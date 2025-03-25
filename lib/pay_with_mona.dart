@@ -1,5 +1,13 @@
-/// A Calculator.
-class Calculator {
-  /// Returns [value] plus 1.
-  int addOne(int value) => value + 1;
+import 'package:flutter/material.dart';
+import 'package:pay_with_mona/src/views/customer_info_view.dart';
+
+class PayWithMona {
+  static void startPayment(
+    BuildContext context,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CustomerInfoView()),
+    );
+  }
 }
