@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/src/views/customer_info_view.dart';
+import 'package:pay_with_mona/src/views/review_and_pay_view.dart';
 
 class PayWithMona {
-  static void startPayment(
-    BuildContext context,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CustomerInfoView()),
-    );
+  static Widget payWidget() {
+    return PayWithMonaWidget();
   }
 }

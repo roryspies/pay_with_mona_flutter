@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/pay_with_mona.dart';
+import 'package:example/views/checkout_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,11 +28,14 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Pay With Mona Example")),
+      appBar: AppBar(title: const Text("NGDeals")),
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
-            PayWithMona.startPayment(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CheckoutView()),
+            );
           },
           child: const Text(
             "Pay Now",

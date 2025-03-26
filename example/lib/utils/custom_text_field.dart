@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/regex.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'package:pay_with_mona/src/utils/validator_mixin.dart';
+import 'package:example/utils/mona_colors.dart';
+import 'package:example/utils/regex.dart';
+import 'package:example/utils/size_config.dart';
+import 'package:example/utils/validator_mixin.dart';
 
 class CustomTextField extends StatefulWidget {
   const CustomTextField({
