@@ -1,0 +1,12 @@
+[
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "NGDeals",
+        "package_name": "ng.ngdeals.example",
+        "sha256_cert_fingerprints": [
+          "E8:DC:0D:63:E9:00:FC:24:DD:E7:A2:E0:FF:A3:2D:17:FC:40:9C:7A:60:BF:99:E7:7B:AE:95:26:F1:30:E9:1C"
+        ]
+      }
+    }
+  ]
