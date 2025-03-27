@@ -175,7 +175,12 @@ class FirebaseSSEListener {
   void _updateConnectionState(SSEConnectionState newState) {
     if (_connectionState != newState) {
       _connectionState = newState;
-      _stateController.add(newState);
+      _logMessage(_connectionState.toString());
+
+      // Only add if the controller is still open
+      if (!_stateController.isClosed) {
+        _stateController.add(newState);
+      }
     }
   }
 
@@ -186,17 +191,27 @@ class FirebaseSSEListener {
       await _subscription!.cancel();
       _subscription = null;
       _currentTransactionId = null;
-      _updateConnectionState(SSEConnectionState.disconnected);
+
+      // Safely update connection state
+      if (!_stateController.isClosed) {
+        _updateConnectionState(SSEConnectionState.disconnected);
+      }
     } else {
-      _logMessage('No active listener to stop.');
+      _logMessage('No active listener.');
     }
   }
 
   /// Dispose the SSE service when no longer needed
   void dispose() {
     _logMessage('Disposing resources...');
+
+    // Stop listening first
     _stopListening();
-    _stateController.close();
+
+    // Close the state controller only if it's not already closed
+    if (!_stateController.isClosed) {
+      _stateController.close();
+    }
   }
 
   /// Logging utility
@@ -208,7 +223,7 @@ class FirebaseSSEListener {
       emoji = '❌'; // Red X for errors
     } else if (message.contains('failed') || message.contains('Failed')) {
       emoji = '🚨'; // Siren for failure states
-    } else if (message.contains('connect')) {
+    } else if (message.contains('connect') || message.contains('Connection')) {
       emoji = '🔌'; // Plug for connection-related messages
     } else if (message.contains('listen') || message.contains('Listening')) {
       emoji = '👂'; // Ear for listening-related messages
@@ -222,6 +237,6 @@ class FirebaseSSEListener {
       emoji = '📝'; // Memo for general messages
     }
 
-    '[SSEListener] $emoji $message'.log();
+    '$emoji [SSEListener] $message'.log();
   }
 }

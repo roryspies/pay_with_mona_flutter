@@ -111,15 +111,16 @@ class PaymentNotifier extends ChangeNotifier {
     );
 
     _firebaseSSE.startListening(
-      transactionId: '67dd7c83bea93e9659a6973f',
+      transactionId: transactionId!,
       onDataChange: (event) {
-        '🔥 [SSE] Event Received: $event'.log();
-        if (event == 'transaction_completed') {
+        '🔥 [SSEListener] Event Received: $event'.log();
+        if (event == 'transaction_completed' || event == 'transaction_failed') {
+          _firebaseSSE.dispose();
           closeCustomTabs();
         }
       },
       onError: (error) {
-        '❌ Error: $error'.log();
+        '❌ [SSEListener] Error: $error'.log();
       },
     );
 
