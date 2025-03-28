@@ -15,7 +15,7 @@ dependencies:
   flutter_custom_tabs: ^2.1.0
   flutter_secure_storage: ^9.2.4
   flutter_svg: ^2.0.17
-  http: ^1.3.0 # for firebase server-side events (SSE)
+  http: ^1.3.0 # for firebase server-sent events (SSE)
 
 dev_dependencies:
   flutter_test:

@@ -21,9 +21,7 @@ class FirebaseSSEListener {
   final http.Client _httpClient = http.Client();
 
   /// Firebase Realtime Database URL
-  /// TODO: remove or keep safe later
-  String _databaseUrl =
-      'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app';
+  String _databaseUrl = '';
 
   /// Current active stream subscription
   StreamSubscription<String>? _subscription;
@@ -72,27 +70,27 @@ class FirebaseSSEListener {
     Function(String)? onDataChange,
     Function(Object)? onError,
   }) async {
-    // Validate initialization
-    if (_databaseUrl.isEmpty) {
-      throw StateError('FirebaseSSE not initialized. Call initialize() first.');
-    }
-
-    // Stop any existing listener if listening to a different transaction
-    if (_currentTransactionId == transactionId && isListening) {
-      _logMessage('Already listening to: $transactionId');
-      await _stopListening();
-    }
-
-    // Ensure previous listener is stopped
-    await _stopListening();
-
-    _currentTransactionId = transactionId;
-    final uri = Uri.parse('$_databaseUrl${_path(transactionId)}');
-
-    final request = http.Request('GET', uri)
-      ..headers['Accept'] = 'text/event-stream';
-
     try {
+      // Validate initialization
+      if (_databaseUrl.isEmpty) {
+        throw StateError(
+            'FirebaseSSE not initialized. Call initialize() first.');
+      }
+
+      // Stop any existing listener if listening to a different transaction
+      if (_currentTransactionId == transactionId && isListening) {
+        _logMessage('Already listening to: $transactionId');
+        await _stopListening();
+      }
+
+      // Ensure previous listener is stopped
+      await _stopListening();
+
+      _currentTransactionId = transactionId;
+      final uri = Uri.parse('$_databaseUrl${_path(transactionId)}');
+
+      final request = http.Request('GET', uri)
+        ..headers['Accept'] = 'text/event-stream';
       _updateConnectionState(SSEConnectionState.connecting);
 
       final response = await _httpClient.send(request);
@@ -116,7 +114,7 @@ class FirebaseSSEListener {
 
       _updateConnectionState(SSEConnectionState.connected);
     } catch (e) {
-      _logMessage('Connection failed: $e');
+      _logMessage('Connection failed');
       _handleError(e, onError);
       await _stopListening();
     }

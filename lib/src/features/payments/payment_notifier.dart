@@ -73,6 +73,32 @@ class PaymentNotifier extends ChangeNotifier {
 
     url.log();
 
+    bool hasError = false;
+
+    _firebaseSSE.initialize(
+        databaseUrl:
+            'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app');
+
+    _firebaseSSE.startListening(
+      transactionId: transactionId,
+      onDataChange: (event) {
+        '🔥 [SSEListener] Event Received: $event'.log();
+        if (event == 'transaction_completed' || event == 'transaction_failed') {
+          _firebaseSSE.dispose();
+          closeCustomTabs();
+        }
+      },
+      onError: (error) {
+        '❌ [SSEListener] Error: $error'.log();
+        _setError('');
+        hasError = true;
+      },
+    );
+
+    if (hasError) {
+      return;
+    }
+
     await launchUrl(
       Uri.parse(url),
       customTabsOptions: CustomTabsOptions.partial(
@@ -102,20 +128,6 @@ class PaymentNotifier extends ChangeNotifier {
         preferredControlTintColor: monaCheckOut.primaryColor,
         dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
       ),
-    );
-
-    _firebaseSSE.startListening(
-      transactionId: transactionId,
-      onDataChange: (event) {
-        '🔥 [SSEListener] Event Received: $event'.log();
-        if (event == 'transaction_completed' || event == 'transaction_failed') {
-          _firebaseSSE.dispose();
-          closeCustomTabs();
-        }
-      },
-      onError: (error) {
-        '❌ [SSEListener] Error: $error'.log();
-      },
     );
 
     _setState(PaymentState.success);
