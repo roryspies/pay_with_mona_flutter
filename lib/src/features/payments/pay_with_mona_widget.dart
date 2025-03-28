@@ -109,7 +109,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                           ),
                         ),
                         onPressed: () async {
-                          await paymentNotifier.initiatePayment(
+                          await paymentNotifier.makePayment(
+                            transactionId: '67e481d9af46b1a1f49bd6b6',
                             method: paymentOption.value,
                             context: context,
                           );

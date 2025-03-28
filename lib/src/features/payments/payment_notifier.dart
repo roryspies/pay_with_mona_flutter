@@ -25,29 +25,29 @@ class PaymentNotifier extends ChangeNotifier {
   PaymentNotifier({PaymentService? paymentsService})
       : _paymentsService = paymentsService ?? PaymentService();
 
-  Future<void> initiatePayment({
-    required String method,
-    required BuildContext context,
-  }) async {
-    _setState(PaymentState.loading);
+  // Future<void> initiatePayment({
+  //   required String method,
+  //   required BuildContext context,
+  // }) async {
+  //   _setState(PaymentState.loading);
 
-    final (Map<String, dynamic>? success, failure) =
-        await _paymentsService.initiatePayment();
-    if (failure != null) {
-      _setError("Payment failed. Try again.");
-    } else if (success != null) {
-      'hiyaa'.log();
-      '$success'.log();
+  //   final (Map<String, dynamic>? success, failure) =
+  //       await _paymentsService.initiatePayment();
+  //   if (failure != null) {
+  //     _setError("Payment failed. Try again.");
+  //   } else if (success != null) {
+  //     'hiyaa'.log();
+  //     '$success'.log();
 
-      _setTransactionId(success['transactionId']);
-      makePayment(
-        transactionId: success['transactionId'],
-        method: method,
-        context: context,
-      );
-      _setState(PaymentState.success);
-    }
-  }
+  //     _setTransactionId(success['transactionId']);
+  //     makePayment(
+  //       transactionId: success['transactionId'],
+  //       method: method,
+  //       context: context,
+  //     );
+  //     _setState(PaymentState.success);
+  //   }
+  // }
 
   Future<void> makePayment({
     required String? transactionId,
