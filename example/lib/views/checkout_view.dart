@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:example/views/customer_info_view.dart';
 import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
-import 'package:example/utils/payment_option_tile.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
-import 'package:pay_with_mona/pay_with_mona.dart';
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
@@ -78,7 +76,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                 ),
               ),
               context.sbH(8),
-              PayWithMona.payWidget(),
+              // PayWithMona.payWidget(),
             ],
           ),
         ),

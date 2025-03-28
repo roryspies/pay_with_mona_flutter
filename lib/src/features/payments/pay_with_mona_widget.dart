@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
+
 import 'package:pay_with_mona/src/features/payments/payment_notifier.dart';
+import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
 
 class PayWithMonaWidget extends StatefulWidget {
-  const PayWithMonaWidget({super.key});
+  const PayWithMonaWidget({
+    super.key,
+    required this.monaCheckOut,
+  });
+
+  final MonaCheckOut monaCheckOut;
 
   @override
   State<PayWithMonaWidget> createState() => _PayWithMonaWidgetState();
@@ -17,21 +22,11 @@ class PayWithMonaWidget extends StatefulWidget {
 class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   final paymentOption = 'transfer'.notifier;
   final paymentNotifier = PaymentNotifier();
-  // final FirebaseSSE firebaseSSE = FirebaseSSE();
-  List<String> events = [];
 
   @override
   void initState() {
     super.initState();
     paymentNotifier.addListener(_onPaymentStateChange);
-    // firebaseSSE.onDataChange = (data) {
-    //   setState(() {
-    //     events.add(data.toString()); // Store received event data
-    //   });
-    // };
-
-    // Fetch initial data
-    // fetchInitialData();
   }
 
   @override
@@ -110,43 +105,10 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         ),
                         onPressed: () async {
                           await paymentNotifier.makePayment(
-                            transactionId: '67e481d9af46b1a1f49bd6b6',
+                            monaCheckOut: widget.monaCheckOut,
                             method: paymentOption.value,
                             context: context,
                           );
-                          // final theme = Theme.of(context);
-                          // await launchUrl(
-                          //   Uri.parse(
-                          //       'https://pay.development.mona.ng/67e3f18d7adde3996e4ab593?embedding=true&sdk=true&embeddingUrl=http%3A%2F%2Flocalhost%3A4008%2F&method=bank&bankId=&sdk=true'),
-                          //   customTabsOptions: CustomTabsOptions.partial(
-                          //     shareState: CustomTabsShareState.off,
-                          //     configuration: PartialCustomTabsConfiguration(
-                          //       initialHeight: context.screenHeight * 0.7,
-                          //       activityHeightResizeBehavior:
-                          //           CustomTabsActivityHeightResizeBehavior.adjustable,
-                          //     ),
-                          //     colorSchemes: CustomTabsColorSchemes.defaults(
-                          //       toolbarColor: MonaColors.primaryBlue,
-                          //     ),
-                          //     showTitle: false,
-                          //   ),
-                          //   safariVCOptions: SafariViewControllerOptions.pageSheet(
-                          //     configuration:
-                          //         const SheetPresentationControllerConfiguration(
-                          //       detents: {
-                          //         SheetPresentationControllerDetent.large,
-                          //         SheetPresentationControllerDetent.medium,
-                          //       },
-                          //       prefersScrollingExpandsWhenScrolledToEdge: true,
-                          //       prefersGrabberVisible: true,
-                          //       prefersEdgeAttachedInCompactHeight: true,
-                          //     ),
-                          //     preferredBarTintColor: MonaColors.primaryBlue,
-                          //     preferredControlTintColor: theme.colorScheme.onSurface,
-                          //     dismissButtonStyle:
-                          //         SafariViewControllerDismissButtonStyle.close,
-                          //   ),
-                          // );
                         },
                         child: Text(
                           "Proceed to pay ",

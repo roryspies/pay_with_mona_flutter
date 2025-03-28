@@ -1,12 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
 import 'package:pay_with_mona/src/features/payments/payments_service.dart';
+import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
-import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'package:pay_with_mona/src/utils/type_defs.dart';
 
 enum PaymentState { idle, loading, success, error }
 
@@ -25,37 +23,31 @@ class PaymentNotifier extends ChangeNotifier {
   PaymentNotifier({PaymentService? paymentsService})
       : _paymentsService = paymentsService ?? PaymentService();
 
-  // Future<void> initiatePayment({
-  //   required String method,
-  //   required BuildContext context,
-  // }) async {
-  //   _setState(PaymentState.loading);
-
-  //   final (Map<String, dynamic>? success, failure) =
-  //       await _paymentsService.initiatePayment();
-  //   if (failure != null) {
-  //     _setError("Payment failed. Try again.");
-  //   } else if (success != null) {
-  //     'hiyaa'.log();
-  //     '$success'.log();
-
-  //     _setTransactionId(success['transactionId']);
-  //     makePayment(
-  //       transactionId: success['transactionId'],
-  //       method: method,
-  //       context: context,
-  //     );
-  //     _setState(PaymentState.success);
-  //   }
-  // }
-
-  Future<void> makePayment({
-    required String? transactionId,
+  Future<void> initiatePayment({
     required String method,
     required BuildContext context,
   }) async {
-    (_currentTransactionId ?? 'isnull').log();
-    (transactionId ?? 'isnull').log();
+    _setState(PaymentState.loading);
+
+    final (Map<String, dynamic>? success, failure) =
+        await _paymentsService.initiatePayment();
+    if (failure != null) {
+      _setError("Payment failed. Try again.");
+    } else if (success != null) {
+      'hiyaa'.log();
+      '$success'.log();
+
+      _setTransactionId(success['transactionId']);
+
+      _setState(PaymentState.success);
+    }
+  }
+
+  Future<void> makePayment({
+    required MonaCheckOut monaCheckOut,
+    required String method,
+    required BuildContext context,
+  }) async {
     _setState(PaymentState.loading);
 
     method.log();
@@ -74,14 +66,15 @@ class PaymentNotifier extends ChangeNotifier {
 
     // method=bank&bankId=
 
+    String transactionId = monaCheckOut.transactionId;
+
     String url =
-        'https://pay.development.mona.ng/$transactionId?embedding=true&sdk=true&mmethod=$method';
+        'https://pay.development.mona.ng/$transactionId?embedding=true&sdk=true&method=$method';
 
     url.log();
 
     await launchUrl(
-      Uri.parse(
-          'https://pay.development.mona.ng/$transactionId?embedding=true&sdk=true&mmethod=$method'),
+      Uri.parse(url),
       customTabsOptions: CustomTabsOptions.partial(
         shareState: CustomTabsShareState.off,
         configuration: PartialCustomTabsConfiguration(
@@ -90,7 +83,7 @@ class PaymentNotifier extends ChangeNotifier {
               CustomTabsActivityHeightResizeBehavior.adjustable,
         ),
         colorSchemes: CustomTabsColorSchemes.defaults(
-          toolbarColor: MonaColors.primaryBlue,
+          toolbarColor: monaCheckOut.primaryColor,
         ),
         showTitle: false,
       ),
@@ -104,14 +97,14 @@ class PaymentNotifier extends ChangeNotifier {
           prefersGrabberVisible: true,
           prefersEdgeAttachedInCompactHeight: true,
         ),
-        preferredBarTintColor: MonaColors.primaryBlue,
+        preferredBarTintColor: monaCheckOut.primaryColor,
         preferredControlTintColor: Colors.white,
         dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
       ),
     );
 
     _firebaseSSE.startListening(
-      transactionId: transactionId!,
+      transactionId: transactionId,
       onDataChange: (event) {
         '🔥 [SSEListener] Event Received: $event'.log();
         if (event == 'transaction_completed' || event == 'transaction_failed') {
