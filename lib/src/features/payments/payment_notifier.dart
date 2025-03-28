@@ -78,12 +78,13 @@ class PaymentNotifier extends ChangeNotifier {
       customTabsOptions: CustomTabsOptions.partial(
         shareState: CustomTabsShareState.off,
         configuration: PartialCustomTabsConfiguration(
-          initialHeight: context.screenHeight * 0.7,
+          initialHeight: context.screenHeight * 0.95,
           activityHeightResizeBehavior:
-              CustomTabsActivityHeightResizeBehavior.adjustable,
+              CustomTabsActivityHeightResizeBehavior.fixed,
         ),
         colorSchemes: CustomTabsColorSchemes.defaults(
           toolbarColor: monaCheckOut.primaryColor,
+          navigationBarColor: monaCheckOut.primaryColor,
         ),
         showTitle: false,
       ),
@@ -91,15 +92,15 @@ class PaymentNotifier extends ChangeNotifier {
         configuration: const SheetPresentationControllerConfiguration(
           detents: {
             SheetPresentationControllerDetent.large,
-            SheetPresentationControllerDetent.medium,
+            // SheetPresentationControllerDetent.medium,
           },
           prefersScrollingExpandsWhenScrolledToEdge: true,
-          prefersGrabberVisible: true,
+          prefersGrabberVisible: false,
           prefersEdgeAttachedInCompactHeight: true,
         ),
         preferredBarTintColor: monaCheckOut.primaryColor,
-        preferredControlTintColor: Colors.white,
-        dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
+        preferredControlTintColor: monaCheckOut.primaryColor,
+        dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
       ),
     );
 
