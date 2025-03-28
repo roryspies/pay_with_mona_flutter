@@ -24,6 +24,9 @@ class SecureStorage {
         KeychainAccessibility.first_unlock, // Available after first unlock
   );
 
+  //! Key IDs
+  static const String paymentUserId = 'PAYMENT_USER_ID';
+
   //! Save a secure value**
   Future<void> write({required String key, required String value}) async {
     await _storage.write(

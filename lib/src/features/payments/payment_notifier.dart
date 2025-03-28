@@ -82,6 +82,7 @@ class PaymentNotifier extends ChangeNotifier {
     _firebaseSSE.startListening(
       transactionId: transactionId,
       onDataChange: (event) {
+        // TODO: grab the data map, not just event string
         '🔥 [SSEListener] Event Received: $event'.log();
         if (event == 'transaction_completed' || event == 'transaction_failed') {
           _firebaseSSE.dispose();
