@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pay_with_mona/src/core/passkeys_service.dart';
 
 import 'package:pay_with_mona/src/features/payments/payment_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
@@ -109,6 +110,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             method: paymentOption.value,
                             context: context,
                           );
+                          // final res = await checkForSafariCreatedPasskey();
+                          // res.log();
                         },
                         child: Text(
                           "Proceed to pay ",

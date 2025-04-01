@@ -1,5 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
 import 'package:pay_with_mona/src/features/payments/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
@@ -50,28 +55,7 @@ class PaymentNotifier extends ChangeNotifier {
   }) async {
     _setState(PaymentState.loading);
 
-    method.log();
-
-    // final (Map<String, dynamic>? success, failure) =
-    //     await _paymentsService.makePayment(
-    //   transactionId: '67e481d9af46b1a1f49bd6b6',
-    //   method: method,
-    // );
-    // if (failure != null) {
-    //   _setState(PaymentState.success);
-    // } else if (success != null) {
-    //   '$success'.log();
-    //   _setError("Payment failed. Try again.");
-    // }
-
-    // method=bank&bankId=
-
     String transactionId = monaCheckOut.transactionId;
-
-    String url =
-        'https://pay.development.mona.ng/$transactionId?embedding=true&sdk=true&method=$method';
-
-    url.log();
 
     bool hasError = false;
 
@@ -99,6 +83,53 @@ class PaymentNotifier extends ChangeNotifier {
     if (hasError) {
       return;
     }
+
+    // Fetch device info
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    // Fetch app version and build number
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final appVersion = '${packageInfo.version} (${packageInfo.buildNumber})';
+    Map<String, Object>? data;
+
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      data = {
+        "sessionId": '',
+        "countryCode": '+234',
+        "deviceInfo": {
+          "name": androidInfo.product,
+          "system": "Android ${androidInfo.version.release}",
+          "model": androidInfo.model,
+          "brand": androidInfo.brand,
+          "isLowRamDevice": androidInfo.isLowRamDevice,
+          "version": appVersion,
+        },
+      };
+    } else {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      data = {
+        "sessionId": '',
+        "countryCode": '+234',
+        "deviceInfo": {
+          "name": iosInfo.name,
+          "system": "iOS ${iosInfo.systemVersion}",
+          "model": iosInfo.model,
+          "brand": iosInfo.modelName,
+          "isLowRamDevice": false,
+          "version": appVersion,
+        },
+      };
+    }
+
+    data.toString().log();
+    String deviceInfoQuery = base64Encode(utf8.encode(jsonEncode(data)));
+
+    String url =
+        'https://pay.development.mona.ng/$transactionId?embedding=true&sdk=true&method=$method&deviceInfo=$deviceInfoQuery';
+
+    // method=bank&bankId=
+
+    url.log();
 
     await launchUrl(
       Uri.parse(url),

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:pay_with_mona/src/core/api_serice.dart';
+import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/core/exceptions.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';

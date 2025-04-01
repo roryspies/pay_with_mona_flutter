@@ -71,6 +71,6 @@ class ApiService {
     buffer.write(" '${options.uri.toString()}'");
 
     // Log the cURL command
-    "🔵 [API] cURL: ${buffer.toString()}".log();
+    "🔵 [API] ${buffer.toString()}".log();
   }
 }
