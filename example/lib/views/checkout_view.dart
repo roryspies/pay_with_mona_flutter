@@ -4,6 +4,7 @@ import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
+import 'package:pay_with_mona/pay_with_mona.dart';
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
@@ -76,7 +77,16 @@ class _CheckoutViewState extends State<CheckoutView> {
                 ),
               ),
               context.sbH(8),
-              // PayWithMona.payWidget(),
+              PayWithMona.payWidget(
+                firstName: "John",
+                lastName: "Doe",
+                dateOfBirth: DateTime(1990, 1, 1),
+                transactionId: "1234567890",
+                merchantName: "NGDeals",
+                primaryColor: MonaColors.primaryBlue,
+                secondaryColor: MonaColors.neutralWhite,
+                bvn: "1234567890",
+              ),
             ],
           ),
         ),

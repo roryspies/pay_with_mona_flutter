@@ -1,32 +1,33 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/payments/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 
-enum PaymentState { idle, loading, success, error }
-
 class PaymentNotifier extends ChangeNotifier {
-  PaymentState _state = PaymentState.idle;
+  final PaymentService _paymentsService;
+  final _firebaseSSE = FirebaseSSEListener();
   String? _errorMessage;
   String? _currentTransactionId;
+  PaymentState _state = PaymentState.idle;
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
 
-  final PaymentService _paymentsService;
-  final FirebaseSSEListener _firebaseSSE = FirebaseSSEListener();
-
+  /// ***
   PaymentState get state => _state;
+  PaymentMethod get selectedPaymentMethod => _selectedPaymentMethod;
   String? get errorMessage => _errorMessage;
   String? get currentTransactionId => _currentTransactionId;
 
-  PaymentNotifier({PaymentService? paymentsService})
-      : _paymentsService = paymentsService ?? PaymentService();
+  PaymentNotifier({
+    PaymentService? paymentsService,
+  }) : _paymentsService = paymentsService ?? PaymentService();
 
   Future<void> initiatePayment({
     required String method,
@@ -39,7 +40,6 @@ class PaymentNotifier extends ChangeNotifier {
     if (failure != null) {
       _setError("Payment failed. Try again.");
     } else if (success != null) {
-      'hiyaa'.log();
       '$success'.log();
 
       _setTransactionId(success['transactionId']);
@@ -66,7 +66,7 @@ class PaymentNotifier extends ChangeNotifier {
     _firebaseSSE.startListening(
       transactionId: transactionId,
       onDataChange: (event) {
-        // TODO: grab the data map, not just event string
+        /// *** TODO: grab the data map, not just event string
         '🔥 [SSEListener] Event Received: $event'.log();
         if (event == 'transaction_completed' || event == 'transaction_failed') {
           _firebaseSSE.dispose();
@@ -181,6 +181,13 @@ class PaymentNotifier extends ChangeNotifier {
 
   void _setTransactionId(String transactionId) {
     _currentTransactionId = transactionId;
+    notifyListeners();
+  }
+
+  void updateSelectedPaymentType({
+    required PaymentMethod selectedPaymentMethod,
+  }) {
+    _selectedPaymentMethod = selectedPaymentMethod;
     notifyListeners();
   }
 }

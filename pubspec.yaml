@@ -28,13 +28,11 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
-
 flutter:
-
   assets:
     - assets/icons/
     - assets/fonts/
-  
+
   fonts:
     - family: General Sans
       fonts:

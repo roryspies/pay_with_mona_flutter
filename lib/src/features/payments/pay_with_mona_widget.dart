@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/src/core/passkeys_service.dart';
-
-import 'package:pay_with_mona/src/features/payments/payment_notifier.dart';
+import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
@@ -21,7 +19,6 @@ class PayWithMonaWidget extends StatefulWidget {
 }
 
 class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
-  final paymentOption = 'transfer'.notifier;
   final paymentNotifier = PaymentNotifier();
 
   @override
@@ -33,99 +30,106 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   @override
   void dispose() {
     paymentNotifier.removeListener(_onPaymentStateChange);
-    paymentNotifier.dispose();
-    paymentOption.dispose();
     paymentNotifier.disposeSSEListener();
+    paymentNotifier.dispose();
     super.dispose();
   }
 
-  void _onPaymentStateChange() {
-    setState(() {}); // Rebuild UI when state changes
-  }
+  /// *** Rebuild UI when state changes
+  void _onPaymentStateChange() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(context.w(20)),
+      padding: EdgeInsets.all(context.w(16)),
       width: double.infinity,
       decoration: BoxDecoration(
         color: MonaColors.neutralWhite,
       ),
-      child: paymentOption.sync(
-        builder: (context, value, child) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: context.h(32),
-            children: [
-              Text(
-                "Payment Method",
-                style: TextStyle(
-                  fontSize: context.sp(16),
-                  fontWeight: FontWeight.w500,
-                  color: MonaColors.textHeading,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Payment Method",
+            style: TextStyle(
+              fontSize: context.sp(16),
+              fontWeight: FontWeight.w500,
+              color: MonaColors.textHeading,
+            ),
+          ),
+
+          context.sbH(16.0),
+
+          Column(
+            children: PaymentMethod.values.map(
+              (paymentMethod) {
+                if (paymentMethod == PaymentMethod.none) {
+                  return const SizedBox.shrink();
+                }
+
+                return PaymentOptionTile(
+                  onTap: () {
+                    paymentNotifier.updateSelectedPaymentType(
+                      selectedPaymentMethod: paymentMethod,
+                    );
+                  },
+                  selectedPaymentMethod: paymentNotifier.selectedPaymentMethod,
+                  paymentMethod: paymentMethod,
+                );
+              },
+            ).toList(),
+          ),
+
+          context.sbH(16.0),
+
+          ///
+          AnimatedSwitcher(
+            duration: Duration(milliseconds: 300),
+            child: switch (paymentNotifier.state == PaymentState.loading) {
+              true => Align(
+                  alignment: Alignment.center,
+                  child: CircularProgressIndicator(
+                    color: MonaColors.primaryBlue,
+                  ),
                 ),
-              ),
-              Column(
-                spacing: context.h(24),
-                children: [
-                  PaymentOptionTile(
-                    title: "Pay by Transfer",
-                    descriptiom: "Pay for your order with cash on delivery",
-                    icon: Icon(Icons.money),
-                    type: 'transfer',
-                    paymentOption: paymentOption,
-                  ),
-                  PaymentOptionTile(
-                    title: "Pay by Card",
-                    descriptiom: "Visa, Verve and Mastercard accepted",
-                    icon: Icon(Icons.credit_card),
-                    type: 'card',
-                    paymentOption: paymentOption,
-                  ),
-                ],
-              ),
-              paymentNotifier.state == PaymentState.loading
-                  ? Align(
-                      alignment: Alignment.center,
-                      child: CircularProgressIndicator(
-                        color: MonaColors.primaryBlue,
+
+              ///
+              false => SizedBox(
+                  width: double.infinity,
+                  height: context.h(50),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: paymentNotifier.selectedPaymentMethod ==
+                              PaymentMethod.none
+                          ? MonaColors.primaryBlue.withAlpha(100)
+                          : MonaColors.primaryBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    )
-                  : SizedBox(
-                      width: double.infinity,
-                      height: context.h(50),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor: paymentOption.value.isEmpty
-                              ? MonaColors.primaryBlue.withAlpha(100)
-                              : MonaColors.primaryBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        onPressed: () async {
-                          await paymentNotifier.makePayment(
-                            monaCheckOut: widget.monaCheckOut,
-                            method: paymentOption.value,
-                            context: context,
-                          );
-                          // final res = await checkForSafariCreatedPasskey();
-                          // res.log();
-                        },
-                        child: Text(
-                          "Proceed to pay ",
-                          style: TextStyle(
-                            fontSize: context.sp(14),
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                    ),
+                    onPressed: () async {
+                      await paymentNotifier.makePayment(
+                        monaCheckOut: widget.monaCheckOut,
+                        method: paymentNotifier.selectedPaymentMethod.type,
+                        context: context,
+                      );
+                      // final res = await checkForSafariCreatedPasskey();
+                      // res.log();
+                    },
+                    child: Text(
+                      "Proceed to pay ",
+                      style: TextStyle(
+                        fontSize: context.sp(14),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
                       ),
-                    )
-            ],
-          );
-        },
+                    ),
+                  ),
+                )
+            },
+          ),
+        ],
       ),
     );
   }
