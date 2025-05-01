@@ -9,15 +9,19 @@ class ApiService {
 
   static const String _defaultBaseUrl = APIConfig.baseUrl;
 
-  ApiService({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl {
+  ApiService({
+    String? baseUrl,
+  }) : baseUrl = baseUrl ?? _defaultBaseUrl {
     _dio = Dio(BaseOptions(baseUrl: this.baseUrl));
     _dio.interceptors.add(LogInterceptor(responseBody: true));
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        _logCurlCommand(options);
-        return handler.next(options);
-      },
-    ));
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          _logCurlCommand(options);
+          return handler.next(options);
+        },
+      ),
+    );
   }
 
   Future<Response> post(

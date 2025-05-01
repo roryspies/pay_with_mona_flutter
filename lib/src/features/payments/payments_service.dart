@@ -9,7 +9,7 @@ class PaymentService {
 
   FutureOutcome<Map<String, dynamic>> initiatePayment() async {
     try {
-      final response = await _apiService.get("/demo/checkout");
+      final response = await _apiService.post("/demo/checkout");
 
       return right(response.data);
     } on DioException catch (e) {
@@ -25,8 +25,9 @@ class PaymentService {
     }
   }
 
-  FutureOutcome<Map<String, dynamic>> getPaymentMethods(
-      {required String transactionId}) async {
+  FutureOutcome<Map<String, dynamic>> getPaymentMethods({
+    required String transactionId,
+  }) async {
     try {
       // final apiService = ApiService(baseUrl: 'https://api.development.mona.ng');
       final response = await _apiService.get("/pay", queryParams: {

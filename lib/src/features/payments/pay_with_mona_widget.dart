@@ -25,6 +25,11 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   void initState() {
     super.initState();
     paymentNotifier.addListener(_onPaymentStateChange);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) async {
+        await paymentNotifier.initiatePayment();
+      },
+    );
   }
 
   @override

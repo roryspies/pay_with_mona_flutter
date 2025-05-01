@@ -1,26 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:example/views/customer_info_view.dart';
-import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
 import 'package:pay_with_mona/pay_with_mona.dart';
 
-class CheckoutView extends StatefulWidget {
+class CheckoutView extends StatelessWidget {
   const CheckoutView({super.key});
-
-  @override
-  State<CheckoutView> createState() => _CheckoutViewState();
-}
-
-class _CheckoutViewState extends State<CheckoutView> {
-  final paymentOption = ''.notifier;
-
-  @override
-  void dispose() {
-    paymentOption.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
