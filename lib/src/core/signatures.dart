@@ -10,6 +10,11 @@ import 'package:biometric_signature/ios_config.dart';
 
 /// A utility class for managing biometric signatures and authentication
 class BiometricSignatureHelper {
+  factory BiometricSignatureHelper() => singleInstance;
+  BiometricSignatureHelper._internal();
+  static BiometricSignatureHelper singleInstance =
+      BiometricSignatureHelper._internal();
+
   /// List of device models with known biometric signature limitations
   static final List<String> _unsupportedModels = [
     "CP3706AS",
@@ -18,7 +23,7 @@ class BiometricSignatureHelper {
   /// Checks if biometric authentication is available and at least one method is enrolled
   ///
   /// Returns a [Future] that completes with a boolean indicating biometric availability
-  static Future<bool> isBiometricAvailable() async {
+  Future<bool> isBiometricAvailable() async {
     try {
       final LocalAuthentication localAuth = LocalAuthentication();
       final isAvailable = await localAuth.canCheckBiometrics;
@@ -36,7 +41,7 @@ class BiometricSignatureHelper {
   ///
   /// [title] Optional title for the biometric prompt
   /// Returns a [Future] with the generated public key or null if generation fails
-  static Future<String?> generatePublicKey({String? title}) async {
+  Future<String?> generatePublicKey({String? title}) async {
     if (!await isBiometricAvailable()) {
       return null;
     }
@@ -81,7 +86,7 @@ class BiometricSignatureHelper {
   /// [title] Optional title for the biometric prompt
   /// [onCancel] Optional callback for cancellation
   /// Returns a [Future] with the generated signature or null if signing fails
-  static Future<String?> createSignature({
+  Future<String?> createSignature({
     required String rawData,
     String? title,
     VoidCallback? onCancel,
