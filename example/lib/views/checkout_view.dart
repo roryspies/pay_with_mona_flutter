@@ -64,8 +64,8 @@ class CheckoutView extends StatelessWidget {
               ),
               context.sbH(8),
               PayWithMona.payWidget(
-                firstName: "Serticode",
-                lastName: "Adonis",
+                firstName: "John",
+                lastName: "Doe Smith",
                 dateOfBirth: DateTime(1995, 2, 1),
                 transactionId: "1234567890",
                 merchantName: "NGDeals",

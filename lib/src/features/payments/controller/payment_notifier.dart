@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/features/payments/payments_service.dart';
+import 'package:pay_with_mona/src/services/auth_service.dart';
+import 'package:pay_with_mona/src/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
-
-part 'payments_notifier.helpers.dart';
 
 class PaymentNotifier extends ChangeNotifier {
   static final PaymentNotifier _instance = PaymentNotifier._internal();
   factory PaymentNotifier() => _instance;
   PaymentNotifier._internal({
     PaymentService? paymentsService,
-  }) : _paymentsService = paymentsService ?? PaymentService();
+    AuthService? authService,
+  })  : _paymentsService = paymentsService ?? PaymentService(),
+        _authService = authService ?? AuthService();
 
   final PaymentService _paymentsService;
+  final AuthService _authService;
   final _firebaseSSE = FirebaseSSEListener();
-  final _apiService = ApiService();
   String? _errorMessage;
   String? _currentTransactionId;
   String? _strongAuthToken;
@@ -35,6 +35,48 @@ class PaymentNotifier extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get currentTransactionId => _currentTransactionId;
 
+  /// ***
+  void disposeSSEListener() {
+    _firebaseSSE.dispose();
+  }
+
+  void _setState(PaymentState newState) {
+    _state = newState;
+    notifyListeners();
+  }
+
+  void _setError(String message) {
+    _errorMessage = message;
+    _setState(PaymentState.error);
+  }
+
+  void _setTransactionId(String transactionId) {
+    _currentTransactionId = transactionId;
+    notifyListeners();
+  }
+
+  void setMonaCheckOut({
+    required MonaCheckOut checkoutDetails,
+  }) {
+    _monaCheckOut = checkoutDetails;
+    notifyListeners();
+  }
+
+  void setCallingBuildContext({
+    required BuildContext context,
+  }) {
+    _callingBuildContext = context;
+    notifyListeners();
+  }
+
+  void setSelectedPaymentType({
+    required PaymentMethod selectedPaymentMethod,
+  }) {
+    _selectedPaymentMethod = selectedPaymentMethod;
+    notifyListeners();
+  }
+
+  /// ***
   Future<void> initiatePayment() async {
     _setState(PaymentState.loading);
 
@@ -98,9 +140,13 @@ class PaymentNotifier extends ChangeNotifier {
           sessionID: sessionID,
           onDataChange: (strongAuthToken) async {
             '🔥 [listenToCustomEvents] Event Received: $strongAuthToken'.log();
-            _strongAuthToken = strongAuthToken;
+            _strongAuthToken = (() {
+              _strongAuthToken = null;
+              return strongAuthToken;
+            })();
+
             await closeCustomTabs();
-            await openLoginCustomTab();
+            await loginWithStrongAuth();
           },
           onError: (error) {
             '❌ [listenToCustomEvents] Error: $error'.log();
@@ -152,17 +198,31 @@ class PaymentNotifier extends ChangeNotifier {
     );
   }
 
-  Future<void> openLoginCustomTab() async {
+  Future<void> loginWithStrongAuth() async {
+    _setState(PaymentState.loading);
+
     try {
-      final url = Uri.https(
-        'api.development.mona.ng',
-        '/login',
-        {
-          'auth_token': _strongAuthToken,
-          'key_exchange': "true",
-        },
+      final response = await _authService.loginWithStrongAuth(
+        strongAuthToken: _strongAuthToken ?? "",
+        phoneNumber: _monaCheckOut?.phoneNumber ?? "",
       );
 
+      if (response == null) {
+        _setError("Login failed. Try again.");
+        return;
+      }
+
+      "✅ Strong Auth login successful: $response".log();
+    } catch (error, trace) {
+      "❌ loginWithStrongAuth() Error: $error ::: Trace - $trace".log();
+      _setError("An error occurred. Please try again.");
+    } finally {
+      "Login with Strong Auth completed".log();
+    }
+  }
+
+  /* Future<void> openLoginCustomTab() async {
+    try {
       final loginUrl = Uri(
         scheme: 'https',
         host: 'api.development.mona.ng',
@@ -173,21 +233,8 @@ class PaymentNotifier extends ChangeNotifier {
         },
       );
 
-      /* final url =
-          "https://api.development.mona.ng/login?strongAuthToken=${Uri.encodeComponent(_strongAuthToken ?? "")}?keyExchange=${Uri.encodeComponent("true")}";
- */
-      url.log();
-      loginUrl.log();
-
       await launchUrl(
         loginUrl,
-        //Uri.parse(url),
-        /* webViewConfiguration: const WebViewConfiguration(
-          headers: {
-            'x-strong-auth-token': strongAuthToken,
-            'x-mona-key-exchange': '$keyExchange',
-          },
-        ), */
         customTabsOptions: CustomTabsOptions.partial(
           shareState: CustomTabsShareState.off,
           configuration: PartialCustomTabsConfiguration(
@@ -223,45 +270,5 @@ class PaymentNotifier extends ChangeNotifier {
     } finally {
       _setState(PaymentState.idle);
     }
-  }
-
-  void disposeSSEListener() {
-    _firebaseSSE.dispose();
-  }
-
-  void _setState(PaymentState newState) {
-    _state = newState;
-    notifyListeners();
-  }
-
-  void _setError(String message) {
-    _errorMessage = message;
-    _setState(PaymentState.error);
-  }
-
-  void _setTransactionId(String transactionId) {
-    _currentTransactionId = transactionId;
-    notifyListeners();
-  }
-
-  void setMonaCheckOut({
-    required MonaCheckOut checkoutDetails,
-  }) {
-    _monaCheckOut = checkoutDetails;
-    notifyListeners();
-  }
-
-  void setCallingBuildContext({
-    required BuildContext context,
-  }) {
-    _callingBuildContext = context;
-    notifyListeners();
-  }
-
-  void setSelectedPaymentType({
-    required PaymentMethod selectedPaymentMethod,
-  }) {
-    _selectedPaymentMethod = selectedPaymentMethod;
-    notifyListeners();
-  }
+  } */
 }

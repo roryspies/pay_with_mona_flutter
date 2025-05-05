@@ -5,7 +5,12 @@ import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
 class PaymentService {
-  final ApiService _apiService = ApiService();
+  factory PaymentService() => singleInstance;
+  PaymentService._internal();
+  static PaymentService singleInstance = PaymentService._internal();
+
+  /// ***
+  final _apiService = ApiService();
 
   FutureOutcome<Map<String, dynamic>> initiatePayment() async {
     try {
