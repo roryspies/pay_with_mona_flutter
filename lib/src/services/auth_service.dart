@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/services/signature_service.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:uuid/uuid.dart';
 
 class AuthService {
   factory AuthService() => singleInstance;
@@ -69,7 +75,7 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>?> commitKeys({
-    required Map<String, dynamic> strongAuthToken,
+    required Map<String, dynamic> data,
   }) async {
     try {
       final response = await _apiService.post(
@@ -90,20 +96,16 @@ class AuthService {
     }
   }
 
-  /* static Future<void> enrolLocalAuth2({
-    required BuildContext context,
+  Future<void> enrolLocalAuth2({
     required Map<String, dynamic> deviceAuth,
-    required WidgetRef callingRef,
-    PageController? setUpController,
     Function()? onSuccess,
     Function()? move,
     Function()? onBioError,
   }) async {
-    log('_enrolLocalAuth');
+    final signatureService = SignatureService();
+    ('_enrolLocalAuth').log();
 
-    Prefs.setString(Prefs.xClientType, 'bioApp');
-
-    String id = const Uuid().v4();
+    final id = const Uuid().v4();
     Map<String, dynamic> payload = {
       "registrationToken": deviceAuth['registrationToken'],
       "attestationResponse": {
@@ -115,9 +117,9 @@ class AuthService {
     try {
       if (Platform.isIOS) {
         //! to give face ID time to cook
-        await Future.delayed(1500.milliseconds);
+        await Future.delayed(Duration(seconds: 1));
       }
-      final String? publicKey = await getPublicKey();
+      final String? publicKey = await signatureService.getPublicKey();
 
       if (publicKey == null || publicKey.isEmpty) {
         onBioError?.call();
@@ -127,63 +129,52 @@ class AuthService {
       payload['attestationResponse']['publicKey'] = publicKey;
 
       // sign data
-      String rawData = base64Encode(
-          utf8.encode(jsonEncode(deviceAuth['registrationOptions'])));
+      final rawData = base64Encode(
+        utf8.encode(
+          jsonEncode(
+            deviceAuth['registrationOptions'],
+          ),
+        ),
+      );
 
-      final String? signature = await generateSignature(rawData: rawData);
+      final signature = await signatureService.generateSignature(
+        rawData: rawData,
+      );
 
       if (signature == null || signature.isEmpty) {
         onBioError?.call();
         return;
       }
+
       payload['attestationResponse']['signature'] = signature;
       move?.call();
+
       // commit keys
-      await getIt<IAuthFacade>().commitKeys(data: payload).then((res) {
-        res.fold((failure) async {
-          failure.map(
-            serverError: (e) =>
-                openSnackBar(context, e.msg, AnimatedSnackBarType.error),
-            apiFailure: (e) {
-              final message = switch (e.msg) {
-                String msg => msg,
-                Map<String, dynamic> map =>
-                  map['errors']?.first ?? map['message'],
-                _ => null
-              };
+      final response = await commitKeys(
+        data: payload,
+      );
 
-              openSnackBar(
-                context,
-                message,
-                AnimatedSnackBarType.error,
-              );
-              context.router.replaceAll([const LandingRoute()]);
-            },
-          );
-        }, (res) async {
-          // ref.read(loadingProvider.notifier).stop();
+      if (response == null) {
+        onBioError?.call();
+        return;
+      }
 
-          if (res['success'] == true) {
-            Prefs.setBool(Prefs.hasPasskey, true);
+      if (response['success'] == true) {
+        //Prefs.setBool(Prefs.hasPasskey, true);
 
-            ///Prefs.setString(Prefs.keyId, res['keyId']);
-            Prefs.setString(
-              "${callingRef.read(serverEnvironmentToggleProvider).currentEnvironment.label}_keyId",
-              res['keyId'],
-            );
+        ///Prefs.setString(Prefs.keyId, res['keyId']);
+        /* Prefs.setString(
+          "${callingRef.read(serverEnvironmentToggleProvider).currentEnvironment.label}_keyId",
+          res['keyId'],
+        ); */
 
-            onSuccess?.call();
+        onSuccess?.call();
 
-            return;
-          }
-        });
-      });
+        return;
+      }
     } on PlatformException catch (e) {
-      log('$e');
+      ('$e').log();
       onBioError?.call();
-      openSnackBar(context, 'An error occurred while signing keys',
-          AnimatedSnackBarType.error);
-      // ref.read(loadingProvider.notifier).stop();
     }
-  } */
+  }
 }

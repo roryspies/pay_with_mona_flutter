@@ -21,6 +21,7 @@ dependencies:
   local_auth: ^2.3.0
   local_auth_signature: ^1.0.12
   package_info_plus: ^8.1.2
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
