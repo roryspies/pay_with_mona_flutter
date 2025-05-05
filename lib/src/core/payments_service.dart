@@ -16,7 +16,9 @@ class PaymentService {
     try {
       final response = await _apiService.post(
         "/demo/checkout",
-        data: {'amount': 3000},
+        data: {
+          'amount': 3000,
+        },
       );
 
       return right(response.data);
@@ -35,12 +37,19 @@ class PaymentService {
 
   FutureOutcome<Map<String, dynamic>> getPaymentMethods({
     required String transactionId,
+    required String userEnrolledCheckoutID,
   }) async {
     try {
       // final apiService = ApiService(baseUrl: 'https://api.development.mona.ng');
-      final response = await _apiService.get("/pay", queryParams: {
-        'transactionId': transactionId,
-      });
+      final response = await _apiService.get(
+        "/pay",
+        headers: {
+          "cookie": "mona_checkoutId=$userEnrolledCheckoutID",
+        },
+        queryParams: {
+          'transactionId': transactionId,
+        },
+      );
 
       return right(response.data);
     } on DioException catch (e) {

@@ -26,7 +26,6 @@ class PaymentNotifier extends ChangeNotifier {
   String? _errorMessage;
   String? _currentTransactionId;
   String? _strongAuthToken;
-  String? _registrationToken;
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
   SecureStorage _secureStorage;
@@ -81,17 +80,6 @@ class PaymentNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setRegistrationToken({
-    required String regToken,
-  }) {
-    _registrationToken = (() {
-      _strongAuthToken = null;
-      return regToken;
-    })();
-
-    notifyListeners();
-  }
-
   /// ***
   Future<void> initiatePayment() async {
     _setState(PaymentState.loading);
@@ -110,7 +98,18 @@ class PaymentNotifier extends ChangeNotifier {
     }
 
     _setTransactionId(success['transactionId'] as String);
-    "✅ Payment initiated: $success".log();
+    final userUUID = await _secureStorage.read(key: SecureStorageKeys.keyID);
+    "✅ Payment initiated: $success ::: User UUID :::$userUUID ".log();
+
+    if (userUUID == null) {
+      _setError("User UUID not found. Please try again.");
+      return;
+    }
+
+    await _paymentsService.getPaymentMethods(
+      transactionId: _currentTransactionId ?? "",
+      userEnrolledCheckoutID: userUUID,
+    );
 
     _setState(PaymentState.success);
   }
@@ -231,7 +230,20 @@ class PaymentNotifier extends ChangeNotifier {
       "✅ Strong Auth login successful: $response".log();
       await _authService.signAndCommitAuthKeys(
         deviceAuth: response["deviceAuth"],
-        onSuccess: () {},
+        onSuccess: () async {
+          final userUUID =
+              await _secureStorage.read(key: SecureStorageKeys.keyID);
+
+          if (userUUID == null) {
+            _setError("User UUID not found. Please try again.");
+            return;
+          }
+
+          await _paymentsService.getPaymentMethods(
+            transactionId: _currentTransactionId ?? "",
+            userEnrolledCheckoutID: userUUID,
+          );
+        },
       );
     } catch (error, trace) {
       "❌ loginWithStrongAuth() Error: $error ::: Trace - $trace".log();
@@ -241,147 +253,18 @@ class PaymentNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> enrollPassKeys() async {}
+/*   Future<void> onRegistrationSuccess() async {
+    Map options = {
+      'registrationToken': _registrationToken,
+      'registrationOptions': _registrationOptions
+    };
 
-  /* Future<void> enrolPasskey2({
-    required BuildContext context,
-    required WidgetRef ref,
-    PageController? setupPageController,
-    Function()? onEnrol,
-    Function()? onError,
-  }) async {
-    ref.read(loadingProvider.notifier).start("Please wait....");
-
-    FlutterSecureStorage storage = const FlutterSecureStorage();
+    String url =
+        'https://pay.development.mona.ng/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}';
 
     try {
-      var onboarding = ref.watch(onboardingProvider);
-      String registrationToken = onboarding.registrationToken;
-      var registrationOptions = onboarding.registrationOptions;
-
-      Prefs.setString(Prefs.xClientType, 'fidoApp');
-
-      // Initialize Pusher
-      var pusher = await PusherUtil.init();
-      bool registrationSuccess = false;
-
-      await pusher.subscribe(
-        channelName: 'authn_$registrationToken',
-        onEvent: (pusherEvent) async {
-          try {
-            PusherEvent event = pusherEvent as PusherEvent;
-            log('event::: $event');
-
-            if (event.eventName == 'pusher:subscription_succeeded') {
-              ref.read(loadingProvider.notifier).stop();
-
-              Map options = {
-                'registrationToken': registrationToken,
-                'registrationOptions': registrationOptions
-              };
-              String url =
-                  '${ref.read(serverEnvironmentToggleProvider).currentEnvironment.payUrl}/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}';
-              /* String url =
-                  '${ENV.payUrl}/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}'; */
-
-              final theme = Theme.of(context);
-              try {
-                await launchUrl(
-                  Uri.parse(url),
-                  customTabsOptions: CustomTabsOptions.partial(
-                    configuration: PartialCustomTabsConfiguration(
-                      initialHeight: 20.h,
-                      activityHeightResizeBehavior:
-                          CustomTabsActivityHeightResizeBehavior.fixed,
-                    ),
-                    colorSchemes: CustomTabsColorSchemes.defaults(
-                      toolbarColor: theme.colorScheme.surface,
-                    ),
-                    showTitle: true,
-                  ),
-                  safariVCOptions: SafariViewControllerOptions.pageSheet(
-                    configuration:
-                        const SheetPresentationControllerConfiguration(
-                      detents: {
-                        SheetPresentationControllerDetent.large,
-                        SheetPresentationControllerDetent.medium,
-                      },
-                      prefersScrollingExpandsWhenScrolledToEdge: true,
-                      prefersGrabberVisible: true,
-                      prefersEdgeAttachedInCompactHeight: true,
-                    ),
-                    preferredBarTintColor: theme.colorScheme.surface,
-                    preferredControlTintColor: theme.colorScheme.onSurface,
-                    dismissButtonStyle:
-                        SafariViewControllerDismissButtonStyle.close,
-                  ),
-                );
-
-                Future.delayed(const Duration(seconds: 2), () async {
-                  onError?.call();
-                });
-              } catch (e) {
-                debugPrint("Launch URL failed: ${e.toString()}");
-                onError?.call();
-              }
-            }
-
-            if (event.eventName == 'registration_success') {
-              registrationSuccess = true;
-              ref.read(loadingProvider.notifier).stop();
-              onEnrol?.call();
-              await closeCustomTabs();
-
-              Map<String, dynamic> eventData = jsonDecode(event.data);
-              String strongAuthToken = eventData['strongAuthToken'];
-
-              pusher.disconnect();
-
-              String? phone = await storage.read(
-                key: Prefs.PHONE,
-                iOptions: AppUtil.getIOSOptions(),
-                aOptions: AppUtil.getAndroidOptions(),
-              );
-
-              await doLoginExistingNN(
-                context: context,
-                ref: ref,
-                strongAuthToken: strongAuthToken,
-                setupPageController: setupPageController,
-                payload: {
-                  'phone': phone,
-                },
-              );
-            }
-          } catch (e) {
-            debugPrint("Error in Pusher event handler: ${e.toString()}");
-            onError?.call();
-          }
-        },
-      );
-
-      await pusher.connect();
-    } catch (e) {
-      debugPrint("Error in enrolPasskey2: ${e.toString()}");
-      onError?.call();
-      ref.read(loadingProvider.notifier).stop();
-    }
-  } */
-
-  /* Future<void> openLoginCustomTab() async {
-    try {
-      final loginUrl = Uri(
-        scheme: 'https',
-        host: 'api.development.mona.ng',
-        path: '/login',
-        queryParameters: {
-          'x-strong-auth-token': _strongAuthToken,
-          'x-mona-key-exchange': "true",
-        },
-      );
-
       await launchUrl(
-        loginUrl,
+        Uri.parse(url),
         customTabsOptions: CustomTabsOptions.partial(
           shareState: CustomTabsShareState.off,
           configuration: PartialCustomTabsConfiguration(
@@ -410,12 +293,11 @@ class PaymentNotifier extends ChangeNotifier {
           dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
         ),
       );
-      "✅ Custom tab opened successfully".log();
     } catch (error, trace) {
-      "❌ openLoginCustomTab() Error: $error ::: Trace - $trace".log();
+      "❌ onEnrollPasskeySubSucceeded() Error: $error ::: Trace - $trace".log();
       _setError("An error occurred. Please try again.");
     } finally {
-      _setState(PaymentState.idle);
+      "Enroll Passkeys completed".log();
     }
   } */
 }

@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/services.dart';
 import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/core/secure_storage.dart';
 import 'package:pay_with_mona/src/core/signatures.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,7 +16,6 @@ class AuthService {
   /// ***
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
-  final _paymentNotifier = PaymentNotifier();
 
   Future<PaymentUserType?> validatePhoneNumberAsMonaUser({
     required String phoneNumber,
@@ -26,9 +23,6 @@ class AuthService {
     try {
       final response = await _apiService.post(
         "/login/validate",
-        headers: {
-          "Content-Type": "application/json",
-        },
         data: {
           'phoneNumber': phoneNumber,
         },
@@ -94,10 +88,6 @@ class AuthService {
         "rawId": id,
       }
     };
-
-    _paymentNotifier.setRegistrationToken(
-      regToken: deviceAuth['registrationToken'],
-    );
 
     try {
       if (Platform.isIOS) {
@@ -182,9 +172,6 @@ class AuthService {
         data: data,
       );
 
-      final responseInMap = response.data as Map<String, dynamic>;
-      responseInMap.log();
-
       return response.data as Map<String, dynamic>;
     } catch (error) {
       "$error".log();
@@ -192,6 +179,4 @@ class AuthService {
       return null;
     }
   }
-
-  Future<void> loginWithoutKeyExchange() async {}
 }

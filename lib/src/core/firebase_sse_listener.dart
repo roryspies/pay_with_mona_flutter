@@ -158,6 +158,8 @@ class FirebaseSSEListener {
       final response = await _httpClient.send(request);
       _logMessage('Connection established. Listening for events...');
 
+      _logMessage('Firebase Connection URL: $uri');
+
       _subscription = response.stream.transform(utf8.decoder).listen(
         (String event) {
           _logMessage('Raw event received: $event');
@@ -228,6 +230,7 @@ class FirebaseSSEListener {
             onDataChange?.call(strongAuthToken);
           } else {
             _logMessage('Event data does not contain strongAuthToken');
+            onDataChange?.call((jsonEncode(eventData)));
           }
         } else {
           _logMessage('Unexpected event structure: $eventData');
