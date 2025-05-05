@@ -8,6 +8,7 @@ class MonaCheckOut {
   final String? bvn;
   final String transactionId;
   final String merchantName;
+  final String phoneNumber;
   final Color primaryColor;
   final Color secondaryColor;
 
@@ -19,6 +20,7 @@ class MonaCheckOut {
     this.bvn,
     required this.transactionId,
     required this.merchantName,
+    required this.phoneNumber,
     required this.primaryColor,
     required this.secondaryColor,
   });
@@ -34,6 +36,7 @@ class MonaCheckOut {
       bvn: json['bvn'] ?? '',
       transactionId: json['transaction_id'] ?? '',
       merchantName: json['merchant_name'] ?? '',
+      phoneNumber: json['phone'] ?? '',
       primaryColor: json['primary_color'] ?? Colors.black,
       secondaryColor: json['secondary_color'] ?? Colors.black,
     );
@@ -49,6 +52,7 @@ class MonaCheckOut {
       "bvn": bvn,
       "transaction_id": transactionId,
       "merchant_name": merchantName,
+      "phone": phoneNumber,
       "primary_color": primaryColor,
       "secondary_color": secondaryColor,
     };
@@ -62,6 +66,7 @@ class MonaCheckOut {
     String? bvn,
     String? transactionId,
     String? merchantName,
+    String? phoneNumber,
     Color? primaryColor,
     Color? secondaryColor,
   }) {
@@ -73,6 +78,7 @@ class MonaCheckOut {
       bvn: bvn ?? this.bvn,
       transactionId: transactionId ?? this.transactionId,
       merchantName: merchantName ?? this.merchantName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       primaryColor: primaryColor ?? this.primaryColor,
       secondaryColor: secondaryColor ?? this.secondaryColor,
     );
@@ -80,7 +86,7 @@ class MonaCheckOut {
 
   @override
   String toString() {
-    return 'MonaCheckOut(firstName: $firstName, middleName: $middleName, lastName: $lastName, dateOfBirth: $dateOfBirth, bvn: $bvn, transactionId: $transactionId, merchantName: $merchantName, primaryColor: $primaryColor, secondaryColor: $secondaryColor)';
+    return 'MonaCheckOut(firstName: $firstName, middleName: $middleName, lastName: $lastName, dateOfBirth: $dateOfBirth, bvn: $bvn, transactionId: $transactionId, merchantName: $merchantName, phoneNumber: $phoneNumber, primaryColor: $primaryColor, secondaryColor: $secondaryColor)';
   }
 
   @override
@@ -95,6 +101,7 @@ class MonaCheckOut {
         other.bvn == bvn &&
         other.transactionId == transactionId &&
         other.merchantName == merchantName &&
+        other.phoneNumber == phoneNumber &&
         other.primaryColor == primaryColor &&
         other.secondaryColor == secondaryColor;
   }
@@ -108,6 +115,7 @@ class MonaCheckOut {
         bvn.hashCode ^
         transactionId.hashCode ^
         merchantName.hashCode ^
+        phoneNumber.hashCode ^
         primaryColor.hashCode ^
         secondaryColor.hashCode;
   }

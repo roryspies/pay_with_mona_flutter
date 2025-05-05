@@ -29,6 +29,9 @@ class FirebaseSSEListener {
   /// Current transaction ID being listened to
   String? _currentTransactionId;
 
+  /// Current authn event ID being listened to
+  String? _currentAuthNSessionID;
+
   /// Current connection state
   SSEConnectionState _connectionState = SSEConnectionState.disconnected;
 
@@ -59,6 +62,10 @@ class FirebaseSSEListener {
   /// Constructs the Firebase database path for a specific transaction
   String _path(String transactionId) =>
       '/public/paymentUpdate/$transactionId.json';
+
+  /// Constructs the Firebase database path for a specific transaction
+  String _authNPath(String sessionID) =>
+      '/public/login_success/authn_$sessionID.json';
 
   /// Start listening to SSE events for a given transaction
   ///
@@ -120,9 +127,67 @@ class FirebaseSSEListener {
     }
   }
 
+  Future<void> listenToCustomEvents({
+    required String sessionID,
+    Function(String)? onDataChange,
+    Function(Object)? onError,
+  }) async {
+    try {
+      // Validate initialization
+      if (_databaseUrl.isEmpty) {
+        throw StateError(
+            'FirebaseSSE not initialized. Call initialize() first.');
+      }
+
+      // Stop any existing listener if listening to a different transaction
+      if (_currentAuthNSessionID == sessionID && isListening) {
+        _logMessage('Already listening to: $sessionID');
+        await _stopListening();
+      }
+
+      // Ensure previous listener is stopped
+      await _stopListening();
+
+      _currentAuthNSessionID = sessionID;
+      final uri = Uri.parse('$_databaseUrl${_authNPath(sessionID)}');
+
+      final request = http.Request('GET', uri)
+        ..headers['Accept'] = 'text/event-stream';
+      _updateConnectionState(SSEConnectionState.connecting);
+
+      final response = await _httpClient.send(request);
+      _logMessage('Connection established. Listening for events...');
+
+      _subscription = response.stream.transform(utf8.decoder).listen(
+        (String event) {
+          _logMessage('Raw event received: $event');
+          _processEvent(event, onDataChange, onError);
+        },
+        onError: (error) {
+          _logMessage('Connection error: $error');
+          _handleError(error, onError);
+        },
+        onDone: () {
+          _logMessage('Connection closed.');
+          _stopListening();
+        },
+        cancelOnError: true,
+      );
+
+      _updateConnectionState(SSEConnectionState.connected);
+    } catch (e) {
+      _logMessage('Connection failed');
+      _handleError(e, onError);
+      await _stopListening();
+    }
+  }
+
   /// Process individual SSE events
   void _processEvent(
-      String event, Function(String)? onDataChange, Function(Object)? onError) {
+    String event,
+    Function(String)? onDataChange,
+    Function(Object)? onError,
+  ) {
     final lines = event.split('\n');
     for (var line in lines) {
       if (line.startsWith('data: ')) {
@@ -133,7 +198,10 @@ class FirebaseSSEListener {
 
   /// Parse and process data lines from SSE events
   void _processDataLine(
-      String line, Function(String)? onDataChange, Function(Object)? onError) {
+    String line,
+    Function(String)? onDataChange,
+    Function(Object)? onError,
+  ) {
     final jsonData = line.substring(6).trim();
     _logMessage('Extracted JSON: $jsonData');
 
@@ -148,9 +216,19 @@ class FirebaseSSEListener {
         _logMessage('Parsed data: $data');
 
         final eventData = data['data'];
+        _logMessage('Event data: $eventData');
+
         if (eventData is String) {
           _logMessage('Emitting event: $eventData');
           onDataChange?.call(eventData);
+        } else if (eventData is Map<String, dynamic>) {
+          if (eventData.containsKey('strongAuthToken')) {
+            final strongAuthToken = eventData['strongAuthToken'];
+            _logMessage('Strong Auth Token: $strongAuthToken');
+            onDataChange?.call(strongAuthToken);
+          } else {
+            _logMessage('Event data does not contain strongAuthToken');
+          }
         } else {
           _logMessage('Unexpected event structure: $eventData');
         }

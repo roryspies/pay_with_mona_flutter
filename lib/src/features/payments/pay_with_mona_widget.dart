@@ -74,7 +74,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
                 return PaymentOptionTile(
                   onTap: () {
-                    paymentNotifier.updateSelectedPaymentType(
+                    paymentNotifier.setSelectedPaymentType(
                       selectedPaymentMethod: paymentMethod,
                     );
                   },
@@ -114,11 +114,12 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       ),
                     ),
                     onPressed: () async {
-                      await paymentNotifier.makePayment(
-                        monaCheckOut: widget.monaCheckOut,
-                        method: paymentNotifier.selectedPaymentMethod.type,
-                        context: context,
-                      );
+                      paymentNotifier
+                        ..setCallingBuildContext(context: context)
+                        ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
+                        ..makePayment(
+                          method: paymentNotifier.selectedPaymentMethod.type,
+                        );
                       // final res = await checkForSafariCreatedPasskey();
                       // res.log();
                     },

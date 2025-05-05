@@ -1,7 +1,7 @@
 part of 'payment_notifier.dart';
 
 extension PaymentNotifierHelpers on PaymentNotifier {
-  Future<bool> validatePhoneNumberAsMonaUser({
+  Future<PaymentUserType?> validatePhoneNumberAsMonaUser({
     required String phoneNumber,
   }) async {
     try {
@@ -16,11 +16,22 @@ extension PaymentNotifierHelpers on PaymentNotifier {
       );
 
       final responseInMap = response.data as Map<String, dynamic>;
-      return responseInMap["success"] as bool;
+      final isMonaUser = responseInMap["success"] as bool? ?? false;
+
+      "Is Mona User: $isMonaUser".log();
+      if (!isMonaUser) {
+        return PaymentUserType.nonMonaUser;
+      }
+
+      return PaymentUserType.monaUser;
     } catch (error) {
       "$error".log();
+      if (error.toString().toLowerCase().contains("404")) {
+        return PaymentUserType.nonMonaUser;
+      }
+
       _setError("An error occurred. Please try again.");
-      return false;
+      return null;
     } finally {
       _setState(PaymentState.idle);
     }

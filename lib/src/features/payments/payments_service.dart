@@ -9,7 +9,10 @@ class PaymentService {
 
   FutureOutcome<Map<String, dynamic>> initiatePayment() async {
     try {
-      final response = await _apiService.post("/demo/checkout");
+      final response = await _apiService.post(
+        "/demo/checkout",
+        data: {'amount': 3000},
+      );
 
       return right(response.data);
     } on DioException catch (e) {

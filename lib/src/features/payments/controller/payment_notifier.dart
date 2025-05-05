@@ -1,9 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
@@ -11,6 +7,7 @@ import 'package:pay_with_mona/src/features/payments/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'dart:math' as math;
 
 part 'payments_notifier.helpers.dart';
 
@@ -26,8 +23,11 @@ class PaymentNotifier extends ChangeNotifier {
   final _apiService = ApiService();
   String? _errorMessage;
   String? _currentTransactionId;
+  String? _strongAuthToken;
+  MonaCheckOut? _monaCheckOut;
+  BuildContext? _callingBuildContext;
   PaymentState _state = PaymentState.idle;
-  PaymentMethod _selectedPaymentMethod = PaymentMethod.transfer;
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
 
   /// ***
   PaymentState get state => _state;
@@ -58,83 +58,65 @@ class PaymentNotifier extends ChangeNotifier {
   }
 
   Future<void> makePayment({
-    required MonaCheckOut monaCheckOut,
     required String method,
-    required BuildContext context,
   }) async {
     _setState(PaymentState.loading);
-
-    String transactionId = monaCheckOut.transactionId;
-
     bool hasError = false;
+    bool customPathError = false;
+
+    "✅ Mona user payment initiated".log();
 
     _firebaseSSE.initialize(
-        databaseUrl:
-            'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app');
-
-    _firebaseSSE.startListening(
-      transactionId: transactionId,
-      onDataChange: (event) {
-        /// *** TODO: grab the data map, not just event string
-        '🔥 [SSEListener] Event Received: $event'.log();
-        if (event == 'transaction_completed' || event == 'transaction_failed') {
-          _firebaseSSE.dispose();
-          closeCustomTabs();
-        }
-      },
-      onError: (error) {
-        '❌ [SSEListener] Error: $error'.log();
-        _setError('');
-        hasError = true;
-      },
+      databaseUrl:
+          'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app',
     );
 
-    if (hasError) {
+    final sessionID = "${math.Random.secure().nextInt(999999999)}";
+
+    await Future.wait(
+      [
+        /// *** Listen for transaction events and handle where necessary
+        _firebaseSSE.startListening(
+          transactionId: _currentTransactionId ?? "",
+          onDataChange: (event) {
+            '🔥 [SSEListener] Event Received: $event'.log();
+            if (event == 'transaction_completed' ||
+                event == 'transaction_failed') {
+              _firebaseSSE.dispose();
+              closeCustomTabs();
+            }
+          },
+          onError: (error) {
+            '❌ [SSEListener] Error: $error'.log();
+            _setError('');
+            hasError = true;
+          },
+        ),
+
+        /// *** Listen for Strong Auth Events and handle where necessary
+        _firebaseSSE.listenToCustomEvents(
+          sessionID: sessionID,
+          onDataChange: (strongAuthToken) async {
+            '🔥 [listenToCustomEvents] Event Received: $strongAuthToken'.log();
+            _strongAuthToken = strongAuthToken;
+            await closeCustomTabs();
+            await openLoginCustomTab();
+          },
+          onError: (error) {
+            '❌ [listenToCustomEvents] Error: $error'.log();
+            _setError('');
+            customPathError = true;
+          },
+        )
+      ],
+    );
+
+    if (hasError || customPathError) {
       return;
     }
 
-    // Fetch device info
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    // Fetch app version and build number
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final appVersion = '${packageInfo.version} (${packageInfo.buildNumber})';
-    Map<String, Object>? data;
-
-    if (Platform.isAndroid) {
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      data = {
-        "sessionId": '',
-        "countryCode": '+234',
-        "deviceInfo": {
-          "name": androidInfo.product,
-          "system": "Android ${androidInfo.version.release}",
-          "model": androidInfo.model,
-          "brand": androidInfo.brand,
-          "isLowRamDevice": androidInfo.isLowRamDevice,
-          "version": appVersion,
-        },
-      };
-    } else {
-      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-      data = {
-        "sessionId": '',
-        "countryCode": '+234',
-        "deviceInfo": {
-          "name": iosInfo.name,
-          "system": "iOS ${iosInfo.systemVersion}",
-          "model": iosInfo.model,
-          "brand": iosInfo.modelName,
-          "isLowRamDevice": false,
-          "version": appVersion,
-        },
-      };
-    }
-
-    data.toString().log();
-    String deviceInfoQuery = base64Encode(utf8.encode(jsonEncode(data)));
-
-    String url =
-        'https://pay.development.mona.ng/$transactionId?embedding=true&sdk=true&method=$method&deviceInfo=$deviceInfoQuery';
+    final url =
+        "https://pay.development.mona.ng/login?loginScope=${Uri.encodeComponent("67e41f884126830aded0b43c")}&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/${_currentTransactionId ?? ""}?embedding=true&sdk=true&method=${_selectedPaymentMethod.type}")}&sessionId=${Uri.encodeComponent(sessionID)}";
 
     url.log();
 
@@ -143,13 +125,13 @@ class PaymentNotifier extends ChangeNotifier {
       customTabsOptions: CustomTabsOptions.partial(
         shareState: CustomTabsShareState.off,
         configuration: PartialCustomTabsConfiguration(
-          initialHeight: context.screenHeight * 0.95,
+          initialHeight: _callingBuildContext!.screenHeight * 0.95,
           activityHeightResizeBehavior:
               CustomTabsActivityHeightResizeBehavior.fixed,
         ),
         colorSchemes: CustomTabsColorSchemes.defaults(
-          toolbarColor: monaCheckOut.primaryColor,
-          navigationBarColor: monaCheckOut.primaryColor,
+          toolbarColor: _monaCheckOut?.primaryColor,
+          navigationBarColor: _monaCheckOut?.primaryColor,
         ),
         showTitle: false,
       ),
@@ -157,19 +139,90 @@ class PaymentNotifier extends ChangeNotifier {
         configuration: const SheetPresentationControllerConfiguration(
           detents: {
             SheetPresentationControllerDetent.large,
-            // SheetPresentationControllerDetent.medium,
           },
           prefersScrollingExpandsWhenScrolledToEdge: true,
           prefersGrabberVisible: false,
           prefersEdgeAttachedInCompactHeight: true,
+          preferredCornerRadius: 16.0,
         ),
-        preferredBarTintColor: monaCheckOut.primaryColor,
-        preferredControlTintColor: monaCheckOut.primaryColor,
+        preferredBarTintColor: _monaCheckOut?.secondaryColor,
+        preferredControlTintColor: _monaCheckOut?.primaryColor,
         dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
       ),
     );
+  }
 
-    _setState(PaymentState.success);
+  Future<void> openLoginCustomTab() async {
+    try {
+      final url = Uri.https(
+        'api.development.mona.ng',
+        '/login',
+        {
+          'auth_token': _strongAuthToken,
+          'key_exchange': "true",
+        },
+      );
+
+      final loginUrl = Uri(
+        scheme: 'https',
+        host: 'api.development.mona.ng',
+        path: '/login',
+        queryParameters: {
+          'x-strong-auth-token': _strongAuthToken,
+          'x-mona-key-exchange': "true",
+        },
+      );
+
+      /* final url =
+          "https://api.development.mona.ng/login?strongAuthToken=${Uri.encodeComponent(_strongAuthToken ?? "")}?keyExchange=${Uri.encodeComponent("true")}";
+ */
+      url.log();
+      loginUrl.log();
+
+      await launchUrl(
+        loginUrl,
+        //Uri.parse(url),
+        /* webViewConfiguration: const WebViewConfiguration(
+          headers: {
+            'x-strong-auth-token': strongAuthToken,
+            'x-mona-key-exchange': '$keyExchange',
+          },
+        ), */
+        customTabsOptions: CustomTabsOptions.partial(
+          shareState: CustomTabsShareState.off,
+          configuration: PartialCustomTabsConfiguration(
+            initialHeight: _callingBuildContext!.screenHeight * 0.95,
+            activityHeightResizeBehavior:
+                CustomTabsActivityHeightResizeBehavior.fixed,
+          ),
+          colorSchemes: CustomTabsColorSchemes.defaults(
+            toolbarColor: _monaCheckOut?.primaryColor,
+            navigationBarColor: _monaCheckOut?.primaryColor,
+          ),
+          showTitle: false,
+        ),
+        safariVCOptions: SafariViewControllerOptions.pageSheet(
+          configuration: const SheetPresentationControllerConfiguration(
+            detents: {
+              SheetPresentationControllerDetent.large,
+            },
+            prefersScrollingExpandsWhenScrolledToEdge: true,
+            prefersGrabberVisible: false,
+            prefersEdgeAttachedInCompactHeight: true,
+            preferredCornerRadius: 16.0,
+          ),
+          preferredBarTintColor: _monaCheckOut?.secondaryColor,
+          preferredControlTintColor: _monaCheckOut?.primaryColor,
+          dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
+        ),
+      );
+      "✅ Custom tab opened successfully".log();
+    } catch (error, trace) {
+      "❌ openLoginCustomTab() Error: $error ::: Trace - $trace".log();
+      _setError("An error occurred. Please try again.");
+    } finally {
+      _setState(PaymentState.idle);
+    }
   }
 
   void disposeSSEListener() {
@@ -191,7 +244,21 @@ class PaymentNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateSelectedPaymentType({
+  void setMonaCheckOut({
+    required MonaCheckOut checkoutDetails,
+  }) {
+    _monaCheckOut = checkoutDetails;
+    notifyListeners();
+  }
+
+  void setCallingBuildContext({
+    required BuildContext context,
+  }) {
+    _callingBuildContext = context;
+    notifyListeners();
+  }
+
+  void setSelectedPaymentType({
     required PaymentMethod selectedPaymentMethod,
   }) {
     _selectedPaymentMethod = selectedPaymentMethod;

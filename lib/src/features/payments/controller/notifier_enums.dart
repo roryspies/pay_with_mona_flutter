@@ -2,6 +2,29 @@ import 'package:flutter/material.dart';
 
 enum PaymentState { idle, loading, success, error }
 
+enum PaymentUserType {
+  monaUser,
+  nonMonaUser;
+
+  String get userType {
+    switch (this) {
+      case PaymentUserType.monaUser:
+        return "customer";
+      case PaymentUserType.nonMonaUser:
+        return "merchant";
+    }
+  }
+
+  String get title {
+    switch (this) {
+      case PaymentUserType.monaUser:
+        return "Customer";
+      case PaymentUserType.nonMonaUser:
+        return "Merchant";
+    }
+  }
+}
+
 enum PaymentMethod {
   none,
   card,
