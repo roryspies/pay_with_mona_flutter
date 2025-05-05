@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/core/secure_storage.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/auth_service.dart';
 import 'package:pay_with_mona/src/core/payments_service.dart';
@@ -10,24 +11,28 @@ import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
 
 class PaymentNotifier extends ChangeNotifier {
-  static final PaymentNotifier _instance = PaymentNotifier._internal();
+  static final _instance = PaymentNotifier._internal();
   factory PaymentNotifier() => _instance;
   PaymentNotifier._internal({
     PaymentService? paymentsService,
     AuthService? authService,
+    SecureStorage? secureStorage,
   })  : _paymentsService = paymentsService ?? PaymentService(),
-        _authService = authService ?? AuthService();
+        _authService = authService ?? AuthService(),
+        _secureStorage = secureStorage ?? SecureStorage();
 
   final PaymentService _paymentsService;
   final AuthService _authService;
-  final _firebaseSSE = FirebaseSSEListener();
   String? _errorMessage;
   String? _currentTransactionId;
   String? _strongAuthToken;
+  String? _registrationToken;
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
+  SecureStorage _secureStorage;
   PaymentState _state = PaymentState.idle;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
+  final _firebaseSSE = FirebaseSSEListener();
 
   /// ***
   PaymentState get state => _state;
@@ -73,6 +78,17 @@ class PaymentNotifier extends ChangeNotifier {
     required PaymentMethod selectedPaymentMethod,
   }) {
     _selectedPaymentMethod = selectedPaymentMethod;
+    notifyListeners();
+  }
+
+  void setRegistrationToken({
+    required String regToken,
+  }) {
+    _registrationToken = (() {
+      _strongAuthToken = null;
+      return regToken;
+    })();
+
     notifyListeners();
   }
 
@@ -213,6 +229,10 @@ class PaymentNotifier extends ChangeNotifier {
       }
 
       "✅ Strong Auth login successful: $response".log();
+      await _authService.signAndCommitAuthKeys(
+        deviceAuth: response["deviceAuth"],
+        onSuccess: () {},
+      );
     } catch (error, trace) {
       "❌ loginWithStrongAuth() Error: $error ::: Trace - $trace".log();
       _setError("An error occurred. Please try again.");
@@ -220,6 +240,133 @@ class PaymentNotifier extends ChangeNotifier {
       "Login with Strong Auth completed".log();
     }
   }
+
+  Future<void> enrollPassKeys() async {}
+
+  /* Future<void> enrolPasskey2({
+    required BuildContext context,
+    required WidgetRef ref,
+    PageController? setupPageController,
+    Function()? onEnrol,
+    Function()? onError,
+  }) async {
+    ref.read(loadingProvider.notifier).start("Please wait....");
+
+    FlutterSecureStorage storage = const FlutterSecureStorage();
+
+    try {
+      var onboarding = ref.watch(onboardingProvider);
+      String registrationToken = onboarding.registrationToken;
+      var registrationOptions = onboarding.registrationOptions;
+
+      Prefs.setString(Prefs.xClientType, 'fidoApp');
+
+      // Initialize Pusher
+      var pusher = await PusherUtil.init();
+      bool registrationSuccess = false;
+
+      await pusher.subscribe(
+        channelName: 'authn_$registrationToken',
+        onEvent: (pusherEvent) async {
+          try {
+            PusherEvent event = pusherEvent as PusherEvent;
+            log('event::: $event');
+
+            if (event.eventName == 'pusher:subscription_succeeded') {
+              ref.read(loadingProvider.notifier).stop();
+
+              Map options = {
+                'registrationToken': registrationToken,
+                'registrationOptions': registrationOptions
+              };
+              String url =
+                  '${ref.read(serverEnvironmentToggleProvider).currentEnvironment.payUrl}/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}';
+              /* String url =
+                  '${ENV.payUrl}/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}'; */
+
+              final theme = Theme.of(context);
+              try {
+                await launchUrl(
+                  Uri.parse(url),
+                  customTabsOptions: CustomTabsOptions.partial(
+                    configuration: PartialCustomTabsConfiguration(
+                      initialHeight: 20.h,
+                      activityHeightResizeBehavior:
+                          CustomTabsActivityHeightResizeBehavior.fixed,
+                    ),
+                    colorSchemes: CustomTabsColorSchemes.defaults(
+                      toolbarColor: theme.colorScheme.surface,
+                    ),
+                    showTitle: true,
+                  ),
+                  safariVCOptions: SafariViewControllerOptions.pageSheet(
+                    configuration:
+                        const SheetPresentationControllerConfiguration(
+                      detents: {
+                        SheetPresentationControllerDetent.large,
+                        SheetPresentationControllerDetent.medium,
+                      },
+                      prefersScrollingExpandsWhenScrolledToEdge: true,
+                      prefersGrabberVisible: true,
+                      prefersEdgeAttachedInCompactHeight: true,
+                    ),
+                    preferredBarTintColor: theme.colorScheme.surface,
+                    preferredControlTintColor: theme.colorScheme.onSurface,
+                    dismissButtonStyle:
+                        SafariViewControllerDismissButtonStyle.close,
+                  ),
+                );
+
+                Future.delayed(const Duration(seconds: 2), () async {
+                  onError?.call();
+                });
+              } catch (e) {
+                debugPrint("Launch URL failed: ${e.toString()}");
+                onError?.call();
+              }
+            }
+
+            if (event.eventName == 'registration_success') {
+              registrationSuccess = true;
+              ref.read(loadingProvider.notifier).stop();
+              onEnrol?.call();
+              await closeCustomTabs();
+
+              Map<String, dynamic> eventData = jsonDecode(event.data);
+              String strongAuthToken = eventData['strongAuthToken'];
+
+              pusher.disconnect();
+
+              String? phone = await storage.read(
+                key: Prefs.PHONE,
+                iOptions: AppUtil.getIOSOptions(),
+                aOptions: AppUtil.getAndroidOptions(),
+              );
+
+              await doLoginExistingNN(
+                context: context,
+                ref: ref,
+                strongAuthToken: strongAuthToken,
+                setupPageController: setupPageController,
+                payload: {
+                  'phone': phone,
+                },
+              );
+            }
+          } catch (e) {
+            debugPrint("Error in Pusher event handler: ${e.toString()}");
+            onError?.call();
+          }
+        },
+      );
+
+      await pusher.connect();
+    } catch (e) {
+      debugPrint("Error in enrolPasskey2: ${e.toString()}");
+      onError?.call();
+      ref.read(loadingProvider.notifier).stop();
+    }
+  } */
 
   /* Future<void> openLoginCustomTab() async {
     try {

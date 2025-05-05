@@ -1,5 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+class SecureStorageKeys {
+  static const hasPasskey = 'hasPasskey';
+  static const keyID = 'keyID';
+}
+
 /// A secure storage utility for the `pay_with_mona` SDK.
 /// Ensures sensitive data is securely stored and retrieved.
 class SecureStorage {
@@ -12,7 +17,7 @@ class SecureStorage {
   SecureStorage._internal();
 
   /// Instance of FlutterSecureStorage
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
 
   /// Secure storage options for Android & iOS
   static const _androidOptions = AndroidOptions(

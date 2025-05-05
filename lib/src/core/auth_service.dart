@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:pay_with_mona/src/core/api_service.dart';
+import 'package:pay_with_mona/src/core/secure_storage.dart';
 import 'package:pay_with_mona/src/core/signatures.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,6 +17,8 @@ class AuthService {
 
   /// ***
   final _apiService = ApiService();
+  final _secureStorage = SecureStorage();
+  final _paymentNotifier = PaymentNotifier();
 
   Future<PaymentUserType?> validatePhoneNumberAsMonaUser({
     required String phoneNumber,
@@ -60,10 +64,10 @@ class AuthService {
           "x-strong-auth-token": strongAuthToken,
           "x-mona-key-exchange": "true",
         },
+        data: {
+          "phone": null,
+        },
       );
-
-      final responseInMap = response.data as Map<String, dynamic>;
-      responseInMap.log();
 
       return response.data as Map<String, dynamic>;
     } catch (error) {
@@ -91,11 +95,16 @@ class AuthService {
       }
     };
 
+    _paymentNotifier.setRegistrationToken(
+      regToken: deviceAuth['registrationToken'],
+    );
+
     try {
       if (Platform.isIOS) {
         //! to give face ID time to cook
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(Duration(milliseconds: 1500));
       }
+
       final publicKey = await signatureService.generatePublicKey();
 
       if (publicKey == null || publicKey.isEmpty) {
@@ -126,10 +135,11 @@ class AuthService {
       payload['attestationResponse']['signature'] = signature;
       move?.call();
 
-      // commit keys
       final response = await commitKeys(
         data: payload,
       );
+
+      "Commit Keys Response ::: $response".log();
 
       if (response == null) {
         onBioError?.call();
@@ -137,13 +147,18 @@ class AuthService {
       }
 
       if (response['success'] == true) {
-        //Prefs.setBool(Prefs.hasPasskey, true);
-
-        ///Prefs.setString(Prefs.keyId, res['keyId']);
-        /* Prefs.setString(
-          "${callingRef.read(serverEnvironmentToggleProvider).currentEnvironment.label}_keyId",
-          res['keyId'],
-        ); */
+        await Future.wait(
+          [
+            _secureStorage.write(
+              key: SecureStorageKeys.hasPasskey,
+              value: "true",
+            ),
+            _secureStorage.write(
+              key: SecureStorageKeys.keyID,
+              value: response['keyId'] as String,
+            ),
+          ],
+        );
 
         onSuccess?.call();
 
@@ -178,128 +193,5 @@ class AuthService {
     }
   }
 
-  /* static Future<void> enrolPasskey2({
-    required BuildContext context,
-    required WidgetRef ref,
-    PageController? setupPageController,
-    Function()? onEnrol,
-    Function()? onError,
-  }) async {
-    ref.read(loadingProvider.notifier).start("Please wait....");
-
-    FlutterSecureStorage storage = const FlutterSecureStorage();
-
-    try {
-      var onboarding = ref.watch(onboardingProvider);
-      String registrationToken = onboarding.registrationToken;
-      var registrationOptions = onboarding.registrationOptions;
-
-      Prefs.setString(Prefs.xClientType, 'fidoApp');
-
-      // Initialize Pusher
-      var pusher = await PusherUtil.init();
-      bool registrationSuccess = false;
-
-      await pusher.subscribe(
-        channelName: 'authn_$registrationToken',
-        onEvent: (pusherEvent) async {
-          try {
-            PusherEvent event = pusherEvent as PusherEvent;
-            log('event::: $event');
-
-            if (event.eventName == 'pusher:subscription_succeeded') {
-              ref.read(loadingProvider.notifier).stop();
-
-              Map options = {
-                'registrationToken': registrationToken,
-                'registrationOptions': registrationOptions
-              };
-              String url =
-                  '${ref.read(serverEnvironmentToggleProvider).currentEnvironment.payUrl}/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}';
-              /* String url =
-                  '${ENV.payUrl}/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}'; */
-
-              final theme = Theme.of(context);
-              try {
-                await launchUrl(
-                  Uri.parse(url),
-                  customTabsOptions: CustomTabsOptions.partial(
-                    configuration: PartialCustomTabsConfiguration(
-                      initialHeight: 20.h,
-                      activityHeightResizeBehavior:
-                          CustomTabsActivityHeightResizeBehavior.fixed,
-                    ),
-                    colorSchemes: CustomTabsColorSchemes.defaults(
-                      toolbarColor: theme.colorScheme.surface,
-                    ),
-                    showTitle: true,
-                  ),
-                  safariVCOptions: SafariViewControllerOptions.pageSheet(
-                    configuration:
-                        const SheetPresentationControllerConfiguration(
-                      detents: {
-                        SheetPresentationControllerDetent.large,
-                        SheetPresentationControllerDetent.medium,
-                      },
-                      prefersScrollingExpandsWhenScrolledToEdge: true,
-                      prefersGrabberVisible: true,
-                      prefersEdgeAttachedInCompactHeight: true,
-                    ),
-                    preferredBarTintColor: theme.colorScheme.surface,
-                    preferredControlTintColor: theme.colorScheme.onSurface,
-                    dismissButtonStyle:
-                        SafariViewControllerDismissButtonStyle.close,
-                  ),
-                );
-
-                Future.delayed(const Duration(seconds: 2), () async {
-                  onError?.call();
-                });
-              } catch (e) {
-                debugPrint("Launch URL failed: ${e.toString()}");
-                onError?.call();
-              }
-            }
-
-            if (event.eventName == 'registration_success') {
-              registrationSuccess = true;
-              ref.read(loadingProvider.notifier).stop();
-              onEnrol?.call();
-              await closeCustomTabs();
-
-              Map<String, dynamic> eventData = jsonDecode(event.data);
-              String strongAuthToken = eventData['strongAuthToken'];
-
-              pusher.disconnect();
-
-              String? phone = await storage.read(
-                key: Prefs.PHONE,
-                iOptions: AppUtil.getIOSOptions(),
-                aOptions: AppUtil.getAndroidOptions(),
-              );
-
-              await doLoginExistingNN(
-                context: context,
-                ref: ref,
-                strongAuthToken: strongAuthToken,
-                setupPageController: setupPageController,
-                payload: {
-                  'phone': phone,
-                },
-              );
-            }
-          } catch (e) {
-            debugPrint("Error in Pusher event handler: ${e.toString()}");
-            onError?.call();
-          }
-        },
-      );
-
-      await pusher.connect();
-    } catch (e) {
-      debugPrint("Error in enrolPasskey2: ${e.toString()}");
-      onError?.call();
-      ref.read(loadingProvider.notifier).stop();
-    }
-  } */
+  Future<void> loginWithoutKeyExchange() async {}
 }
