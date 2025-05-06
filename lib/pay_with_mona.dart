@@ -1,3 +1,5 @@
+export 'package:pay_with_mona/src/features/collections/views/create_collection_view.dart';
+
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/features/payments/pay_with_mona_widget.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
