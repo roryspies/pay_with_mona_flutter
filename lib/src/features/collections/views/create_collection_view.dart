@@ -26,7 +26,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _debitLimitController = TextEditingController();
   final _expDateController = TextEditingController();
   final _referenceController = TextEditingController();
-  final collectionMethod = CollectionsMethod.none;
+  final collectionMethod = CollectionsMethod.none.notifier;
+  final subscriptionFrequency = SubscriptionFrequency.none.notifier;
 
   List<TextEditingController> controllers = [];
 
@@ -110,75 +111,151 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                   ],
                 ),
               ),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: context.w(20),
-                  vertical: context.h(20),
-                ),
-                color: MonaColors.neutralWhite,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: context.w(12))
-                          .copyWith(bottom: context.h(32)),
-                      child: Column(
-                        spacing: context.h(12.5),
-                        children: [
-                          CustomTextField(
-                            title: 'Debitor',
-                            controller: _merchantNameController,
-                            onChanged: (value) {},
-                            inputFormatters: [],
-                          ),
-                          CustomDropDown(
-                            title: 'Type',
-                            items: collectionMethods,
-                            value: collectionMethod,
-                            onChanged: (value) {},
-                          ),
-                          CustomTextField(
-                            title: 'Total debit limit',
-                            controller: _debitLimitController,
-                            onChanged: (value) {},
-                            suffixIcon: IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () {},
+              [collectionMethod, subscriptionFrequency].multiSync(
+                  builder: (context, child) {
+                return Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.w(20),
+                    vertical: context.h(20),
+                  ),
+                  color: MonaColors.neutralWhite,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: context.w(12))
+                            .copyWith(bottom: context.h(32)),
+                        child: Column(
+                          spacing: context.h(12.5),
+                          children: [
+                            CustomTextField(
+                              title: 'Debitor',
+                              controller: _merchantNameController,
+                              onChanged: (value) {},
+                              inputFormatters: [],
                             ),
-                          ),
-                          CustomTextField(
-                            title: 'Expiration date',
-                            controller: _expDateController,
-                            onChanged: (value) {},
-                            suffixIcon: IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () {},
+                            CustomDropDown(
+                              title: 'Type',
+                              items: collectionMethods,
+                              value: collectionMethod.value,
+                              onChanged: (value) {
+                                collectionMethod.value = value;
+                              },
                             ),
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(10),
-                              FilteringTextInputFormatter.singleLineFormatter,
-                              DOBTextInputFormatter(),
+                            if (collectionMethod.value !=
+                                CollectionsMethod.none) ...[
+                              if (collectionMethod.value ==
+                                  CollectionsMethod.subscription)
+                                CustomDropDown(
+                                  title: 'Frequency',
+                                  items: subscriptionFrequencies,
+                                  value: subscriptionFrequency.value,
+                                  onChanged: (value) {
+                                    subscriptionFrequency.value = value;
+                                  },
+                                ),
+                              CustomTextField(
+                                title: collectionMethod.value ==
+                                        CollectionsMethod.scheduled
+                                    ? 'Total debit limit'
+                                    : 'Amount',
+                                controller: _debitLimitController,
+                                onChanged: (value) {},
+                                suffixIcon: IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {},
+                                ),
+                              ),
+                              CustomTextField(
+                                title: collectionMethod.value ==
+                                        CollectionsMethod.scheduled
+                                    ? 'Expiration date'
+                                    : 'Start date',
+                                controller: _expDateController,
+                                onChanged: (value) {},
+                                suffixIcon: IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {},
+                                ),
+                                inputFormatters: [
+                                  LengthLimitingTextInputFormatter(10),
+                                  FilteringTextInputFormatter
+                                      .singleLineFormatter,
+                                  DOBTextInputFormatter(),
+                                ],
+                              ),
+                              CustomTextField(
+                                title: 'Reference',
+                                controller: _referenceController,
+                                onChanged: (value) {},
+                                suffixIcon: IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {},
+                                ),
+                              ),
                             ],
-                          ),
-                          CustomTextField(
-                            title: 'Reference',
-                            controller: _referenceController,
-                            onChanged: (value) {},
-                            suffixIcon: IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
+                            if (collectionMethod.value ==
+                                CollectionsMethod.scheduled)
+                              Column(
+                                spacing: context.h(24),
+                                children: List.generate(
+                                  3,
+                                  (index) {
+                                    return Row(
+                                      children: [
+                                        Expanded(
+                                          child: CustomTextField(
+                                            title: 'Payment ${index + 1}',
+                                            controller: _debitLimitController,
+                                            keyboardType: TextInputType.number,
+                                            onChanged: (value) {},
+                                            suffixIcon: IconButton(
+                                              icon: Icon(Icons.edit),
+                                              onPressed: () {},
+                                            ),
+                                            inputFormatters: [
+                                              // LengthLimitingTextInputFormatter(10),
+                                              // FilteringTextInputFormatter
+                                              //     .singleLineFormatter,
+                                              // DOBTextInputFormatter(),
+                                            ],
+                                          ),
+                                        ),
+                                        context.sbW(21),
+                                        Expanded(
+                                          child: CustomTextField(
+                                            title: 'Date & Time',
+                                            controller: _debitLimitController,
+                                            onChanged: (value) {},
+                                            // suffixIcon: IconButton(
+                                            //   icon: Icon(Icons.edit),
+                                            //   onPressed: () {},
+                                            // ),
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                              LengthLimitingTextInputFormatter(
+                                                  11),
+                                            ],
+                                            keyboardType: TextInputType.number,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    CustomButton(
-                      onTap: () {},
-                      label: 'Continue',
-                    ),
-                  ],
-                ),
-              ),
+                      CustomButton(
+                        onTap: () {},
+                        label: 'Continue',
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
           ),
         ),

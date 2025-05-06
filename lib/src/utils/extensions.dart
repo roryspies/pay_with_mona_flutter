@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import "dart:developer" as dev_tools show log;
 
+import 'package:intl/intl.dart';
+
 extension ImagePath on String {
   String get png => "assets/images/$this.png";
   String get jpg => "assets/images/$this.jpg";
@@ -49,4 +51,18 @@ extension Log on Object {
       );
     }
   }
+}
+
+
+extension StringCasingExtension on String {
+  String? camelCase() => toBeginningOfSentenceCase(this);
+  String toCapitalized() =>
+      length > 0 ? '${this[0].toUpperCase()}${substring(1).toLowerCase()}' : '';
+  String toTitleCase() => replaceAll(RegExp(' +'), ' ')
+      .split(' ')
+      .map((str) => str.toCapitalized())
+      .join(' ');
+  String? trimToken() => contains(":") ? split(":")[1].trim() : this;
+  String? trimSpaces() => replaceAll(" ", "");
+  String removeSpacesAndLower() => replaceAll(' ', '').toLowerCase();
 }

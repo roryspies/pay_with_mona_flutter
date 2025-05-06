@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
@@ -35,7 +36,20 @@ class _CustomDropDownState<T> extends State<CustomDropDown<T>> {
   final ValueNotifier<bool> showDropdown = ValueNotifier(false);
 
   String _displayItem(T item) {
-    return widget.itemBuilder?.call(item) ?? item.toString();
+    if (item is CollectionsMethod) {
+      if (item == CollectionsMethod.none) {
+        return 'Please select';
+      }
+      return item.name.toString().toTitleCase();
+    }
+
+    if (item is SubscriptionFrequency) {
+      if (item == SubscriptionFrequency.none) {
+        return 'Please select';
+      }
+      return item.name.toString().toTitleCase();
+    }
+    return widget.itemBuilder?.call(item) ?? item.toString().toTitleCase();
   }
 
   @override
@@ -66,7 +80,7 @@ class _CustomDropDownState<T> extends State<CustomDropDown<T>> {
               ),
               height: widget.height ??
                   (showDropdown.value
-                      ? (context.h(44 + (widget.items.length * 40)))
+                      ? (context.h(44 + (widget.items.length * 44)))
                       : context.h(44)),
               width: widget.width,
               decoration: BoxDecoration(
@@ -77,55 +91,61 @@ class _CustomDropDownState<T> extends State<CustomDropDown<T>> {
                   color: Colors.transparent,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  InkWell(
-                    onTap: () => showDropdown.value = !showDropdown.value,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _displayItem(widget.value),
-                          style: TextStyle(
-                            color: MonaColors.textHeading,
-                            fontWeight: FontWeight.w400,
-                            fontSize: context.sp(14),
-                          ),
-                        ),
-                        Icon(
-                          showDropdown.value
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: MonaColors.textHeading,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (showDropdown.value) ...[
-                    const SizedBox(height: 10),
-                    for (final item in widget.items)
-                      InkWell(
-                        onTap: () {
-                          widget.onChanged(item);
-                          showDropdown.value = false;
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: context.h(8),
-                          ),
-                          child: Text(
-                            _displayItem(item),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      onTap: () => showDropdown.value = !showDropdown.value,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _displayItem(widget.value),
                             style: TextStyle(
-                              fontSize: context.sp(13),
-                              color: MonaColors.textBody,
+                              color: MonaColors.textHeading,
+                              fontWeight: FontWeight.w400,
+                              fontSize: context.sp(14),
+                            ),
+                          ),
+                          Icon(
+                            showDropdown.value
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            color: MonaColors.textHeading,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (showDropdown.value) ...[
+                      const SizedBox(height: 10),
+                      for (final item in widget.items)
+                        InkWell(
+                          onTap: () {
+                            widget.onChanged(item);
+                            showDropdown.value = false;
+                          },
+                          child: SizedBox(
+                            height: context.h(44),
+                            child: Center(
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _displayItem(item),
+                                    style: TextStyle(
+                                      fontSize: context.sp(13),
+                                      color: MonaColors.textBody,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             );
           },
