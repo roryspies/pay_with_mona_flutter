@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:pay_with_mona/src/core/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api_service.dart';
+import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
@@ -30,7 +31,7 @@ class PaymentService {
   }
 
   /// Retrieves available payment methods for a transaction.
-  FutureOutcome<Map<String, dynamic>> getPaymentMethods({
+  FutureOutcome<PendingPaymentResponseModel> getPaymentMethods({
     required String transactionId,
     required String userEnrolledCheckoutID,
   }) async {
@@ -42,8 +43,17 @@ class PaymentService {
         },
         queryParams: {'transactionId': transactionId},
       );
+
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      return right(decoded);
+
+      "DECODED ::: $decoded".log();
+      final data = PendingPaymentResponseModel.fromJSON(
+        json: decoded,
+      );
+
+      "CONVERTED ::: $data".log();
+
+      return right(data);
     } catch (e) {
       final apiEx = APIException.fromHttpError(e);
       '❌ getPaymentMethods() Error: ${apiEx.message}'.log();

@@ -23,6 +23,10 @@ class ApiService {
   final bool logResponses;
   final bool logCurlCommands;
 
+  // JSON formatting settings for logs
+  final bool prettyPrintJson;
+  final int jsonIndent;
+
   static const String _defaultBaseUrl = APIConfig.baseUrl;
 
   ApiService({
@@ -31,6 +35,8 @@ class ApiService {
     this.logRequests = true,
     this.logResponses = true,
     this.logCurlCommands = true,
+    this.prettyPrintJson = true,
+    this.jsonIndent = 2,
   }) : baseUrl = (baseUrl ?? _defaultBaseUrl).replaceAll(r'\/+\\$', '');
 
   /// POST to [endpoint], passing optional JSON [data] and [headers].
@@ -43,7 +49,9 @@ class ApiService {
 
     if (logRequests) {
       '🚀 POST Request to $uri'.log();
-      if (data != null) '📦 Request data: $data'.log();
+      if (data != null) {
+        '📦 Request data: $data'.log();
+      }
     }
 
     if (logCurlCommands) {
@@ -69,8 +77,22 @@ class ApiService {
 
       // Log raw response
       if (logResponses) {
-        '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
-            .log();
+        final contentType = response.headers.contentType?.mimeType ?? '';
+        if (contentType.contains('json') && prettyPrintJson) {
+          try {
+            final jsonData = jsonDecode(body);
+            '🧾 RESPONSE [${response.statusCode}]:\n${_prettyJson(jsonData)}'
+                .log();
+          } catch (e) {
+            // Fallback to regular logging if we can't parse JSON
+            '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
+                .log();
+            '⚠️ Failed to parse response as JSON: ${e.toString()}'.log();
+          }
+        } else {
+          '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
+              .log();
+        }
       }
 
       final responseHeaders = <String, String>{};
@@ -133,8 +155,22 @@ class ApiService {
 
       // Log raw response
       if (logResponses) {
-        '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
-            .log();
+        final contentType = response.headers.contentType?.mimeType ?? '';
+        if (contentType.contains('json') && prettyPrintJson) {
+          try {
+            final jsonData = jsonDecode(body);
+            '🧾 RESPONSE [${response.statusCode}]:\n${_prettyJson(jsonData)}'
+                .log();
+          } catch (e) {
+            // Fallback to regular logging if we can't parse JSON
+            '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
+                .log();
+            '⚠️ Failed to parse response as JSON: ${e.toString()}'.log();
+          }
+        } else {
+          '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
+              .log();
+        }
       }
 
       final responseHeaders = <String, String>{};
@@ -204,8 +240,52 @@ class ApiService {
   }
 
   /// Truncate long strings for logging to avoid console clutter
-  String _truncateForLogging(String text, {int maxLength = 1000}) {
+  String _truncateForLogging(String text, {int maxLength = 4000}) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength)}... (${text.length - maxLength} more characters)';
+  }
+
+  /// Format JSON data with proper indentation for logging
+  String _prettyJson(dynamic json, {int level = 0}) {
+    if (json == null) return 'null';
+
+    final indent = ' ' * (level * jsonIndent);
+    final nextIndent = ' ' * ((level + 1) * jsonIndent);
+
+    if (json is Map) {
+      if (json.isEmpty) return '{}';
+
+      final buffer = StringBuffer('{\n');
+      var i = 0;
+
+      json.forEach((key, value) {
+        if (i > 0) buffer.write(',\n');
+        buffer.write(
+            '$nextIndent"$key": ${_prettyJson(value, level: level + 1)}');
+        i++;
+      });
+
+      buffer.write('\n$indent}');
+      return buffer.toString();
+    } else if (json is List) {
+      if (json.isEmpty) return '[]';
+
+      final buffer = StringBuffer('[\n');
+
+      for (var i = 0; i < json.length; i++) {
+        if (i > 0) buffer.write(',\n');
+        buffer.write('$nextIndent${_prettyJson(json[i], level: level + 1)}');
+      }
+
+      buffer.write('\n$indent]');
+      return buffer.toString();
+    } else if (json is String) {
+      // Escape quotes and special characters
+      return '"${json.replaceAll('"', '\\"').replaceAll('\n', '\\n')}"';
+    } else if (json is num || json is bool) {
+      return json.toString();
+    } else {
+      return '"$json"';
+    }
   }
 }

@@ -7,6 +7,7 @@ import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.da
 import 'package:pay_with_mona/src/core/auth_service.dart';
 import 'package:pay_with_mona/src/core/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
+import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
@@ -59,6 +60,7 @@ class PaymentNotifier extends ChangeNotifier {
 
   PaymentState _state = PaymentState.idle;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
+  PendingPaymentResponseModel? _pendingPaymentResponseModel;
 
   /// Current payment process state.
   PaymentState get state => _state;
@@ -71,6 +73,9 @@ class PaymentNotifier extends ChangeNotifier {
 
   /// Identifier of the most recent transaction.
   String? get currentTransactionId => _currentTransactionId;
+
+  PendingPaymentResponseModel? get currentPaymentResponseModel =>
+      _pendingPaymentResponseModel;
 
   /// Clean up SSE listener when this notifier is disposed.
   @override
@@ -98,20 +103,36 @@ class PaymentNotifier extends ChangeNotifier {
   }
 
   /// Provides checkout details (e.g., colors, phone number) for UI integration.
-  void setMonaCheckOut({required MonaCheckOut checkoutDetails}) {
+  void setMonaCheckOut({
+    required MonaCheckOut checkoutDetails,
+  }) {
     _monaCheckOut = checkoutDetails;
     notifyListeners();
   }
 
   /// Retains the [BuildContext] to calculate UI-dependent dimensions.
-  void setCallingBuildContext({required BuildContext context}) {
+  void setCallingBuildContext({
+    required BuildContext context,
+  }) {
     _callingBuildContext = context;
     notifyListeners();
   }
 
   /// Chooses the payment method (e.g., card, mobile money) before initiating payment.
-  void setSelectedPaymentMethod({required PaymentMethod method}) {
+  void setSelectedPaymentMethod({
+    required PaymentMethod method,
+  }) {
     _selectedPaymentMethod = method;
+    notifyListeners();
+  }
+
+  void setPendingPaymentData({
+    required PendingPaymentResponseModel pendingPayment,
+  }) {
+    _pendingPaymentResponseModel = () {
+      _pendingPaymentResponseModel = null;
+      return pendingPayment;
+    }();
     notifyListeners();
   }
 
@@ -156,6 +177,43 @@ class PaymentNotifier extends ChangeNotifier {
       transactionId: txId,
       userEnrolledCheckoutID: userCheckoutID,
     );
+
+    _updateState(PaymentState.success);
+  }
+
+  Future<void> getPaymentMethods() async {
+    _updateState(PaymentState.loading);
+
+    final userCheckoutID = await _secureStorage.read(
+      key: SecureStorageKeys.monaCheckoutID,
+    );
+
+    if (userCheckoutID == null) {
+      _handleError('User identifier not found. Please log in again.');
+      return;
+    }
+
+    try {
+      final (PendingPaymentResponseModel? paymentDataAndMethods, failure) =
+          await _paymentsService.getPaymentMethods(
+        transactionId: _currentTransactionId ?? '',
+        userEnrolledCheckoutID: userCheckoutID,
+      );
+
+      if (failure != null) {
+        _handleError('Payment initiation failed. Please try again.');
+        return;
+      }
+
+      if (paymentDataAndMethods != null) {
+        "Payment methods is not null".log();
+        setPendingPaymentData(pendingPayment: paymentDataAndMethods);
+        return;
+      }
+    } catch (error, trace) {
+      _handleError('Error fetching payment methods: $error ::: $trace');
+      return;
+    }
 
     _updateState(PaymentState.success);
   }
