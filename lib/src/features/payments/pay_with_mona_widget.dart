@@ -35,7 +35,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   @override
   void dispose() {
     paymentNotifier.removeListener(_onPaymentStateChange);
-    paymentNotifier.disposeSSEListener();
     paymentNotifier.dispose();
     super.dispose();
   }
@@ -74,8 +73,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
                 return PaymentOptionTile(
                   onTap: () {
-                    paymentNotifier.setSelectedPaymentType(
-                      selectedPaymentMethod: paymentMethod,
+                    paymentNotifier.setSelectedPaymentMethod(
+                      method: paymentMethod,
                     );
                   },
                   selectedPaymentMethod: paymentNotifier.selectedPaymentMethod,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/core/secure_storage.dart';
+import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/signatures.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -28,7 +29,7 @@ class AuthService {
         },
       );
 
-      final responseInMap = response.data as Map<String, dynamic>;
+      final responseInMap = jsonDecode(response.body) as Map<String, dynamic>;
       final isMonaUser = responseInMap["success"] as bool? ?? false;
 
       "Is Mona User: $isMonaUser".log();
@@ -63,7 +64,7 @@ class AuthService {
         },
       );
 
-      return response.data as Map<String, dynamic>;
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } catch (error) {
       "$error".log();
 
@@ -78,7 +79,6 @@ class AuthService {
     Function()? onBioError,
   }) async {
     final signatureService = BiometricSignatureHelper();
-    ('_enrolLocalAuth').log();
 
     final id = const Uuid().v4();
     Map<String, dynamic> payload = {
@@ -147,6 +147,10 @@ class AuthService {
               key: SecureStorageKeys.keyID,
               value: response['keyId'] as String,
             ),
+            _secureStorage.write(
+              key: SecureStorageKeys.monaCheckoutID,
+              value: response['mona_checkoutId'] as String,
+            ),
           ],
         );
 
@@ -172,7 +176,7 @@ class AuthService {
         data: data,
       );
 
-      return response.data as Map<String, dynamic>;
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } catch (error) {
       "$error".log();
 
