@@ -26,7 +26,9 @@ class PaymentService {
     try {
       final response = await _apiService.post(
         '/demo/checkout',
-        data: {'amount': 5000},
+        data: {
+          'amount': 3000,
+        },
       );
 
       return right(
@@ -71,8 +73,13 @@ class PaymentService {
     Function? onPayComplete,
   }) async {
     final paymentNotifier = PaymentNotifier();
+    final secureStorage = SecureStorage();
     final payload = await paymentNotifier.buildBankPaymentPayload();
-    final userCheckoutID = await SecureStorage().read(
+    final monaKeyID = await secureStorage.read(
+          key: SecureStorageKeys.keyID,
+        ) ??
+        "";
+    final userCheckoutID = await secureStorage.read(
           key: SecureStorageKeys.monaCheckoutID,
         ) ??
         "";
@@ -89,7 +96,7 @@ class PaymentService {
         payload,
         nonce,
         timestamp,
-        userCheckoutID,
+        monaKeyID,
       );
 
       if (signature == null) {
@@ -103,17 +110,21 @@ class PaymentService {
         paymentType,
         payload,
         onPayComplete: onPayComplete,
-        monaKeyId: userCheckoutID,
+        monaKeyId: monaKeyID,
+        monaCheckoutID: userCheckoutID,
         signature: signature,
         nonce: nonce,
         timestamp: timestamp,
       );
+      return;
     }
 
     await submitPaymentRequest(
       paymentType,
       payload,
       onPayComplete: onPayComplete,
+      monaKeyId: monaKeyID,
+      monaCheckoutID: userCheckoutID,
     );
   }
 
@@ -122,6 +133,7 @@ class PaymentService {
     Map<String, dynamic> payload, {
     required Function? onPayComplete,
     String? monaKeyId,
+    String? monaCheckoutID,
     String? signature,
     String? nonce,
     String? timestamp,
@@ -131,6 +143,7 @@ class PaymentService {
     final (res, failure) = await sendPaymentToServer(
       payload: payload,
       monaKeyId: monaKeyId,
+      monaCheckoutID: monaCheckoutID,
       signature: signature,
       nonce: nonce,
       timestamp: timestamp,
@@ -143,6 +156,9 @@ class PaymentService {
 
     if (res!["success"] == true) {
       "Payment Successful".log();
+      if (onPayComplete != null) {
+        onPayComplete();
+      }
 
       return;
     } else {
@@ -173,17 +189,17 @@ class PaymentService {
   FutureOutcome<Map<String, dynamic>> sendPaymentToServer({
     required Map<String, dynamic> payload,
     String? monaKeyId,
+    String? monaCheckoutID,
     String? signature,
     String? nonce,
     String? timestamp,
   }) async {
     try {
-      final apiService = ApiService(baseUrl: 'https://pay.development.mona.ng');
-
-      final response = await apiService.post(
+      final response = await _apiService.post(
         "/pay",
         headers: ApiHeaderModel.paymentHeaders(
           monaKeyID: monaKeyId,
+          monaCheckoutID: monaCheckoutID,
           signature: signature,
           nonce: nonce,
           timestamp: timestamp,

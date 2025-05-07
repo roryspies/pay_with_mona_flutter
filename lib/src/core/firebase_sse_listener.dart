@@ -102,6 +102,7 @@ class FirebaseSSEListener {
 
       final response = await _httpClient.send(request);
       _logMessage('Connection established. Listening for events...');
+      _logMessage('startListening ::: Firebase Connection URL: $uri');
 
       _subscription = response.stream.transform(utf8.decoder).listen(
         (String event) {
@@ -158,7 +159,7 @@ class FirebaseSSEListener {
       final response = await _httpClient.send(request);
       _logMessage('Connection established. Listening for events...');
 
-      _logMessage('Firebase Connection URL: $uri');
+      _logMessage('listenToCustomEvents ::: Firebase Connection URL: $uri');
 
       _subscription = response.stream.transform(utf8.decoder).listen(
         (String event) {
