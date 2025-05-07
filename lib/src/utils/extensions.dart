@@ -5,11 +5,11 @@ import "dart:developer" as dev_tools show log;
 import 'package:intl/intl.dart';
 
 extension ImagePath on String {
-  String get png => "assets/images/$this.png";
-  String get jpg => "assets/images/$this.jpg";
-  String get jpeg => "assets/images/$this.jpeg";
-  String get gif => "assets/gif/$this.gif";
-  String get svg => "assets/icons/$this.svg";
+  String get png => "packages/pay_with_mona/assets/images/$this.png";
+  String get jpg => "packages/pay_with_mona/assets/images/$this.jpg";
+  String get jpeg => "packages/pay_with_mona/assets/images/$this.jpeg";
+  String get gif => "packages/pay_with_mona/assets/gif/$this.gif";
+  String get svg => "packages/pay_with_mona/assets/icons/$this.svg";
 }
 
 /// Extension for creating a ValueNotifier from a value directly.
@@ -52,7 +52,6 @@ extension Log on Object {
     }
   }
 }
-
 
 extension StringCasingExtension on String {
   String? camelCase() => toBeginningOfSentenceCase(this);
