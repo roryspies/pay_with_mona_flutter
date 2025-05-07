@@ -13,7 +13,6 @@ abstract class ApiHeaderModel {
   }
 
   static Map<String, String> paymentHeaders({
-    //required String bearerToken,
     required String? monaKeyID,
     required String? monaCheckoutID,
     required String? signature,

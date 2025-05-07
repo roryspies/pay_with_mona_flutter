@@ -21,7 +21,8 @@ class FirebaseSSEListener {
   final http.Client _httpClient = http.Client();
 
   /// Firebase Realtime Database URL
-  String _databaseUrl = '';
+  final String _databaseUrl =
+      'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app';
 
   /// Current active stream subscription
   StreamSubscription<String>? _subscription;
@@ -52,10 +53,10 @@ class FirebaseSSEListener {
   /// Initialize the SSE listener with a Firebase Realtime Database URL
   ///
   /// [databaseUrl] The base URL of the Firebase Realtime Database
-  void initialize({required String databaseUrl}) {
-    ArgumentError.checkNotNull(databaseUrl, 'databaseUrl');
+  void initialize(/* {required String databaseUrl} */) {
+    //ArgumentError.checkNotNull(databaseUrl, 'databaseUrl');
 
-    _databaseUrl = databaseUrl.trim();
+    //_databaseUrl = databaseUrl.trim();
     _logMessage('Initialized with database URL: $_databaseUrl');
   }
 

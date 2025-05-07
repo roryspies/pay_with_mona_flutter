@@ -241,9 +241,9 @@ class PaymentNotifier extends ChangeNotifier {
 
     // Initialize SSE listener for real-time events
     _firebaseSSE.initialize(
-      databaseUrl:
-          'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app',
-    );
+        /* databaseUrl:
+          'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app', */
+        );
 
     final sessionID = math.Random.secure().nextInt(999999999).toString();
     bool hasError = false;
@@ -296,6 +296,22 @@ class PaymentNotifier extends ChangeNotifier {
       },
       onError: (error) {
         _handleError('Error listening for transaction updates.');
+        errorFlag = true;
+      },
+    );
+  }
+
+  Future<void> _listenForTransactionUpdateEvents(
+      String sessionId, bool errorFlag) async {
+    await _firebaseSSE.listenToCustomEvents(
+      sessionID: sessionId,
+      onDataChange: (token) async {
+        _strongAuthToken = token;
+        await closeCustomTabs();
+        await loginWithStrongAuth();
+      },
+      onError: (error) {
+        _handleError('Error during strong authentication.');
         errorFlag = true;
       },
     );
