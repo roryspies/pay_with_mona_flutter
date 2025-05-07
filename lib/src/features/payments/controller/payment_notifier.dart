@@ -186,7 +186,7 @@ class PaymentNotifier extends ChangeNotifier {
 
     if (failure != null) {
       _handleError('Payment initiation failed. Please try again.');
-      return;
+      throw (failure.message);
     }
 
     final txId = success?['transactionId'] as String?;
@@ -251,7 +251,8 @@ class PaymentNotifier extends ChangeNotifier {
 
     // Concurrently listen for transaction completion and authentication tokens
     await Future.wait([
-      _listenForTransactionEvents(hasError),
+      _listenForPaymentUpdates(hasError),
+      _listenForTransactionUpdateEvents(hasError),
       _listenForAuthEvents(sessionID, authError),
     ]);
 
@@ -285,8 +286,8 @@ class PaymentNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> _listenForTransactionEvents(bool errorFlag) async {
-    await _firebaseSSE.startListening(
+  Future<void> _listenForPaymentUpdates(bool errorFlag) async {
+    await _firebaseSSE.listenForPaymentUpdates(
       transactionId: _currentTransactionId ?? '',
       onDataChange: (event) {
         if (event == 'transaction_completed' || event == 'transaction_failed') {
@@ -301,14 +302,14 @@ class PaymentNotifier extends ChangeNotifier {
     );
   }
 
-  Future<void> _listenForTransactionUpdateEvents(
-      String sessionId, bool errorFlag) async {
-    await _firebaseSSE.listenToCustomEvents(
-      sessionID: sessionId,
-      onDataChange: (token) async {
-        _strongAuthToken = token;
-        await closeCustomTabs();
-        await loginWithStrongAuth();
+  Future<void> _listenForTransactionUpdateEvents(bool errorFlag) async {
+    await _firebaseSSE.listenForTransactionMessages(
+      transactionId: _currentTransactionId ?? "",
+      onDataChange: (event) async {
+        if (event == 'transaction_completed' || event == 'transaction_failed') {
+          _firebaseSSE.dispose();
+          closeCustomTabs();
+        }
       },
       onError: (error) {
         _handleError('Error during strong authentication.');

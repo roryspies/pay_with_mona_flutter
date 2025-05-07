@@ -20,11 +20,12 @@ class PayWithMonaWidget extends StatefulWidget {
 }
 
 class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
-  final paymentNotifier = PaymentNotifier();
+  late PaymentNotifier paymentNotifier;
 
   @override
   void initState() {
     super.initState();
+    paymentNotifier = PaymentNotifier();
     paymentNotifier.addListener(_onPaymentStateChange);
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
@@ -36,7 +37,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   @override
   void dispose() {
     paymentNotifier.removeListener(_onPaymentStateChange);
-    paymentNotifier.dispose();
+    //paymentNotifier.dispose();
     super.dispose();
   }
 

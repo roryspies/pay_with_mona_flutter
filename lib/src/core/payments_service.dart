@@ -27,7 +27,7 @@ class PaymentService {
       final response = await _apiService.post(
         '/demo/checkout',
         data: {
-          'amount': 3000,
+          'amount': 100,
         },
       );
 
@@ -247,40 +247,10 @@ class PaymentService {
 
     return signature;
   }
-
-  /// Starts the actual payment flow (e.g. redirect to payment gateway).
-  /* FutureOutcome<Map<String, dynamic>> makePayment({
-    required String transactionId,
-    required String method,
-  }) async {
-    try {
-      // Use a custom base URL for the payment gateway
-      final api = ApiService(baseUrl: 'https://pay.development.mona.ng');
-      final response = await api.get(
-        '/$transactionId',
-        queryParams: {
-          'embedding': 'true',
-          'sdk': 'true',
-          'embeddingUrl': 'http://localhost:4008/',
-          'method': method,
-          if (method == 'bank') 'bankId': '',
-        },
-      );
-
-      return right(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } catch (e) {
-      final apiEx = APIException.fromHttpError(e);
-      '❌ makePayment() Error: ${apiEx.message}'.log();
-      return left(Failure(apiEx.message));
-    }
-  } */
 }
 
 enum TransactionPaymentTypes {
-  bank('bank'),
-  ;
+  bank('bank');
 
   const TransactionPaymentTypes(this.jsonString);
   final String jsonString;
