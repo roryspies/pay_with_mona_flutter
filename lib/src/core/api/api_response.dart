@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:pay_with_mona/src/core/api_exceptions.dart';
+import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 
 /// A simple HTTP response wrapper.
 class ApiResponse {

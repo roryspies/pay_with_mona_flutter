@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
+import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
@@ -44,6 +45,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
   @override
   Widget build(BuildContext context) {
+    "PayWithMonaWidget BUILD CALLED".log();
+
     final savedBanks =
         paymentNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
@@ -147,6 +150,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
             ),
           ],
 
+          /// *** Saved Banks
           if (savedBanks != null && savedBanks.isNotEmpty) ...[
             Column(
               children: savedBanks.map(
@@ -285,9 +289,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       paymentNotifier
                         ..setCallingBuildContext(context: context)
                         ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
-                        ..makePayment(
-                          method: paymentNotifier.selectedPaymentMethod.type,
-                        );
+                        ..makePayment();
                     },
                     child: Text(
                       "Proceed to pay ",

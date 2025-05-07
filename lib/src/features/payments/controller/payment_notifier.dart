@@ -236,7 +236,7 @@ class PaymentNotifier extends ChangeNotifier {
   ///
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
-  Future<void> makePayment({required String method}) async {
+  Future<void> makePayment() async {
     _updateState(PaymentState.loading);
 
     // Initialize SSE listener for real-time events
@@ -258,8 +258,31 @@ class PaymentNotifier extends ChangeNotifier {
     // ignore: dead_code
     if (hasError || authError) return;
 
-    final url = _buildPaymentUrl(sessionID, method);
-    await _launchPaymentUrl(url);
+    switch (_selectedPaymentMethod) {
+      case PaymentMethod.savedBank:
+        try {
+          await _paymentsService.makePaymentRequest(
+            onPayComplete: () {
+              "Payment Notifier ::: Make Payment Request Complete".log();
+            },
+          );
+
+          _updateState(PaymentState.idle);
+        } catch (error, trace) {
+          _handleError('Error listening for transaction updates.');
+          "Payment Notifier ::: makePayment ::: PaymentMethod.savedBank ::: ERROR ::: $error TRACE ::: $trace"
+              .log();
+        }
+        break;
+
+      default:
+        final url = _buildPaymentUrl(
+          sessionID,
+          _selectedPaymentMethod.type,
+        );
+        await _launchPaymentUrl(url);
+        break;
+    }
   }
 
   Future<void> _listenForTransactionEvents(bool errorFlag) async {
