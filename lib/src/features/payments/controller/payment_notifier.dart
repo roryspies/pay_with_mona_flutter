@@ -2,63 +2,114 @@ import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
 import 'package:pay_with_mona/src/core/secure_storage.dart';
+import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/auth_service.dart';
 import 'package:pay_with_mona/src/core/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
+import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
+part 'payment_notifier.helpers.dart';
 
+/// Manages the entire payment workflow, from initiation to completion,
+/// including real-time event listening and strong authentication.
+///
+/// Implements a singleton pattern to ensure a single source of truth
+/// throughout the app lifecycle.
 class PaymentNotifier extends ChangeNotifier {
-  static final _instance = PaymentNotifier._internal();
-  factory PaymentNotifier() => _instance;
-  PaymentNotifier._internal({
+  /// The single, shared instance of [PaymentNotifier].
+  static final PaymentNotifier _instance = PaymentNotifier._internal();
+
+  /// Factory constructor returning the singleton instance.
+  factory PaymentNotifier({
     PaymentService? paymentsService,
     AuthService? authService,
     SecureStorage? secureStorage,
-  })  : _paymentsService = paymentsService ?? PaymentService(),
-        _authService = authService ?? AuthService(),
-        _secureStorage = secureStorage ?? SecureStorage();
+  }) {
+    // Allow dependency injection for testing or customization
+    _instance._paymentsService = paymentsService ?? _instance._paymentsService;
+    _instance._authService = authService ?? _instance._authService;
+    _instance._secureStorage = secureStorage ?? _instance._secureStorage;
+    return _instance;
+  }
 
-  final PaymentService _paymentsService;
-  final AuthService _authService;
+  /// Internal constructor initializes default services.
+  PaymentNotifier._internal()
+      : _paymentsService = PaymentService(),
+        _authService = AuthService(),
+        _secureStorage = SecureStorage();
+
+  /// Service responsible for initiating and completing payments.
+  late PaymentService _paymentsService;
+
+  /// Service responsible for handling strong authentication.
+  late AuthService _authService;
+
+  /// Secure storage for persisting user identifiers.
+  late SecureStorage _secureStorage;
+
+  /// Listener for Firebase Server-Sent Events.
+  final FirebaseSSEListener _firebaseSSE = FirebaseSSEListener();
+
   String? _errorMessage;
   String? _currentTransactionId;
   String? _strongAuthToken;
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
-  SecureStorage _secureStorage;
+
   PaymentState _state = PaymentState.idle;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
-  final _firebaseSSE = FirebaseSSEListener();
+  PendingPaymentResponseModel? _pendingPaymentResponseModel;
+  BankOption? _selectedBankOption;
+  CardOption? _selectedCardOption;
 
-  /// ***
+  /// Current payment process state.
   PaymentState get state => _state;
+
+  /// The method chosen by the user for payment.
   PaymentMethod get selectedPaymentMethod => _selectedPaymentMethod;
+
+  /// Error message, if any, from the last operation.
   String? get errorMessage => _errorMessage;
+
+  /// Identifier of the most recent transaction.
   String? get currentTransactionId => _currentTransactionId;
 
-  /// ***
-  void disposeSSEListener() {
+  PendingPaymentResponseModel? get currentPaymentResponseModel =>
+      _pendingPaymentResponseModel;
+
+  BankOption? get selectedBankOption => _selectedBankOption;
+
+  CardOption? get selectedCardOption => _selectedCardOption;
+
+  /// Clean up SSE listener when this notifier is disposed.
+  @override
+  void dispose() {
     _firebaseSSE.dispose();
+    super.dispose();
   }
 
-  void _setState(PaymentState newState) {
+  /// Sets the internal state and notifies listeners of changes.
+  void _updateState(PaymentState newState) {
     _state = newState;
     notifyListeners();
   }
 
-  void _setError(String message) {
+  /// Records an error, updates state, and notifies listeners.
+  void _handleError(String message) {
     _errorMessage = message;
-    _setState(PaymentState.error);
+    _updateState(PaymentState.error);
   }
 
-  void _setTransactionId(String transactionId) {
+  /// Stores the transaction ID and notifies listeners.
+  void _handleTransactionId(String transactionId) {
     _currentTransactionId = transactionId;
     notifyListeners();
   }
 
+  /// Provides checkout details (e.g., colors, phone number) for UI integration.
   void setMonaCheckOut({
     required MonaCheckOut checkoutDetails,
   }) {
@@ -66,6 +117,7 @@ class PaymentNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Retains the [BuildContext] to calculate UI-dependent dimensions.
   void setCallingBuildContext({
     required BuildContext context,
   }) {
@@ -73,231 +125,248 @@ class PaymentNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSelectedPaymentType({
-    required PaymentMethod selectedPaymentMethod,
+  /// Chooses the payment method (e.g., card, mobile money) before initiating payment.
+  void setSelectedPaymentMethod({
+    required PaymentMethod method,
   }) {
-    _selectedPaymentMethod = selectedPaymentMethod;
+    clearSelectedPaymentMethod();
+    _selectedPaymentMethod = method;
     notifyListeners();
   }
 
-  /// ***
+  void clearSelectedPaymentMethod() {
+    _selectedPaymentMethod = PaymentMethod.none;
+    _selectedBankOption = null;
+    _selectedCardOption = null;
+    notifyListeners();
+  }
+
+  setSelectedBankOption({
+    required BankOption bankOption,
+  }) {
+    _selectedBankOption = () {
+      _selectedBankOption = null;
+      return bankOption;
+    }();
+    notifyListeners();
+  }
+
+  setSelectedCardOption({
+    required CardOption cardOption,
+  }) {
+    _selectedCardOption = () {
+      _selectedCardOption = null;
+      return cardOption;
+    }();
+    notifyListeners();
+  }
+
+  void setPendingPaymentData({
+    required PendingPaymentResponseModel pendingPayment,
+  }) {
+    _pendingPaymentResponseModel = () {
+      _pendingPaymentResponseModel = null;
+      return pendingPayment;
+    }();
+    notifyListeners();
+  }
+
+  /// Starts the payment initiation process.
+  ///
+  /// 1. Updates state to [PaymentState.loading].
+  /// 2. Calls [_paymentsService.initiatePayment].
+  /// 3. Handles failure or missing transaction ID.
+  /// 4. Persists user UUID from secure storage.
+  /// 5. Retrieves available payment methods.
   Future<void> initiatePayment() async {
-    _setState(PaymentState.loading);
+    _updateState(PaymentState.loading);
 
     final (Map<String, dynamic>? success, failure) =
         await _paymentsService.initiatePayment();
 
     if (failure != null) {
-      _setError("Payment failed. Try again.");
+      _handleError('Payment initiation failed. Please try again.');
       return;
     }
 
-    if (success == null || success['transactionId'] == null) {
-      _setError("Invalid response from payment service.");
+    final txId = success?['transactionId'] as String?;
+    if (txId == null) {
+      _handleError('Invalid response from payment service.');
       return;
     }
 
-    _setTransactionId(success['transactionId'] as String);
-    final userUUID = await _secureStorage.read(key: SecureStorageKeys.keyID);
-    "✅ Payment initiated: $success ::: User UUID :::$userUUID ".log();
-
-    if (userUUID == null) {
-      _setError("User UUID not found. Please try again.");
-      return;
-    }
-
-    await _paymentsService.getPaymentMethods(
-      transactionId: _currentTransactionId ?? "",
-      userEnrolledCheckoutID: userUUID,
-    );
-
-    _setState(PaymentState.success);
+    _handleTransactionId(txId);
+    await getPaymentMethods();
   }
 
-  Future<void> makePayment({
-    required String method,
-  }) async {
-    _setState(PaymentState.loading);
-    bool hasError = false;
-    bool customPathError = false;
+  Future<void> getPaymentMethods() async {
+    _updateState(PaymentState.loading);
 
-    "✅ Mona user payment initiated".log();
+    final userCheckoutID = await _secureStorage.read(
+      key: SecureStorageKeys.monaCheckoutID,
+    );
 
+    if (userCheckoutID == null) {
+      _handleError('User identifier not found. Please log in again.');
+      return;
+    }
+
+    try {
+      final (paymentDataAndMethods, failure) =
+          await _paymentsService.getPaymentMethods(
+        transactionId: _currentTransactionId ?? '',
+        userEnrolledCheckoutID: userCheckoutID,
+      );
+
+      if (failure != null) {
+        _handleError('Payment initiation failed. Please try again.');
+        return;
+      }
+
+      setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
+      _pendingPaymentResponseModel?.toJson().log();
+      _updateState(PaymentState.success);
+    } catch (error, trace) {
+      _handleError('Error fetching payment methods: $error ::: $trace');
+      return;
+    }
+  }
+
+  /// Orchestrates the in-app payment flow with SSE and strong authentication.
+  ///
+  /// 1. Opens a custom tab to the payment URL.
+  /// 2. Listens for transaction updates and strong auth tokens via SSE.
+  Future<void> makePayment({required String method}) async {
+    _updateState(PaymentState.loading);
+
+    // Initialize SSE listener for real-time events
     _firebaseSSE.initialize(
       databaseUrl:
           'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app',
     );
 
-    final sessionID = "${math.Random.secure().nextInt(999999999)}";
+    final sessionID = math.Random.secure().nextInt(999999999).toString();
+    bool hasError = false;
+    bool authError = false;
 
-    await Future.wait(
-      [
-        /// *** Listen for transaction events and handle where necessary
-        _firebaseSSE.startListening(
-          transactionId: _currentTransactionId ?? "",
-          onDataChange: (event) {
-            '🔥 [SSEListener] Event Received: $event'.log();
-            if (event == 'transaction_completed' ||
-                event == 'transaction_failed') {
-              _firebaseSSE.dispose();
-              closeCustomTabs();
-            }
-          },
-          onError: (error) {
-            '❌ [SSEListener] Error: $error'.log();
-            _setError('');
-            hasError = true;
-          },
-        ),
+    // Concurrently listen for transaction completion and authentication tokens
+    await Future.wait([
+      _listenForTransactionEvents(hasError),
+      _listenForAuthEvents(sessionID, authError),
+    ]);
 
-        /// *** Listen for Strong Auth Events and handle where necessary
-        _firebaseSSE.listenToCustomEvents(
-          sessionID: sessionID,
-          onDataChange: (strongAuthToken) async {
-            '🔥 [listenToCustomEvents] Event Received: $strongAuthToken'.log();
-            _strongAuthToken = (() {
-              _strongAuthToken = null;
-              return strongAuthToken;
-            })();
+    // ignore: dead_code
+    if (hasError || authError) return;
 
-            await closeCustomTabs();
-            await loginWithStrongAuth();
-          },
-          onError: (error) {
-            '❌ [listenToCustomEvents] Error: $error'.log();
-            _setError('');
-            customPathError = true;
-          },
-        )
-      ],
+    final url = _buildPaymentUrl(sessionID, method);
+    await _launchPaymentUrl(url);
+  }
+
+  Future<void> _listenForTransactionEvents(bool errorFlag) async {
+    await _firebaseSSE.startListening(
+      transactionId: _currentTransactionId ?? '',
+      onDataChange: (event) {
+        if (event == 'transaction_completed' || event == 'transaction_failed') {
+          _firebaseSSE.dispose();
+          closeCustomTabs();
+        }
+      },
+      onError: (error) {
+        _handleError('Error listening for transaction updates.');
+        errorFlag = true;
+      },
+    );
+  }
+
+  Future<void> _listenForAuthEvents(String sessionId, bool errorFlag) async {
+    await _firebaseSSE.listenToCustomEvents(
+      sessionID: sessionId,
+      onDataChange: (token) async {
+        _strongAuthToken = token;
+        await closeCustomTabs();
+        await loginWithStrongAuth();
+      },
+      onError: (error) {
+        _handleError('Error during strong authentication.');
+        errorFlag = true;
+      },
+    );
+  }
+
+  /// Builds the URL for the in-app payment custom tab.
+  String _buildPaymentUrl(String sessionID, String method) {
+    final redirect = Uri.encodeComponent(
+      'https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$method',
     );
 
-    if (hasError || customPathError) {
-      return;
-    }
+    return 'https://pay.development.mona.ng/login'
+        '?loginScope=${Uri.encodeComponent('67e41f884126830aded0b43c')}'
+        '&redirect=$redirect'
+        '&sessionId=${Uri.encodeComponent(sessionID)}';
+  }
 
-    final url =
-        "https://pay.development.mona.ng/login?loginScope=${Uri.encodeComponent("67e41f884126830aded0b43c")}&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/${_currentTransactionId ?? ""}?embedding=true&sdk=true&method=${_selectedPaymentMethod.type}")}&sessionId=${Uri.encodeComponent(sessionID)}";
+  /// Launches the payment URL using platform-specific custom tab settings.
+  Future<void> _launchPaymentUrl(String url) async {
+    final uri = Uri.parse(url);
 
-    url.log();
+    "🚀 Launching payment URL: $url".log();
 
     await launchUrl(
-      Uri.parse(url),
+      uri,
       customTabsOptions: CustomTabsOptions.partial(
-        shareState: CustomTabsShareState.off,
         configuration: PartialCustomTabsConfiguration(
-          initialHeight: _callingBuildContext!.screenHeight * 0.95,
           activityHeightResizeBehavior:
               CustomTabsActivityHeightResizeBehavior.fixed,
+          initialHeight: _callingBuildContext!.screenHeight * 0.95,
         ),
-        colorSchemes: CustomTabsColorSchemes.defaults(
-          toolbarColor: _monaCheckOut?.primaryColor,
-          navigationBarColor: _monaCheckOut?.primaryColor,
-        ),
-        showTitle: false,
       ),
       safariVCOptions: SafariViewControllerOptions.pageSheet(
         configuration: const SheetPresentationControllerConfiguration(
-          detents: {
-            SheetPresentationControllerDetent.large,
-          },
-          prefersScrollingExpandsWhenScrolledToEdge: true,
-          prefersGrabberVisible: false,
+          detents: {SheetPresentationControllerDetent.large},
           prefersEdgeAttachedInCompactHeight: true,
           preferredCornerRadius: 16.0,
         ),
-        preferredBarTintColor: _monaCheckOut?.secondaryColor,
-        preferredControlTintColor: _monaCheckOut?.primaryColor,
-        dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
       ),
     );
   }
 
+  /// Performs strong authentication using the received SSE token.
+  ///
+  /// Updates payment methods upon success.
   Future<void> loginWithStrongAuth() async {
-    _setState(PaymentState.loading);
-
+    _updateState(PaymentState.loading);
     try {
       final response = await _authService.loginWithStrongAuth(
-        strongAuthToken: _strongAuthToken ?? "",
-        phoneNumber: _monaCheckOut?.phoneNumber ?? "",
+        strongAuthToken: _strongAuthToken ?? '',
+        phoneNumber: _monaCheckOut?.phoneNumber ?? '',
       );
-
       if (response == null) {
-        _setError("Login failed. Try again.");
+        _handleError('Strong authentication failed.');
         return;
       }
 
-      "✅ Strong Auth login successful: $response".log();
       await _authService.signAndCommitAuthKeys(
-        deviceAuth: response["deviceAuth"],
+        deviceAuth: response['deviceAuth'],
         onSuccess: () async {
-          final userUUID =
-              await _secureStorage.read(key: SecureStorageKeys.keyID);
+          final userCheckoutID = await _secureStorage.read(
+            key: SecureStorageKeys.monaCheckoutID,
+          );
 
-          if (userUUID == null) {
-            _setError("User UUID not found. Please try again.");
+          if (userCheckoutID == null) {
+            _handleError('User identifier missing.');
             return;
           }
 
           await _paymentsService.getPaymentMethods(
-            transactionId: _currentTransactionId ?? "",
-            userEnrolledCheckoutID: userUUID,
+            transactionId: _currentTransactionId ?? '',
+            userEnrolledCheckoutID: userCheckoutID,
           );
+
+          _updateState(PaymentState.success);
         },
       );
-    } catch (error, trace) {
-      "❌ loginWithStrongAuth() Error: $error ::: Trace - $trace".log();
-      _setError("An error occurred. Please try again.");
-    } finally {
-      "Login with Strong Auth completed".log();
+    } catch (e) {
+      _handleError('Unexpected error during authentication.');
     }
   }
-
-/*   Future<void> onRegistrationSuccess() async {
-    Map options = {
-      'registrationToken': _registrationToken,
-      'registrationOptions': _registrationOptions
-    };
-
-    String url =
-        'https://pay.development.mona.ng/register?passkey=${Uri.encodeQueryComponent(jsonEncode(options))}';
-
-    try {
-      await launchUrl(
-        Uri.parse(url),
-        customTabsOptions: CustomTabsOptions.partial(
-          shareState: CustomTabsShareState.off,
-          configuration: PartialCustomTabsConfiguration(
-            initialHeight: _callingBuildContext!.screenHeight * 0.95,
-            activityHeightResizeBehavior:
-                CustomTabsActivityHeightResizeBehavior.fixed,
-          ),
-          colorSchemes: CustomTabsColorSchemes.defaults(
-            toolbarColor: _monaCheckOut?.primaryColor,
-            navigationBarColor: _monaCheckOut?.primaryColor,
-          ),
-          showTitle: false,
-        ),
-        safariVCOptions: SafariViewControllerOptions.pageSheet(
-          configuration: const SheetPresentationControllerConfiguration(
-            detents: {
-              SheetPresentationControllerDetent.large,
-            },
-            prefersScrollingExpandsWhenScrolledToEdge: true,
-            prefersGrabberVisible: false,
-            prefersEdgeAttachedInCompactHeight: true,
-            preferredCornerRadius: 16.0,
-          ),
-          preferredBarTintColor: _monaCheckOut?.secondaryColor,
-          preferredControlTintColor: _monaCheckOut?.primaryColor,
-          dismissButtonStyle: SafariViewControllerDismissButtonStyle.done,
-        ),
-      );
-    } catch (error, trace) {
-      "❌ onEnrollPasskeySubSucceeded() Error: $error ::: Trace - $trace".log();
-      _setError("An error occurred. Please try again.");
-    } finally {
-      "Enroll Passkeys completed".log();
-    }
-  } */
 }
