@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
@@ -31,6 +33,14 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
   List<TextEditingController> controllers = [];
 
+  final firstPayment = PaymentScheduleTextController(
+    index: 0,
+    paymentTextcontroller: TextEditingController(),
+    dateTextcontroller: TextEditingController(),
+  );
+
+  List<PaymentScheduleTextController> paymentScheduleTextControllers = [];
+
   final showMore = false.notifier;
 
   @override
@@ -42,6 +52,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
       _expDateController,
       _referenceController,
     ];
+    paymentScheduleTextControllers = [firstPayment];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setData();
     });
@@ -59,6 +70,25 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
   void setData() {
     _merchantNameController.text = widget.merchantName ?? '';
+  }
+
+  void addController(
+      {required PaymentScheduleTextController
+          newPaymentScheduleTextController}) {
+    setState(() {
+      paymentScheduleTextControllers = [
+        ...paymentScheduleTextControllers,
+        newPaymentScheduleTextController
+      ];
+    });
+  }
+
+  void removeController({required int indexId}) {
+    setState(() {
+      paymentScheduleTextControllers = paymentScheduleTextControllers
+          .where((p) => p.index != indexId)
+          .toList();
+    });
   }
 
   @override
@@ -175,7 +205,20 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                 onChanged: (value) {},
                                 suffixIcon: IconButton(
                                   icon: Icon(Icons.edit),
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    final now = DateTime.now();
+                                    final pickedDate = await showDatePicker(
+                                      context: context,
+                                      initialDate: now,
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (pickedDate != null) {
+                                      _expDateController.text =
+                                          DateFormat('dd/MM/yyyy')
+                                              .format(pickedDate);
+                                    }
+                                  },
                                 ),
                                 inputFormatters: [
                                   LengthLimitingTextInputFormatter(10),
@@ -199,14 +242,17 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                               Column(
                                 spacing: context.h(24),
                                 children: List.generate(
-                                  3,
+                                  paymentScheduleTextControllers.length,
                                   (index) {
                                     return Row(
                                       children: [
                                         Expanded(
                                           child: CustomTextField(
                                             title: 'Payment ${index + 1}',
-                                            controller: _debitLimitController,
+                                            controller:
+                                                paymentScheduleTextControllers[
+                                                        index]
+                                                    .paymentTextcontroller,
                                             keyboardType: TextInputType.number,
                                             onChanged: (value) {},
                                             suffixIcon: IconButton(
@@ -225,7 +271,50 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                         Expanded(
                                           child: CustomTextField(
                                             title: 'Date & Time',
-                                            controller: _debitLimitController,
+                                            readOnly: true,
+                                            onTap: () async {
+                                              final now = DateTime.now();
+
+                                              final pickedDate =
+                                                  await showDatePicker(
+                                                context: context,
+                                                initialDate: now,
+                                                firstDate: DateTime(1900),
+                                                lastDate: DateTime(2100),
+                                              );
+
+                                              if (pickedDate != null) {
+                                                final pickedTime =
+                                                    await showTimePicker(
+                                                  context: context,
+                                                  initialTime:
+                                                      TimeOfDay.fromDateTime(
+                                                          now),
+                                                );
+
+                                                if (pickedTime != null) {
+                                                  final fullDateTime = DateTime(
+                                                    pickedDate.year,
+                                                    pickedDate.month,
+                                                    pickedDate.day,
+                                                    pickedTime.hour,
+                                                    pickedTime.minute,
+                                                  );
+
+                                                  // Format: 14:00 26/10/25
+                                                  paymentScheduleTextControllers[
+                                                          index]
+                                                      .dateTextcontroller
+                                                      .text = DateFormat(
+                                                          'HH:mm dd/MM/yy')
+                                                      .format(fullDateTime);
+                                                }
+                                              }
+                                            },
+                                            controller:
+                                                paymentScheduleTextControllers[
+                                                        index]
+                                                    .dateTextcontroller,
                                             onChanged: (value) {},
                                             // suffixIcon: IconButton(
                                             //   icon: Icon(Icons.edit),
@@ -240,11 +329,69 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                             keyboardType: TextInputType.number,
                                           ),
                                         ),
+                                        if (index > 0) ...[
+                                          context.sbW(10),
+                                          InkWell(
+                                            onTap: () {
+                                              removeController(
+                                                  indexId:
+                                                      paymentScheduleTextControllers[
+                                                              index]
+                                                          .index);
+                                            },
+                                            child: CircleAvatar(
+                                              radius: 10,
+                                              child: Icon(Icons.remove),
+                                            ),
+                                          )
+                                        ]
                                       ],
                                     );
                                   },
                                 ),
                               ),
+                            if (collectionMethod.value ==
+                                CollectionsMethod.scheduled)
+                              context.sbH(12),
+                            if (collectionMethod.value ==
+                                CollectionsMethod.scheduled)
+                              InkWell(
+                                onTap: () {
+                                  addController(
+                                      newPaymentScheduleTextController:
+                                          PaymentScheduleTextController(
+                                    index:
+                                        paymentScheduleTextControllers.length,
+                                    paymentTextcontroller:
+                                        TextEditingController(),
+                                    dateTextcontroller: TextEditingController(),
+                                  ));
+                                },
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                    ),
+                                    Text(
+                                      'Add payment',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: context.sp(14),
+                                        color: Colors.black,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                    Opacity(
+                                      opacity: 0,
+                                      child: Icon(
+                                        Icons.add,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
                           ],
                         ),
                       ),
@@ -260,6 +407,31 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class PaymentScheduleTextController {
+  final int index;
+  final TextEditingController paymentTextcontroller;
+  final TextEditingController dateTextcontroller;
+
+  PaymentScheduleTextController({
+    required this.index,
+    required this.paymentTextcontroller,
+    required this.dateTextcontroller,
+  });
+
+  PaymentScheduleTextController copyWith({
+    int? index,
+    TextEditingController? paymentTextcontroller,
+    TextEditingController? dateTextcontroller,
+  }) {
+    return PaymentScheduleTextController(
+      index: index ?? this.index,
+      paymentTextcontroller:
+          paymentTextcontroller ?? this.paymentTextcontroller,
+      dateTextcontroller: dateTextcontroller ?? this.dateTextcontroller,
     );
   }
 }
