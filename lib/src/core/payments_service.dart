@@ -21,8 +21,10 @@ class PaymentService {
         '/demo/checkout',
         data: {'amount': 5000},
       );
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      return right(decoded);
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
     } catch (e) {
       final apiEx = APIException.fromHttpError(e);
       '❌ initiatePayment() Error: ${apiEx.message}'.log();
@@ -44,16 +46,11 @@ class PaymentService {
         queryParams: {'transactionId': transactionId},
       );
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-
-      "DECODED ::: $decoded".log();
-      final data = PendingPaymentResponseModel.fromJSON(
-        json: decoded,
+      return right(
+        PendingPaymentResponseModel.fromJSON(
+          json: jsonDecode(response.body) as Map<String, dynamic>,
+        ),
       );
-
-      "CONVERTED ::: $data".log();
-
-      return right(data);
     } catch (e) {
       final apiEx = APIException.fromHttpError(e);
       '❌ getPaymentMethods() Error: ${apiEx.message}'.log();
@@ -79,8 +76,10 @@ class PaymentService {
           if (method == 'bank') 'bankId': '',
         },
       );
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      return right(decoded);
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
     } catch (e) {
       final apiEx = APIException.fromHttpError(e);
       '❌ makePayment() Error: ${apiEx.message}'.log();

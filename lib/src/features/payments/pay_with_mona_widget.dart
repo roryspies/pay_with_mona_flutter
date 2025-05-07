@@ -44,6 +44,11 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final savedBanks =
+        paymentNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
+    final savedCards =
+        paymentNotifier.currentPaymentResponseModel?.savedPaymentOptions?.card;
+
     return Container(
       padding: EdgeInsets.all(context.w(16)),
       width: double.infinity,
@@ -64,10 +69,174 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
           context.sbH(16.0),
 
+          if (savedCards != null && savedCards.isNotEmpty) ...[
+            Column(
+              children: savedCards.map(
+                (card) {
+                  final selectedCardID =
+                      paymentNotifier.selectedCardOption?.cardId;
+
+                  return ListTile(
+                    onTap: () {
+                      paymentNotifier.setSelectedPaymentMethod(
+                        method: PaymentMethod.card,
+                      );
+
+                      paymentNotifier.setSelectedCardOption(
+                        cardOption: card,
+                      );
+                    },
+
+                    /// ***
+                    contentPadding: EdgeInsets.zero,
+                    /* leading: CircleAvatar(
+                      backgroundColor: MonaColors.neutralWhite,
+                      child: Image.network(
+                        card.cardId  ?? "",
+                      ),
+                    ), */
+
+                    title: Text(
+                      card.cardNetwork ?? "",
+                      style: TextStyle(
+                        fontSize: context.sp(14),
+                        fontWeight: FontWeight.w500,
+                        color: MonaColors.textHeading,
+                      ),
+                    ),
+
+                    subtitle: Text(
+                      "Account - ${card.maskedPan}",
+                      style: TextStyle(
+                        fontSize: context.sp(12),
+                        fontWeight: FontWeight.w400,
+                        color: MonaColors.textBody,
+                      ),
+                    ),
+
+                    trailing: AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      height: context.h(24),
+                      width: context.w(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(context.h(24)),
+                        border: Border.all(
+                          width: 1.5,
+                          color: (paymentNotifier.selectedPaymentMethod ==
+                                      PaymentMethod.savedBank &&
+                                  selectedCardID == card.cardId)
+                              ? MonaColors.primaryBlue
+                              : MonaColors.bgGrey,
+                        ),
+                      ),
+                      child: Center(
+                        child: CircleAvatar(
+                          radius: context.w(6),
+                          backgroundColor:
+                              (paymentNotifier.selectedPaymentMethod ==
+                                          PaymentMethod.savedBank &&
+                                      selectedCardID == card.cardId)
+                                  ? MonaColors.primaryBlue
+                                  : Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ).toList(),
+            ),
+          ],
+
+          if (savedBanks != null && savedBanks.isNotEmpty) ...[
+            Column(
+              children: savedBanks.map(
+                (bank) {
+                  final selectedBankID =
+                      paymentNotifier.selectedBankOption?.bankId;
+
+                  "Selected Bank ID: $selectedBankID";
+
+                  return ListTile(
+                    onTap: () {
+                      paymentNotifier.setSelectedPaymentMethod(
+                        method: PaymentMethod.savedBank,
+                      );
+
+                      paymentNotifier.setSelectedBankOption(
+                        bankOption: bank,
+                      );
+                    },
+
+                    /// ***
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: MonaColors.neutralWhite,
+                      child: Image.network(
+                        bank.logo ?? "",
+                      ),
+                    ),
+
+                    title: Text(
+                      bank.bankName ?? "",
+                      style: TextStyle(
+                        fontSize: context.sp(14),
+                        fontWeight: FontWeight.w500,
+                        color: MonaColors.textHeading,
+                      ),
+                    ),
+
+                    subtitle: Text(
+                      "Account - ${bank.accountNumber}",
+                      style: TextStyle(
+                        fontSize: context.sp(12),
+                        fontWeight: FontWeight.w400,
+                        color: MonaColors.textBody,
+                      ),
+                    ),
+
+                    trailing: AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      height: context.h(24),
+                      width: context.w(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(context.h(24)),
+                        border: Border.all(
+                          width: 1.5,
+                          color: (paymentNotifier.selectedPaymentMethod ==
+                                      PaymentMethod.savedBank &&
+                                  selectedBankID == bank.bankId)
+                              ? MonaColors.primaryBlue
+                              : MonaColors.bgGrey,
+                        ),
+                      ),
+                      child: Center(
+                        child: CircleAvatar(
+                          radius: context.w(6),
+                          backgroundColor:
+                              (paymentNotifier.selectedPaymentMethod ==
+                                          PaymentMethod.savedBank &&
+                                      selectedBankID == bank.bankId)
+                                  ? MonaColors.primaryBlue
+                                  : Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ).toList(),
+            ),
+          ],
+
           Column(
             children: PaymentMethod.values.map(
               (paymentMethod) {
                 if (paymentMethod == PaymentMethod.none) {
+                  return const SizedBox.shrink();
+                }
+                if (paymentMethod == PaymentMethod.savedBank) {
+                  return const SizedBox.shrink();
+                }
+                if (paymentMethod == PaymentMethod.savedCard) {
                   return const SizedBox.shrink();
                 }
 
@@ -119,8 +288,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         ..makePayment(
                           method: paymentNotifier.selectedPaymentMethod.type,
                         );
-                      // final res = await checkForSafariCreatedPasskey();
-                      // res.log();
                     },
                     child: Text(
                       "Proceed to pay ",

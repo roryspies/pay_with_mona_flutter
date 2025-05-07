@@ -11,6 +11,7 @@ import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
+part 'payment_notifier.helpers.dart';
 
 /// Manages the entire payment workflow, from initiation to completion,
 /// including real-time event listening and strong authentication.
@@ -61,6 +62,8 @@ class PaymentNotifier extends ChangeNotifier {
   PaymentState _state = PaymentState.idle;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
   PendingPaymentResponseModel? _pendingPaymentResponseModel;
+  BankOption? _selectedBankOption;
+  CardOption? _selectedCardOption;
 
   /// Current payment process state.
   PaymentState get state => _state;
@@ -76,6 +79,10 @@ class PaymentNotifier extends ChangeNotifier {
 
   PendingPaymentResponseModel? get currentPaymentResponseModel =>
       _pendingPaymentResponseModel;
+
+  BankOption? get selectedBankOption => _selectedBankOption;
+
+  CardOption? get selectedCardOption => _selectedCardOption;
 
   /// Clean up SSE listener when this notifier is disposed.
   @override
@@ -122,7 +129,35 @@ class PaymentNotifier extends ChangeNotifier {
   void setSelectedPaymentMethod({
     required PaymentMethod method,
   }) {
+    clearSelectedPaymentMethod();
     _selectedPaymentMethod = method;
+    notifyListeners();
+  }
+
+  void clearSelectedPaymentMethod() {
+    _selectedPaymentMethod = PaymentMethod.none;
+    _selectedBankOption = null;
+    _selectedCardOption = null;
+    notifyListeners();
+  }
+
+  setSelectedBankOption({
+    required BankOption bankOption,
+  }) {
+    _selectedBankOption = () {
+      _selectedBankOption = null;
+      return bankOption;
+    }();
+    notifyListeners();
+  }
+
+  setSelectedCardOption({
+    required CardOption cardOption,
+  }) {
+    _selectedCardOption = () {
+      _selectedCardOption = null;
+      return cardOption;
+    }();
     notifyListeners();
   }
 
@@ -161,24 +196,7 @@ class PaymentNotifier extends ChangeNotifier {
     }
 
     _handleTransactionId(txId);
-    final userCheckoutID = await _secureStorage.read(
-      key: SecureStorageKeys.monaCheckoutID,
-    );
-
-    if (userCheckoutID == null) {
-      _handleError('User identifier not found. Please log in again.');
-      return;
-    }
-
-    "UUID ::: $userCheckoutID".log();
-
-    // Fetch available payment methods for the transaction
-    await _paymentsService.getPaymentMethods(
-      transactionId: txId,
-      userEnrolledCheckoutID: userCheckoutID,
-    );
-
-    _updateState(PaymentState.success);
+    await getPaymentMethods();
   }
 
   Future<void> getPaymentMethods() async {
@@ -194,7 +212,7 @@ class PaymentNotifier extends ChangeNotifier {
     }
 
     try {
-      final (PendingPaymentResponseModel? paymentDataAndMethods, failure) =
+      final (paymentDataAndMethods, failure) =
           await _paymentsService.getPaymentMethods(
         transactionId: _currentTransactionId ?? '',
         userEnrolledCheckoutID: userCheckoutID,
@@ -205,17 +223,13 @@ class PaymentNotifier extends ChangeNotifier {
         return;
       }
 
-      if (paymentDataAndMethods != null) {
-        "Payment methods is not null".log();
-        setPendingPaymentData(pendingPayment: paymentDataAndMethods);
-        return;
-      }
+      setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
+      _pendingPaymentResponseModel?.toJson().log();
+      _updateState(PaymentState.success);
     } catch (error, trace) {
       _handleError('Error fetching payment methods: $error ::: $trace');
       return;
     }
-
-    _updateState(PaymentState.success);
   }
 
   /// Orchestrates the in-app payment flow with SSE and strong authentication.

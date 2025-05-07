@@ -1,7 +1,7 @@
 class PendingPaymentResponseModel {
   final String? merchantId;
   final String? customerPhone;
-  final int? amount;
+  final num? amount;
   final String? latestStatus;
   final SavedPaymentOptions? savedPaymentOptions;
   final SelectedPaymentOptions? selectedPaymentOptions;
@@ -31,7 +31,7 @@ class PendingPaymentResponseModel {
     return PendingPaymentResponseModel(
       merchantId: json['merchantId'] as String?,
       customerPhone: json['customerPhone'] as String?,
-      amount: json['amount'] as int?,
+      amount: json['amount'] as num?,
       latestStatus: json['latestStatus'] as String?,
       savedPaymentOptions: json['savedPaymentOptions'] != null
           ? SavedPaymentOptions.fromJSON(
@@ -84,15 +84,21 @@ class SavedPaymentOptions {
 
   factory SavedPaymentOptions.fromJSON({required Map<String, dynamic> json}) {
     return SavedPaymentOptions(
-      card: (json['card'] as List<dynamic>?)
-          ?.map((e) => CardOption.fromJSON(json: e as Map<String, dynamic>))
-          .toList(),
-      bank: (json['bank'] as List<dynamic>?)
-          ?.map((e) => BankOption.fromJSON(json: e as Map<String, dynamic>))
-          .toList(),
-      oneTapCardOptions: (json['oneTapCardOptions'] as List<dynamic>?)
-          ?.map((e) => CardOption.fromJSON(json: e as Map<String, dynamic>))
-          .toList(),
+      card: json['card'] != null
+          ? (json['card'] as List<dynamic>)
+              .map((e) => CardOption.fromJSON(json: e as Map<String, dynamic>))
+              .toList()
+          : null,
+      bank: json['bank'] != null
+          ? (json['bank'] as List<dynamic>)
+              .map((e) => BankOption.fromJSON(json: e as Map<String, dynamic>))
+              .toList()
+          : null,
+      oneTapCardOptions: json['oneTapCardOptions'] != null
+          ? (json['oneTapCardOptions'] as List<dynamic>)
+              .map((e) => CardOption.fromJSON(json: e as Map<String, dynamic>))
+              .toList()
+          : null,
     );
   }
 
@@ -107,12 +113,40 @@ class SavedPaymentOptions {
 
 /// Represents a generic card option.
 class CardOption {
-  CardOption();
+  final String? cardId;
+  final String? maskedPan;
+  final String? cardNetwork;
+  final String? expiryDate;
+  final String? cardType;
+  final bool? isDefault;
+
+  CardOption({
+    this.cardId,
+    this.maskedPan,
+    this.cardNetwork,
+    this.expiryDate,
+    this.cardType,
+    this.isDefault,
+  });
 
   factory CardOption.fromJSON({required Map<String, dynamic> json}) =>
-      CardOption();
+      CardOption(
+        cardId: json['cardId'] as String?,
+        maskedPan: json['maskedPan'] as String?,
+        cardNetwork: json['cardNetwork'] as String?,
+        expiryDate: json['expiryDate'] as String?,
+        cardType: json['cardType'] as String?,
+        isDefault: json['isDefault'] as bool?,
+      );
 
-  Map<String, dynamic> toJson() => {};
+  Map<String, dynamic> toJson() => {
+        if (cardId != null) 'cardId': cardId,
+        if (maskedPan != null) 'maskedPan': maskedPan,
+        if (cardNetwork != null) 'cardNetwork': cardNetwork,
+        if (expiryDate != null) 'expiryDate': expiryDate,
+        if (cardType != null) 'cardType': cardType,
+        if (isDefault != null) 'isDefault': isDefault,
+      };
 }
 
 /// Bank-specific payment option.
@@ -122,6 +156,7 @@ class BankOption {
   final String? logo;
   final String? accountNumber;
   final String? webLinkAndroid;
+  final String? institutionCode;
   final bool? isPrimary;
   final bool? manualPaymentRequired;
   final bool? hasInstantPay;
@@ -133,6 +168,7 @@ class BankOption {
     this.logo,
     this.accountNumber,
     this.webLinkAndroid,
+    this.institutionCode,
     this.isPrimary,
     this.manualPaymentRequired,
     this.hasInstantPay,
@@ -146,12 +182,15 @@ class BankOption {
       logo: json['logo'] as String?,
       accountNumber: json['accountNumber'] as String?,
       webLinkAndroid: json['webLinkAndroid'] as String?,
+      institutionCode: json['institutionCode'] as String?,
       isPrimary: json['isPrimary'] as bool?,
       manualPaymentRequired: json['manualPaymentRequired'] as bool?,
       hasInstantPay: json['hasInstantPay'] as bool?,
-      primaryInstruments: (json['primaryInstruments'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+      primaryInstruments: json['primaryInstruments'] != null
+          ? (json['primaryInstruments'] as List<dynamic>)
+              .map((e) => e as String)
+              .toList()
+          : null,
     );
   }
 
@@ -161,6 +200,7 @@ class BankOption {
         if (logo != null) 'logo': logo,
         if (accountNumber != null) 'accountNumber': accountNumber,
         if (webLinkAndroid != null) 'webLinkAndroid': webLinkAndroid,
+        if (institutionCode != null) 'institutionCode': institutionCode,
         if (isPrimary != null) 'isPrimary': isPrimary,
         if (manualPaymentRequired != null)
           'manualPaymentRequired': manualPaymentRequired,
