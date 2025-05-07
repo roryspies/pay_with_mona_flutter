@@ -145,6 +145,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                   builder: (context, child) {
                 return Container(
                   width: double.infinity,
+                  margin: EdgeInsets.only(
+                    bottom: context.h(40),
+                  ),
                   padding: EdgeInsets.symmetric(
                     horizontal: context.w(20),
                     vertical: context.h(20),
