@@ -21,7 +21,7 @@ class FirebaseSSEListener {
   final http.Client _httpClient = http.Client();
 
   /// Firebase Realtime Database URL
-  final String _databaseUrl =
+  String _databaseUrl =
       'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app';
 
   /// Current active stream subscription
@@ -53,10 +53,15 @@ class FirebaseSSEListener {
   /// Initialize the SSE listener with a Firebase Realtime Database URL
   ///
   /// [databaseUrl] The base URL of the Firebase Realtime Database
-  void initialize(/* {required String databaseUrl} */) {
+  void initialize({
+    String? databaseUrl,
+  }) {
     //ArgumentError.checkNotNull(databaseUrl, 'databaseUrl');
 
-    //_databaseUrl = databaseUrl.trim();
+    if (databaseUrl != null) {
+      _databaseUrl = databaseUrl.trim();
+    }
+
     _logMessage('Initialized with database URL: $_databaseUrl');
   }
 
@@ -139,7 +144,6 @@ class FirebaseSSEListener {
     Function(Object)? onError,
   }) async {
     try {
-      // Validate initialization
       if (_databaseUrl.isEmpty) {
         throw StateError(
           'FirebaseSSE not initialized. Call initialize() first.',
@@ -156,7 +160,8 @@ class FirebaseSSEListener {
       final response = await _httpClient.send(request);
       _logMessage('Connection established. Listening for events...');
       _logMessage(
-          'listenForTransactionMessages ::: Firebase Connection URL: $uri');
+        'listenForTransactionMessages ::: Firebase Connection URL: $uri',
+      );
 
       _subscription = response.stream.transform(utf8.decoder).listen(
         (String event) {
@@ -182,13 +187,12 @@ class FirebaseSSEListener {
     }
   }
 
-  Future<void> listenToCustomEvents({
+  Future<void> listenToAuthNEvents({
     required String sessionID,
     Function(String)? onDataChange,
     Function(Object)? onError,
   }) async {
     try {
-      // Validate initialization
       if (_databaseUrl.isEmpty) {
         throw StateError(
             'FirebaseSSE not initialized. Call initialize() first.');
@@ -276,7 +280,7 @@ class FirebaseSSEListener {
         _logMessage('Event data: $eventData');
 
         if (eventData is String) {
-          _logMessage('Emitting event: $eventData');
+          _logMessage('Emitting String event: $eventData');
           onDataChange?.call(eventData);
         } else if (eventData is Map<String, dynamic>) {
           if (eventData.containsKey('strongAuthToken')) {
@@ -285,7 +289,7 @@ class FirebaseSSEListener {
             onDataChange?.call(strongAuthToken);
           } else {
             _logMessage('Event data does not contain strongAuthToken');
-            onDataChange?.call((jsonEncode(eventData)));
+            onDataChange?.call(jsonEncode(eventData));
           }
         } else {
           _logMessage('Unexpected event structure: $eventData');

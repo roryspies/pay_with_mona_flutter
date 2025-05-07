@@ -1,14 +1,9 @@
 abstract class ApiHeaderModel {
   static const String _xClientType = "bioApp";
-  static const String _contentType = "application/json; charset=utf-8";
 
-  static Map<String, dynamic> getHeaders({
-    required String bearerToken,
-  }) {
+  static Map<String, dynamic> getHeaders() {
     return {
-      "Authorization": bearerToken,
       "x-client-type": _xClientType,
-      "content-type": _contentType,
     };
   }
 

@@ -183,4 +183,8 @@ class AuthService {
       return null;
     }
   }
+
+  Future<void> clearKeys() async {
+    await _secureStorage.deleteAll();
+  }
 }

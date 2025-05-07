@@ -20,24 +20,42 @@ class PayWithMonaWidget extends StatefulWidget {
 }
 
 class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
-  late PaymentNotifier paymentNotifier;
+  final paymentNotifier = PaymentNotifier();
 
   @override
   void initState() {
     super.initState();
-    paymentNotifier = PaymentNotifier();
     paymentNotifier.addListener(_onPaymentStateChange);
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await paymentNotifier.initiatePayment();
+        PaymentNotifier().transactionStateStream.listen(
+          (state) {
+            switch (state) {
+              case TransactionState.initiated:
+                ('🎉  PayWithMonaWidget ==>>  Transaction started').log();
+                break;
+              case TransactionState.completed:
+                ('✅ PayWithMonaWidget ==>>  Transaction completed').log();
+                break;
+              case TransactionState.failed:
+                ('⛔  PayWithMonaWidget ==>> Transaction failed').log();
+                break;
+            }
+          },
+          onError: (err) {
+            ('Error from transactionStateStream: $err').log();
+          },
+        );
       },
     );
   }
 
   @override
   void dispose() {
+    /// *** Considering we're using a singleton class for Payment Notifier
+    /// *** Do not dispose the Notifier itself, so that instance isn't gone with the wind.
     paymentNotifier.removeListener(_onPaymentStateChange);
-    //paymentNotifier.dispose();
     super.dispose();
   }
 

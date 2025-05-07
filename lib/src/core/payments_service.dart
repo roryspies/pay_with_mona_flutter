@@ -27,7 +27,7 @@ class PaymentService {
       final response = await _apiService.post(
         '/demo/checkout',
         data: {
-          'amount': 100,
+          'amount': 2000,
         },
       );
 
