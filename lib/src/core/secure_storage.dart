@@ -1,10 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class SecureStorageKeys {
-  static const hasPasskey = 'hasPasskey';
-  static const keyID = 'keyID';
-}
-
 /// A secure storage utility for the `pay_with_mona` SDK.
 /// Ensures sensitive data is securely stored and retrieved.
 class SecureStorage {
@@ -28,9 +23,6 @@ class SecureStorage {
     accessibility:
         KeychainAccessibility.first_unlock, // Available after first unlock
   );
-
-  //! Key IDs
-  static const String paymentUserId = 'PAYMENT_USER_ID';
 
   //! Save a secure value**
   Future<void> write({required String key, required String value}) async {

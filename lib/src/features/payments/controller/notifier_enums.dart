@@ -27,6 +27,8 @@ enum PaymentUserType {
 
 enum PaymentMethod {
   none,
+  savedBank,
+  savedCard,
   card,
   transfer;
 
@@ -38,6 +40,8 @@ enum PaymentMethod {
         return "transfer";
       case PaymentMethod.none:
         return "none";
+      default:
+        return "";
     }
   }
 
@@ -49,6 +53,8 @@ enum PaymentMethod {
         return "Pay by Transfer";
       case PaymentMethod.none:
         return "No payment method selected";
+      default:
+        return "";
     }
   }
 
@@ -60,6 +66,8 @@ enum PaymentMethod {
         return "Pay for your order with cash on delivery";
       case PaymentMethod.none:
         return "No payment method selected";
+      default:
+        return "";
     }
   }
 
@@ -70,6 +78,10 @@ enum PaymentMethod {
       case PaymentMethod.transfer:
         return Icons.money;
       case PaymentMethod.none:
+        return Icons.close;
+
+      /// Using none as default as other options are not used.
+      default:
         return Icons.close;
     }
   }
