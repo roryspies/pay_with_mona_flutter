@@ -5,9 +5,9 @@ import 'package:pay_with_mona/src/core/api_service.dart';
 import 'package:pay_with_mona/src/core/secure_storage.dart';
 import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/signatures.dart';
+import 'package:pay_with_mona/src/core/uuid_generator.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
-import 'package:uuid/uuid.dart';
 
 class AuthService {
   factory AuthService() => singleInstance;
@@ -80,7 +80,7 @@ class AuthService {
   }) async {
     final signatureService = BiometricSignatureHelper();
 
-    final id = const Uuid().v4();
+    final id = UUIDGenerator.v4();
     Map<String, dynamic> payload = {
       "registrationToken": deviceAuth['registrationToken'],
       "attestationResponse": {
