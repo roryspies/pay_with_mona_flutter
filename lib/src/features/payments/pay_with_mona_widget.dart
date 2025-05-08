@@ -3,8 +3,8 @@ import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
-import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -24,16 +24,17 @@ class PayWithMonaWidget extends StatefulWidget {
 }
 
 class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
-  final paymentNotifier = PaymentNotifier();
+  final sdkNotifier = MonaSDKNotifier();
 
   @override
   void initState() {
     super.initState();
-    paymentNotifier.addListener(_onPaymentStateChange);
+    sdkNotifier.addListener(_onPaymentStateChange);
+
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
-        await paymentNotifier.initiatePayment();
-        paymentNotifier
+        await sdkNotifier.initiatePayment();
+        sdkNotifier
           ..txnStateStream.listen(
             (state) {
               switch (state) {
@@ -99,7 +100,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   void dispose() {
     /// *** Considering we're using a singleton class for Payment Notifier
     /// *** Do not dispose the Notifier itself, so that instance isn't gone with the wind.
-    paymentNotifier.removeListener(_onPaymentStateChange);
+    sdkNotifier.removeListener(_onPaymentStateChange);
     super.dispose();
   }
 
@@ -111,9 +112,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
     "PayWithMonaWidget BUILD CALLED".log();
 
     final savedBanks =
-        paymentNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
+        sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
-        paymentNotifier.currentPaymentResponseModel?.savedPaymentOptions?.card;
+        sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.card;
 
     return Container(
       padding: EdgeInsets.all(context.w(16)),
@@ -139,16 +140,15 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
             Column(
               children: savedCards.map(
                 (card) {
-                  final selectedCardID =
-                      paymentNotifier.selectedCardOption?.cardId;
+                  final selectedCardID = sdkNotifier.selectedCardOption?.cardId;
 
                   return ListTile(
                     onTap: () {
-                      paymentNotifier.setSelectedPaymentMethod(
+                      sdkNotifier.setSelectedPaymentMethod(
                         method: PaymentMethod.card,
                       );
 
-                      paymentNotifier.setSelectedCardOption(
+                      sdkNotifier.setSelectedCardOption(
                         cardOption: card,
                       );
                     },
@@ -188,7 +188,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         borderRadius: BorderRadius.circular(context.h(24)),
                         border: Border.all(
                           width: 1.5,
-                          color: (paymentNotifier.selectedPaymentMethod ==
+                          color: (sdkNotifier.selectedPaymentMethod ==
                                       PaymentMethod.savedBank &&
                                   selectedCardID == card.cardId)
                               ? MonaColors.primaryBlue
@@ -198,12 +198,11 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       child: Center(
                         child: CircleAvatar(
                           radius: context.w(6),
-                          backgroundColor:
-                              (paymentNotifier.selectedPaymentMethod ==
-                                          PaymentMethod.savedBank &&
-                                      selectedCardID == card.cardId)
-                                  ? MonaColors.primaryBlue
-                                  : Colors.transparent,
+                          backgroundColor: (sdkNotifier.selectedPaymentMethod ==
+                                      PaymentMethod.savedBank &&
+                                  selectedCardID == card.cardId)
+                              ? MonaColors.primaryBlue
+                              : Colors.transparent,
                         ),
                       ),
                     ),
@@ -218,18 +217,17 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
             Column(
               children: savedBanks.map(
                 (bank) {
-                  final selectedBankID =
-                      paymentNotifier.selectedBankOption?.bankId;
+                  final selectedBankID = sdkNotifier.selectedBankOption?.bankId;
 
                   "Selected Bank ID: $selectedBankID";
 
                   return ListTile(
                     onTap: () {
-                      paymentNotifier.setSelectedPaymentMethod(
+                      sdkNotifier.setSelectedPaymentMethod(
                         method: PaymentMethod.savedBank,
                       );
 
-                      paymentNotifier.setSelectedBankOption(
+                      sdkNotifier.setSelectedBankOption(
                         bankOption: bank,
                       );
                     },
@@ -269,7 +267,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         borderRadius: BorderRadius.circular(context.h(24)),
                         border: Border.all(
                           width: 1.5,
-                          color: (paymentNotifier.selectedPaymentMethod ==
+                          color: (sdkNotifier.selectedPaymentMethod ==
                                       PaymentMethod.savedBank &&
                                   selectedBankID == bank.bankId)
                               ? MonaColors.primaryBlue
@@ -279,12 +277,11 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       child: Center(
                         child: CircleAvatar(
                           radius: context.w(6),
-                          backgroundColor:
-                              (paymentNotifier.selectedPaymentMethod ==
-                                          PaymentMethod.savedBank &&
-                                      selectedBankID == bank.bankId)
-                                  ? MonaColors.primaryBlue
-                                  : Colors.transparent,
+                          backgroundColor: (sdkNotifier.selectedPaymentMethod ==
+                                      PaymentMethod.savedBank &&
+                                  selectedBankID == bank.bankId)
+                              ? MonaColors.primaryBlue
+                              : Colors.transparent,
                         ),
                       ),
                     ),
@@ -309,11 +306,11 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
                 return PaymentOptionTile(
                   onTap: () {
-                    paymentNotifier.setSelectedPaymentMethod(
+                    sdkNotifier.setSelectedPaymentMethod(
                       method: paymentMethod,
                     );
                   },
-                  selectedPaymentMethod: paymentNotifier.selectedPaymentMethod,
+                  selectedPaymentMethod: sdkNotifier.selectedPaymentMethod,
                   paymentMethod: paymentMethod,
                 );
               },
@@ -325,7 +322,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
           ///
           AnimatedSwitcher(
             duration: Duration(milliseconds: 300),
-            child: switch (paymentNotifier.state == MonaSDKState.loading) {
+            child: switch (sdkNotifier.state == MonaSDKState.loading) {
               true => Align(
                   alignment: Alignment.center,
                   child: CircularProgressIndicator(
@@ -340,7 +337,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
-                      backgroundColor: paymentNotifier.selectedPaymentMethod ==
+                      backgroundColor: sdkNotifier.selectedPaymentMethod ==
                               PaymentMethod.none
                           ? MonaColors.primaryBlue.withAlpha(100)
                           : MonaColors.primaryBlue,
@@ -349,7 +346,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       ),
                     ),
                     onPressed: () async {
-                      paymentNotifier
+                      sdkNotifier
                         ..setCallingBuildContext(context: context)
                         ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
                         ..makePayment();

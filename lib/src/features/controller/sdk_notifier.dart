@@ -8,7 +8,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
@@ -16,19 +16,19 @@ import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
-part 'payment_notifier.helpers.dart';
+part 'sdk_notifier.helpers.dart';
 
 /// Manages the entire payment workflow, from initiation to completion,
 /// including real-time event listening and strong authentication.
 ///
 /// Implements a singleton pattern to ensure a single source of truth
 /// throughout the app lifecycle.
-class PaymentNotifier extends ChangeNotifier {
-  /// The single, shared instance of [PaymentNotifier].
-  static final PaymentNotifier _instance = PaymentNotifier._internal();
+class MonaSDKNotifier extends ChangeNotifier {
+  /// The single, shared instance of [MonaSDKNotifier].
+  static final MonaSDKNotifier _instance = MonaSDKNotifier._internal();
 
   /// Factory constructor returning the singleton instance.
-  factory PaymentNotifier({
+  factory MonaSDKNotifier({
     PaymentService? paymentsService,
     AuthService? authService,
     SecureStorage? secureStorage,
@@ -41,7 +41,7 @@ class PaymentNotifier extends ChangeNotifier {
   }
 
   /// Internal constructor initializes default services.
-  PaymentNotifier._internal()
+  MonaSDKNotifier._internal()
       : _paymentsService = PaymentService(),
         _authService = AuthService(),
         _secureStorage = SecureStorage();
@@ -195,11 +195,15 @@ class PaymentNotifier extends ChangeNotifier {
   /// 3. Handles failure or missing transaction ID.
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
-  Future<void> initiatePayment() async {
+  Future<void> initiatePayment({
+    num? tnxAmountInKobo,
+  }) async {
     _updateState(MonaSDKState.loading);
 
     final (Map<String, dynamic>? success, failure) =
-        await _paymentsService.initiatePayment();
+        await _paymentsService.initiatePayment(
+      tnxAmountInKobo: tnxAmountInKobo ?? 2000,
+    );
 
     if (failure != null) {
       _handleError('Payment initiation failed. Please try again.');
