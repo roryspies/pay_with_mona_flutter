@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 enum PaymentState { idle, loading, success, error }
 
+enum TransactionState {
+  completed,
+  failed,
+  initiated,
+}
+
 enum PaymentUserType {
   monaUser,
   nonMonaUser;

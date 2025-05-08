@@ -68,4 +68,8 @@ class SecureStorage {
       iOptions: _iOSOptions,
     );
   }
+
+  Future<void> deleteAll() async {
+    await _storage.deleteAll();
+  }
 }
