@@ -3,7 +3,7 @@ import 'package:example/views/customer_info_view.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
-import 'package:pay_with_mona/pay_with_mona.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class CheckoutView extends StatelessWidget {
   const CheckoutView({super.key});
