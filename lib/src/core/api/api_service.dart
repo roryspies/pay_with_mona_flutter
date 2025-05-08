@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:pay_with_mona/src/core/api_exceptions.dart';
-import 'package:pay_with_mona/src/core/api_response.dart';
+import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
+import 'package:pay_with_mona/src/core/api/api_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
-import '../core/config.dart';
+import '../config.dart';
 
 import 'dart:io';
 

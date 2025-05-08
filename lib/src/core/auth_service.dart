@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:pay_with_mona/src/core/api_service.dart';
+import 'package:pay_with_mona/src/core/api/api_service.dart';
 import 'package:pay_with_mona/src/core/secure_storage.dart';
 import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/signatures.dart';
@@ -182,5 +182,9 @@ class AuthService {
 
       return null;
     }
+  }
+
+  Future<void> clearKeys() async {
+    await _secureStorage.deleteAll();
   }
 }

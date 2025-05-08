@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
+import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
@@ -28,14 +29,33 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await paymentNotifier.initiatePayment();
+        PaymentNotifier().transactionStateStream.listen(
+          (state) {
+            switch (state) {
+              case TransactionState.initiated:
+                ('🎉  PayWithMonaWidget ==>>  Transaction started').log();
+                break;
+              case TransactionState.completed:
+                ('✅ PayWithMonaWidget ==>>  Transaction completed').log();
+                break;
+              case TransactionState.failed:
+                ('⛔  PayWithMonaWidget ==>> Transaction failed').log();
+                break;
+            }
+          },
+          onError: (err) {
+            ('Error from transactionStateStream: $err').log();
+          },
+        );
       },
     );
   }
 
   @override
   void dispose() {
+    /// *** Considering we're using a singleton class for Payment Notifier
+    /// *** Do not dispose the Notifier itself, so that instance isn't gone with the wind.
     paymentNotifier.removeListener(_onPaymentStateChange);
-    paymentNotifier.dispose();
     super.dispose();
   }
 
@@ -44,6 +64,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
   @override
   Widget build(BuildContext context) {
+    "PayWithMonaWidget BUILD CALLED".log();
+
     final savedBanks =
         paymentNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
@@ -147,6 +169,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
             ),
           ],
 
+          /// *** Saved Banks
           if (savedBanks != null && savedBanks.isNotEmpty) ...[
             Column(
               children: savedBanks.map(
@@ -285,9 +308,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       paymentNotifier
                         ..setCallingBuildContext(context: context)
                         ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
-                        ..makePayment(
-                          method: paymentNotifier.selectedPaymentMethod.type,
-                        );
+                        ..makePayment();
                     },
                     child: Text(
                       "Proceed to pay ",

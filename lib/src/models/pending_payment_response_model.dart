@@ -291,11 +291,13 @@ class TransferDetails {
   final String? accountName;
   final String? bankName;
   final String? accountNumber;
+  final String? institutionCode;
 
   TransferDetails({
     this.accountName,
     this.bankName,
     this.accountNumber,
+    this.institutionCode,
   });
 
   factory TransferDetails.fromJSON({required Map<String, dynamic> json}) {
@@ -303,6 +305,7 @@ class TransferDetails {
       accountName: json['accountName'] as String?,
       bankName: json['bankName'] as String?,
       accountNumber: json['accountNumber'] as String?,
+      institutionCode: json['institutionCode'] as String?,
     );
   }
 
@@ -310,6 +313,7 @@ class TransferDetails {
         if (accountName != null) 'accountName': accountName,
         if (bankName != null) 'bankName': bankName,
         if (accountNumber != null) 'accountNumber': accountNumber,
+        if (institutionCode != null) 'institutionCode': accountNumber,
       };
 }
 

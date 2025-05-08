@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
@@ -88,6 +90,10 @@ class PaymentNotifier extends ChangeNotifier {
   @override
   void dispose() {
     _firebaseSSE.dispose();
+    // Close the transaction state stream
+    if (!_transactionStateController.isClosed) {
+      _transactionStateController.close();
+    }
     super.dispose();
   }
 
@@ -186,7 +192,7 @@ class PaymentNotifier extends ChangeNotifier {
 
     if (failure != null) {
       _handleError('Payment initiation failed. Please try again.');
-      return;
+      throw (failure.message);
     }
 
     final txId = success?['transactionId'] as String?;
@@ -236,41 +242,66 @@ class PaymentNotifier extends ChangeNotifier {
   ///
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
-  Future<void> makePayment({required String method}) async {
+  Future<void> makePayment() async {
     _updateState(PaymentState.loading);
 
-    // Initialize SSE listener for real-time events
-    _firebaseSSE.initialize(
-      databaseUrl:
-          'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app',
-    );
+    if (_currentTransactionId == null) {
+      await initiatePayment();
+    }
 
-    final sessionID = math.Random.secure().nextInt(999999999).toString();
+    // Initialize SSE listener for real-time events
+    _firebaseSSE.initialize();
+
     bool hasError = false;
+    bool hasTransactionUpdateError = false;
     bool authError = false;
 
     // Concurrently listen for transaction completion and authentication tokens
     await Future.wait([
-      _listenForTransactionEvents(hasError),
-      _listenForAuthEvents(sessionID, authError),
+      _listenForPaymentUpdates(hasError),
+      _listenForTransactionUpdateEvents(hasTransactionUpdateError),
     ]);
 
     // ignore: dead_code
     if (hasError || authError) return;
 
-    final url = _buildPaymentUrl(sessionID, method);
-    await _launchPaymentUrl(url);
+    switch (_selectedPaymentMethod) {
+      case PaymentMethod.savedBank:
+        try {
+          await _paymentsService.makePaymentRequest(
+            onPayComplete: () {
+              "Payment Notifier ::: Make Payment Request Complete".log();
+
+              clearSelectedPaymentMethod();
+              _currentTransactionId = null;
+            },
+          );
+
+          _updateState(PaymentState.idle);
+        } catch (error, trace) {
+          _handleError('Error listening for transaction updates.');
+          "Payment Notifier ::: makePayment ::: PaymentMethod.savedBank ::: ERROR ::: $error TRACE ::: $trace"
+              .log();
+        }
+        break;
+
+      default:
+        final sessionID = math.Random.secure().nextInt(999999999).toString();
+        await _listenForAuthEvents(sessionID, authError);
+
+        final url = _buildPaymentUrl(
+          sessionID,
+          _selectedPaymentMethod.type,
+        );
+        await _launchPaymentUrl(url);
+        break;
+    }
   }
 
-  Future<void> _listenForTransactionEvents(bool errorFlag) async {
-    await _firebaseSSE.startListening(
+  Future<void> _listenForPaymentUpdates(bool errorFlag) async {
+    await _firebaseSSE.listenForPaymentUpdates(
       transactionId: _currentTransactionId ?? '',
-      onDataChange: (event) {
-        if (event == 'transaction_completed' || event == 'transaction_failed') {
-          _firebaseSSE.dispose();
-          closeCustomTabs();
-        }
-      },
+      onDataChange: (event) {},
       onError: (error) {
         _handleError('Error listening for transaction updates.');
         errorFlag = true;
@@ -278,8 +309,40 @@ class PaymentNotifier extends ChangeNotifier {
     );
   }
 
+  Future<void> _listenForTransactionUpdateEvents(bool errorFlag) async {
+    await _firebaseSSE.listenForTransactionMessages(
+      transactionId: _currentTransactionId ?? "",
+      onDataChange: (event) async {
+        "_listenForTransactionUpdateEvents ::: EVENT $event".log();
+        final eventData = jsonDecode(event) as Map<String, dynamic>;
+        final theEvent = eventData["event"];
+
+        if (theEvent == "transaction_initiated") {
+          "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
+              .log();
+          _emitTransactionState(TransactionState.initiated);
+        }
+
+        if (theEvent == "transaction_failed") {
+          "😭 _listenForTransactionUpdateEvents ::: transaction_initiated"
+              .log();
+          _emitTransactionState(TransactionState.failed);
+        }
+
+        if (theEvent == "transaction_completed") {
+          "✅ _listenForTransactionUpdateEvents ::: transaction_initiated".log();
+          _emitTransactionState(TransactionState.completed);
+        }
+      },
+      onError: (error) {
+        _handleError('Error during strong authentication.');
+        errorFlag = true;
+      },
+    );
+  }
+
   Future<void> _listenForAuthEvents(String sessionId, bool errorFlag) async {
-    await _firebaseSSE.listenToCustomEvents(
+    await _firebaseSSE.listenToAuthNEvents(
       sessionID: sessionId,
       onDataChange: (token) async {
         _strongAuthToken = token;
@@ -367,6 +430,23 @@ class PaymentNotifier extends ChangeNotifier {
       );
     } catch (e) {
       _handleError('Unexpected error during authentication.');
+    }
+  }
+
+  /// *** Stream Controller Section
+  /// *** Stream Controller Section
+  /// Stream controller for transaction state events
+  final StreamController<TransactionState> _transactionStateController =
+      StreamController<TransactionState>.broadcast();
+
+  /// Stream of transaction state events for SDK consumers to subscribe to
+  Stream<TransactionState> get transactionStateStream =>
+      _transactionStateController.stream;
+
+  /// Helper method to emit transaction state events
+  void _emitTransactionState(TransactionState state) {
+    if (!_transactionStateController.isClosed) {
+      _transactionStateController.add(state);
     }
   }
 }
