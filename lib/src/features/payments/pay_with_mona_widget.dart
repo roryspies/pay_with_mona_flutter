@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
@@ -30,7 +32,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await paymentNotifier.initiatePayment();
-        PaymentNotifier().transactionStateStream.listen(
+        PaymentNotifier().txnStateStream.listen(
           (state) {
             switch (state) {
               case TransactionState.initiated:
@@ -282,7 +284,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
           ///
           AnimatedSwitcher(
             duration: Duration(milliseconds: 300),
-            child: switch (paymentNotifier.state == PaymentState.loading) {
+            child: switch (paymentNotifier.state == MonaSDKState.loading) {
               true => Align(
                   alignment: Alignment.center,
                   child: CircularProgressIndicator(

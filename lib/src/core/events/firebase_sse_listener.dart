@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+// ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
@@ -273,28 +274,38 @@ class FirebaseSSEListener {
 
     try {
       final data = json.decode(jsonData);
+
       if (data is Map<String, dynamic>) {
         _logMessage('Parsed data: $data');
 
         final eventData = data['data'];
-        _logMessage('Event data: $eventData');
 
+        /// *** String events
         if (eventData is String) {
           _logMessage('Emitting String event: $eventData');
           onDataChange?.call(eventData);
-        } else if (eventData is Map<String, dynamic>) {
+          return;
+        }
+
+        /// *** MAP Events
+        else if (eventData is Map<String, dynamic>) {
+          _logMessage('Emitting MAP event: $eventData');
           if (eventData.containsKey('strongAuthToken')) {
-            final strongAuthToken = eventData['strongAuthToken'];
-            _logMessage('Strong Auth Token: $strongAuthToken');
-            onDataChange?.call(strongAuthToken);
-          } else {
-            _logMessage('Event data does not contain strongAuthToken');
-            onDataChange?.call(jsonEncode(eventData));
+            _logMessage("MAP Event contains strongAuthToken");
           }
-        } else {
+
+          onDataChange?.call(jsonEncode(eventData));
+          return;
+        }
+
+        /// *** Unexpected Events
+        else {
           _logMessage('Unexpected event structure: $eventData');
         }
-      } else {
+      }
+
+      /// *** Unhandled Data Type
+      else {
         _logMessage('Unexpected data type: ${data.runtimeType}');
       }
     } catch (e) {
