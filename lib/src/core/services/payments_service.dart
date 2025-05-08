@@ -7,7 +7,7 @@ import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.da
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
-import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
+import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
@@ -22,12 +22,14 @@ class PaymentService {
   final _apiService = ApiService();
 
   /// Initiates a checkout session.
-  FutureOutcome<Map<String, dynamic>> initiatePayment() async {
+  FutureOutcome<Map<String, dynamic>> initiatePayment({
+    required num tnxAmountInKobo,
+  }) async {
     try {
       final response = await _apiService.post(
         '/demo/checkout',
         data: {
-          'amount': 2000,
+          'amount': tnxAmountInKobo,
         },
       );
 
@@ -72,7 +74,7 @@ class PaymentService {
     TransactionPaymentTypes paymentType = TransactionPaymentTypes.bank,
     Function? onPayComplete,
   }) async {
-    final paymentNotifier = PaymentNotifier();
+    final paymentNotifier = MonaSDKNotifier();
     final secureStorage = SecureStorage();
     final payload = await paymentNotifier.buildBankPaymentPayload();
     final monaKeyID = await secureStorage.read(
