@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
+import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
@@ -29,24 +33,64 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await paymentNotifier.initiatePayment();
-        PaymentNotifier().transactionStateStream.listen(
-          (state) {
-            switch (state) {
-              case TransactionState.initiated:
-                ('🎉  PayWithMonaWidget ==>>  Transaction started').log();
-                break;
-              case TransactionState.completed:
-                ('✅ PayWithMonaWidget ==>>  Transaction completed').log();
-                break;
-              case TransactionState.failed:
-                ('⛔  PayWithMonaWidget ==>> Transaction failed').log();
-                break;
-            }
-          },
-          onError: (err) {
-            ('Error from transactionStateStream: $err').log();
-          },
-        );
+        paymentNotifier
+          ..txnStateStream.listen(
+            (state) {
+              switch (state) {
+                case TransactionState.initiated:
+                  ('🎉  PayWithMonaWidget ==>>  Transaction started').log();
+                  break;
+                case TransactionState.completed:
+                  ('✅ PayWithMonaWidget ==>>  Transaction completed').log();
+                  break;
+                case TransactionState.failed:
+                  ('⛔  PayWithMonaWidget ==>> Transaction failed').log();
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          )
+          ..sdkStateStream.listen(
+            (state) {
+              switch (state) {
+                case MonaSDKState.idle:
+                  ('🎉  PayWithMonaWidget ==>> SDK is Idle').log();
+                  break;
+                case MonaSDKState.loading:
+                  ('🔄 PayWithMonaWidget ==>>  SDK is Loading').log();
+                  break;
+                case MonaSDKState.error:
+                  ('⛔  PayWithMonaWidget ==>> SDK Has Errors').log();
+                  break;
+                case MonaSDKState.success:
+                  ('👍  PayWithMonaWidget ==>> SDK is in Success state').log();
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          )
+          ..authStateStream.listen(
+            (state) {
+              switch (state) {
+                case AuthState.loggedIn:
+                  ('🎉  PayWithMonaWidget ==>>  Auth State Logged In').log();
+                  break;
+                case AuthState.loggedOut:
+                  ('👀 PayWithMonaWidget ==>>  Auth State Logged Out').log();
+                  break;
+                case AuthState.error:
+                  ('⛔  PayWithMonaWidget ==>> Auth Has Error').log();
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          );
       },
     );
   }
@@ -281,7 +325,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
           ///
           AnimatedSwitcher(
             duration: Duration(milliseconds: 300),
-            child: switch (paymentNotifier.state == PaymentState.loading) {
+            child: switch (paymentNotifier.state == MonaSDKState.loading) {
               true => Align(
                   alignment: Alignment.center,
                   child: CircularProgressIndicator(
@@ -322,6 +366,24 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 )
             },
           ),
+
+          context.sbH(16),
+
+          Center(
+            child: TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await AuthService.singleInstance.clearKeys();
+              },
+              child: Text(
+                "Clear Exchange Keys",
+                style: TextStyle(
+                  fontSize: context.sp(14),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          )
         ],
       ),
     );

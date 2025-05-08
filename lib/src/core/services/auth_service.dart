@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
-import 'package:pay_with_mona/src/core/secure_storage.dart';
-import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/core/signatures.dart';
-import 'package:pay_with_mona/src/core/uuid_generator.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
+import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
+import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
@@ -78,7 +78,7 @@ class AuthService {
     Function()? move,
     Function()? onBioError,
   }) async {
-    final signatureService = BiometricSignatureHelper();
+    final signatureService = BiometricService();
 
     final id = UUIDGenerator.v4();
     Map<String, dynamic> payload = {
@@ -186,5 +186,6 @@ class AuthService {
 
   Future<void> clearKeys() async {
     await _secureStorage.deleteAll();
+    "Cleared Secure Storage Keys".log();
   }
 }
