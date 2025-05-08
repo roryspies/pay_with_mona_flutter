@@ -1,5 +1,6 @@
 export 'package:pay_with_mona/src/features/collections/views/create_collection_view.dart';
 export 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
+export 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 
 import 'package:flutter/material.dart';
 
