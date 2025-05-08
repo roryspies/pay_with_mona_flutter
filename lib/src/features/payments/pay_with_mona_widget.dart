@@ -369,8 +369,12 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
           Center(
             child: TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
-                await AuthService.singleInstance.clearKeys();
+                final navigator = Navigator.of(context);
+
+                sdkNotifier.invalidate();
+                await AuthService.singleInstance.permanentlyClearKeys();
+
+                navigator.pop();
               },
               child: Text(
                 "Clear Exchange Keys",

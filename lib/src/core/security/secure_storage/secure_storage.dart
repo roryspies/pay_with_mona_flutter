@@ -103,17 +103,25 @@ class SecureStorage {
   ///
   /// Throws:
   /// - [PlatformException] if the operation fails.
-  Future<void> clear() async {
-    await _storage.deleteAll(
-      aOptions: _androidOptions,
-      iOptions: _iOSOptions,
-    );
+  Future<void> permanentlyClearKeys() async {
+    try {
+      await _storage.deleteAll(
+        aOptions: _androidOptions,
+        iOptions: _iOSOptions,
+      );
+    } catch (e, stackTrace) {
+      throw Exception('Failed to clear secure storage: $e\n$stackTrace');
+    }
   }
 
   /// Deletes all entries using default options (no platform-specific settings).
   ///
   /// Provided for compatibility; preferred method is [clear()].
-  Future<void> deleteAll() async {
-    await _storage.deleteAll();
+  Future<void> clearKeys() async {
+    try {
+      await _storage.deleteAll();
+    } catch (e, stackTrace) {
+      throw Exception('Failed to clear secure storage keys: $e\n$stackTrace');
+    }
   }
 }
