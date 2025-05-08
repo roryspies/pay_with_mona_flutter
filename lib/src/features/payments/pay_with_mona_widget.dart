@@ -33,7 +33,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
-        await sdkNotifier.initiatePayment();
+        // await sdkNotifier.initiatePayment();
         sdkNotifier
           ..txnStateStream.listen(
             (state) {
