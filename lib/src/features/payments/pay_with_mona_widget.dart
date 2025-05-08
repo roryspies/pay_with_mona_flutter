@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/payments/controller/payment_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
@@ -322,6 +323,24 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 )
             },
           ),
+
+          context.sbH(16),
+
+          Center(
+            child: TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await AuthService.singleInstance.clearKeys();
+              },
+              child: Text(
+                "Clear Exchange Keys",
+                style: TextStyle(
+                  fontSize: context.sp(14),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          )
         ],
       ),
     );

@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
-import 'package:pay_with_mona/src/core/secure_storage.dart';
-import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
+import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/core/auth_service.dart';
-import 'package:pay_with_mona/src/core/payments_service.dart';
+import 'package:pay_with_mona/src/core/services/auth_service.dart';
+import 'package:pay_with_mona/src/core/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -214,6 +214,7 @@ class PaymentNotifier extends ChangeNotifier {
 
     if (userCheckoutID == null) {
       _handleError('User identifier not found. Please log in again.');
+      "User identifier not found. Please log in again.".log();
       return;
     }
 
@@ -433,7 +434,6 @@ class PaymentNotifier extends ChangeNotifier {
     }
   }
 
-  /// *** Stream Controller Section
   /// *** Stream Controller Section
   /// Stream controller for transaction state events
   final StreamController<TransactionState> _transactionStateController =

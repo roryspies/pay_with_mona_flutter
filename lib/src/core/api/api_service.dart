@@ -5,7 +5,7 @@ import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
-import '../config.dart';
+import 'api_config.dart';
 
 import 'dart:io';
 
