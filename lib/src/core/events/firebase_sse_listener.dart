@@ -1,25 +1,45 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 // ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
 /// Enum to represent different states of the SSE connection
-enum SSEConnectionState { disconnected, connecting, connected, error }
+enum SSEConnectionState {
+  /// Not connected to any Firebase event source
+  disconnected,
+
+  /// Currently establishing a connection
+  connecting,
+
+  /// Successfully connected and receiving events
+  connected,
+
+  /// Connection encountered an error
+  error
+}
 
 /// Enhanced Firebase Server-Sent Events (SSE) Listener
-/// Provides robust real-time event listening for Firebase Realtime Database
+///
+/// Provides robust real-time event listening for Firebase Realtime Database with
+/// automatic reconnection, proper resource management, and state tracking.
 class FirebaseSSEListener {
+  // MARK: - Singleton Implementation
+
+  /// Private constructor for singleton pattern
+  FirebaseSSEListener._();
+
   /// Singleton instance
-  static final FirebaseSSEListener _instance = FirebaseSSEListener._internal();
+  static final FirebaseSSEListener _instance = FirebaseSSEListener._();
 
   /// Factory constructor for singleton access
   factory FirebaseSSEListener() => _instance;
 
-  FirebaseSSEListener._internal();
+  // MARK: - Properties
 
   /// HTTP client for making network requests
-  final http.Client _httpClient = http.Client();
+  late http.Client _httpClient;
 
   /// Firebase Realtime Database URL
   String _databaseUrl =
@@ -31,218 +51,304 @@ class FirebaseSSEListener {
   /// Current transaction ID being listened to
   String? _currentTransactionId;
 
-  /// Current authn event ID being listened to
+  /// Current authentication event ID being listened to
   String? _currentAuthNSessionID;
 
   /// Current connection state
   SSEConnectionState _connectionState = SSEConnectionState.disconnected;
 
   /// Stream controller for broadcasting connection state changes
-  final StreamController<SSEConnectionState> _stateController =
-      StreamController<SSEConnectionState>.broadcast();
+  late StreamController<SSEConnectionState> _stateController;
+
+  /// Flag to track initialization state
+  bool _isInitialized = false;
+
+  // MARK: - Public Getters
 
   /// Getter for current connection state
   SSEConnectionState get connectionState => _connectionState;
 
   /// Stream of connection state changes
-  Stream<SSEConnectionState> get connectionStateStream =>
-      _stateController.stream;
+  Stream<SSEConnectionState> get connectionStateStream {
+    _ensureInitialized();
+    return _stateController.stream;
+  }
 
   /// Checks if currently listening to events
   bool get isListening => _subscription != null;
 
+  // MARK: - Initialization
+
+  /// Ensures the listener is properly initialized
+  void _ensureInitialized() {
+    if (!_isInitialized) {
+      _httpClient = http.Client();
+      _stateController = StreamController<SSEConnectionState>.broadcast();
+      _isInitialized = true;
+      _logMessage('Initialized base components');
+    }
+  }
+
   /// Initialize the SSE listener with a Firebase Realtime Database URL
   ///
-  /// [databaseUrl] The base URL of the Firebase Realtime Database
-  void initialize({
-    String? databaseUrl,
-  }) {
-    //ArgumentError.checkNotNull(databaseUrl, 'databaseUrl');
+  /// [databaseUrl] Optional custom URL of the Firebase Realtime Database
+  void initialize({String? databaseUrl}) {
+    _ensureInitialized();
 
-    if (databaseUrl != null) {
+    if (databaseUrl != null && databaseUrl.isNotEmpty) {
       _databaseUrl = databaseUrl.trim();
     }
 
     _logMessage('Initialized with database URL: $_databaseUrl');
   }
 
-  /// Constructs the Firebase database path for a specific transaction
+  // MARK: - URL Path Helpers
+
+  /// Constructs the Firebase database path for a payment update
   String _path(String transactionId) =>
       '/public/paymentUpdate/$transactionId.json';
 
-  /// Constructs the Firebase database path for a specific transaction
+  /// Constructs the Firebase database path for transaction messages
   String _transactionMessagePath(String transactionId) =>
       '/public/transaction-messages/$transactionId.json';
 
-  /// Constructs the Firebase database path for a specific transaction
+  /// Constructs the Firebase database path for authentication events
   String _authNPath(String sessionID) =>
       '/public/login_success/authn_$sessionID.json';
 
-  /// Start listening to SSE events for a given transaction
+  // MARK: - Listening Methods
+
+  /// Start listening to SSE events for a payment update
   ///
   /// [transactionId] Unique identifier for the transaction
   /// [onDataChange] Callback for received data
   /// [onError] Callback for handling errors
+  /// [autoReconnect] Whether to automatically reconnect on failure (default: true)
   Future<void> listenForPaymentUpdates({
     required String transactionId,
     Function(String)? onDataChange,
     Function(Object)? onError,
+    bool autoReconnect = true,
   }) async {
+    _ensureInitialized();
+
     try {
       // Validate initialization
       if (_databaseUrl.isEmpty) {
         throw StateError(
-            'FirebaseSSE not initialized. Call initialize() first.');
+            'Firebase SSE not initialized with valid database URL.');
       }
 
       // Stop any existing listener if listening to a different transaction
-      if (_currentTransactionId == transactionId && isListening) {
-        _logMessage('Already listening to: $transactionId');
+      if (_currentTransactionId != transactionId && isListening) {
+        _logMessage(
+            'Switching from transaction $_currentTransactionId to $transactionId');
         await _stopListening();
+      } else if (_currentTransactionId == transactionId && isListening) {
+        _logMessage('Already listening to transaction: $transactionId');
+        return;
       }
-
-      // Ensure previous listener is stopped
-      await _stopListening();
 
       _currentTransactionId = transactionId;
       final uri = Uri.parse('$_databaseUrl${_path(transactionId)}');
 
-      final request = http.Request('GET', uri)
-        ..headers['Accept'] = 'text/event-stream';
-      _updateConnectionState(SSEConnectionState.connecting);
-
-      final response = await _httpClient.send(request);
-      _logMessage('Connection established. Listening for events...');
-      _logMessage('listenForPaymentUpdates ::: Firebase Connection URL: $uri');
-
-      _subscription = response.stream.transform(utf8.decoder).listen(
-        (String event) {
-          _logMessage('Raw event received: $event');
-          _processEvent(event, onDataChange, onError);
-        },
-        onError: (error) {
-          _logMessage('Connection error: $error');
-          _handleError(error, onError);
-        },
-        onDone: () {
-          _logMessage('Connection closed.');
-          _stopListening();
-        },
-        cancelOnError: true,
+      await _establishConnection(
+        uri: uri,
+        onDataChange: onDataChange,
+        onError: onError,
+        connectionType: 'Payment Updates',
+        autoReconnect: autoReconnect,
       );
-
-      _updateConnectionState(SSEConnectionState.connected);
     } catch (e) {
-      _logMessage('Connection failed');
+      _logMessage('Failed to listen for payment updates: $e');
       _handleError(e, onError);
       await _stopListening();
     }
   }
 
+  /// Start listening to SSE events for transaction messages
+  ///
+  /// [transactionId] Unique identifier for the transaction
+  /// [onDataChange] Callback for received data
+  /// [onError] Callback for handling errors
+  /// [autoReconnect] Whether to automatically reconnect on failure (default: true)
   Future<void> listenForTransactionMessages({
     required String transactionId,
     Function(String)? onDataChange,
     Function(Object)? onError,
+    bool autoReconnect = true,
   }) async {
+    _ensureInitialized();
+
     try {
       if (_databaseUrl.isEmpty) {
         throw StateError(
-          'FirebaseSSE not initialized. Call initialize() first.',
-        );
+            'Firebase SSE not initialized with valid database URL.');
       }
 
+      // Check if already listening to this transaction
+      if (_currentTransactionId == transactionId && isListening) {
+        _logMessage(
+            'Already listening to transaction messages: $transactionId');
+        return;
+      }
+
+      // Stop any existing listener
+      await _stopListening();
+
+      _currentTransactionId = transactionId;
       final uri =
           Uri.parse('$_databaseUrl${_transactionMessagePath(transactionId)}');
 
-      final request = http.Request('GET', uri)
-        ..headers['Accept'] = 'text/event-stream';
-      _updateConnectionState(SSEConnectionState.connecting);
-
-      final response = await _httpClient.send(request);
-      _logMessage('Connection established. Listening for events...');
-      _logMessage(
-        'listenForTransactionMessages ::: Firebase Connection URL: $uri',
+      await _establishConnection(
+        uri: uri,
+        onDataChange: onDataChange,
+        onError: onError,
+        connectionType: 'Transaction Messages',
+        autoReconnect: autoReconnect,
       );
-
-      _subscription = response.stream.transform(utf8.decoder).listen(
-        (String event) {
-          _logMessage('Raw event received: $event');
-          _processEvent(event, onDataChange, onError);
-        },
-        onError: (error) {
-          _logMessage('Connection error: $error');
-          _handleError(error, onError);
-        },
-        onDone: () {
-          _logMessage('Connection closed.');
-          _stopListening();
-        },
-        cancelOnError: true,
-      );
-
-      _updateConnectionState(SSEConnectionState.connected);
     } catch (e) {
-      _logMessage('Connection failed');
+      _logMessage('Failed to listen for transaction messages: $e');
       _handleError(e, onError);
       await _stopListening();
     }
   }
 
+  /// Start listening to SSE events for authentication events
+  ///
+  /// [sessionID] Unique identifier for the authentication session
+  /// [onDataChange] Callback for received data
+  /// [onError] Callback for handling errors
+  /// [autoReconnect] Whether to automatically reconnect on failure (default: true)
   Future<void> listenToAuthNEvents({
     required String sessionID,
     Function(String)? onDataChange,
     Function(Object)? onError,
+    bool autoReconnect = true,
   }) async {
+    _ensureInitialized();
+
     try {
       if (_databaseUrl.isEmpty) {
         throw StateError(
-            'FirebaseSSE not initialized. Call initialize() first.');
+            'Firebase SSE not initialized with valid database URL.');
       }
 
-      // Stop any existing listener if listening to a different transaction
+      // Check if already listening to this session
       if (_currentAuthNSessionID == sessionID && isListening) {
-        _logMessage('Already listening to: $sessionID');
-        await _stopListening();
+        _logMessage('Already listening to authentication events: $sessionID');
+        return;
       }
 
-      // Ensure previous listener is stopped
+      // Stop any existing listener
       await _stopListening();
 
       _currentAuthNSessionID = sessionID;
       final uri = Uri.parse('$_databaseUrl${_authNPath(sessionID)}');
 
+      await _establishConnection(
+        uri: uri,
+        onDataChange: onDataChange,
+        onError: onError,
+        connectionType: 'Authentication Events',
+        autoReconnect: autoReconnect,
+      );
+    } catch (e) {
+      _logMessage('Failed to listen for authentication events: $e');
+      _handleError(e, onError);
+      await _stopListening();
+    }
+  }
+
+  // MARK: - Connection Management
+
+  /// Establishes an SSE connection to the specified URI
+  Future<void> _establishConnection({
+    required Uri uri,
+    required Function(String)? onDataChange,
+    required Function(Object)? onError,
+    required String connectionType,
+    bool autoReconnect = true,
+  }) async {
+    try {
       final request = http.Request('GET', uri)
-        ..headers['Accept'] = 'text/event-stream';
+        ..headers['Accept'] = 'text/event-stream'
+        ..headers['Cache-Control'] = 'no-cache';
+
       _updateConnectionState(SSEConnectionState.connecting);
 
       final response = await _httpClient.send(request);
-      _logMessage('Connection established. Listening for events...');
 
-      _logMessage('listenToCustomEvents ::: Firebase Connection URL: $uri');
+      if (response.statusCode != 200) {
+        throw HttpException('Failed to connect: HTTP ${response.statusCode}');
+      }
+
+      _logMessage('$connectionType connection established at: $uri');
 
       _subscription = response.stream.transform(utf8.decoder).listen(
         (String event) {
-          _logMessage('Raw event received: $event');
+          _logMessage(
+              'Event received: ${event.length > 100 ? '${event.substring(0, 100)}...' : event}');
           _processEvent(event, onDataChange, onError);
         },
         onError: (error) {
           _logMessage('Connection error: $error');
           _handleError(error, onError);
+
+          if (autoReconnect) {
+            _logMessage('Attempting to reconnect in 3 seconds...');
+            Future.delayed(Duration(seconds: 3), () {
+              _establishConnection(
+                uri: uri,
+                onDataChange: onDataChange,
+                onError: onError,
+                connectionType: connectionType,
+                autoReconnect: autoReconnect,
+              );
+            });
+          }
         },
         onDone: () {
           _logMessage('Connection closed.');
-          _stopListening();
+          _updateConnectionState(SSEConnectionState.disconnected);
+
+          if (autoReconnect) {
+            _logMessage('Attempting to reconnect in 3 seconds...');
+            Future.delayed(Duration(seconds: 3), () {
+              _establishConnection(
+                uri: uri,
+                onDataChange: onDataChange,
+                onError: onError,
+                connectionType: connectionType,
+                autoReconnect: autoReconnect,
+              );
+            });
+          }
         },
-        cancelOnError: true,
+        cancelOnError: false, // We handle errors explicitly for reconnection
       );
 
       _updateConnectionState(SSEConnectionState.connected);
     } catch (e) {
-      _logMessage('Connection failed');
+      _logMessage('Connection establishment failed: $e');
       _handleError(e, onError);
-      await _stopListening();
+
+      if (autoReconnect) {
+        _logMessage('Attempting to reconnect in 5 seconds...');
+        Future.delayed(Duration(seconds: 5), () {
+          _establishConnection(
+            uri: uri,
+            onDataChange: onDataChange,
+            onError: onError,
+            connectionType: connectionType,
+            autoReconnect: autoReconnect,
+          );
+        });
+      }
     }
   }
+
+  // MARK: - Event Processing
 
   /// Process individual SSE events
   void _processEvent(
@@ -250,11 +356,29 @@ class FirebaseSSEListener {
     Function(String)? onDataChange,
     Function(Object)? onError,
   ) {
-    final lines = event.split('\n');
-    for (var line in lines) {
-      if (line.startsWith('data: ')) {
-        _processDataLine(line, onDataChange, onError);
+    try {
+      final lines = event.split('\n');
+
+      for (var line in lines) {
+        // Skip empty lines
+        if (line.trim().isEmpty) continue;
+
+        // Parse data lines
+        if (line.startsWith('data: ')) {
+          _processDataLine(line, onDataChange, onError);
+        }
+        // Handle other event types if needed
+        else if (line.startsWith('event: ')) {
+          final eventType = line.substring(7).trim();
+          _logMessage('Event type: $eventType');
+        } else if (line.startsWith('id: ')) {
+          final eventId = line.substring(4).trim();
+          _logMessage('Event ID: $eventId');
+        }
       }
+    } catch (e) {
+      _logMessage('Event processing error: $e');
+      _handleError(e, onError);
     }
   }
 
@@ -264,55 +388,46 @@ class FirebaseSSEListener {
     Function(String)? onDataChange,
     Function(Object)? onError,
   ) {
-    final jsonData = line.substring(6).trim();
-    _logMessage('Extracted JSON: $jsonData');
-
-    if (jsonData.isEmpty || jsonData == 'null') {
-      _logMessage('Skipping null or empty data');
-      return;
-    }
-
     try {
+      final jsonData = line.substring(6).trim();
+
+      if (jsonData.isEmpty || jsonData == 'null') {
+        _logMessage('Skipping null or empty data');
+        return;
+      }
+
       final data = json.decode(jsonData);
 
       if (data is Map<String, dynamic>) {
-        _logMessage('Parsed data: $data');
-
         final eventData = data['data'];
 
-        /// *** String events
+        // Handle string events
         if (eventData is String) {
-          _logMessage('Emitting String event: $eventData');
+          _logMessage(
+              'Processing string event: ${eventData.length > 50 ? '${eventData.substring(0, 50)}...' : eventData}');
           onDataChange?.call(eventData);
-          return;
         }
-
-        /// *** MAP Events
+        // Handle map events
         else if (eventData is Map<String, dynamic>) {
-          _logMessage('Emitting MAP event: $eventData');
-          if (eventData.containsKey('strongAuthToken')) {
-            _logMessage("MAP Event contains strongAuthToken");
-          }
-
-          onDataChange?.call(jsonEncode(eventData));
-          return;
+          _logMessage(
+              'Processing map event with keys: ${eventData.keys.join(', ')}');
+          onDataChange?.call(json.encode(eventData));
         }
-
-        /// *** Unexpected Events
-        else {
-          _logMessage('Unexpected event structure: $eventData');
+        // Handle other types
+        else if (eventData != null) {
+          _logMessage('Unhandled event data type: ${eventData.runtimeType}');
+          onDataChange?.call(json.encode({'data': eventData}));
         }
-      }
-
-      /// *** Unhandled Data Type
-      else {
-        _logMessage('Unexpected data type: ${data.runtimeType}');
+      } else {
+        _logMessage('Unexpected data format: ${data.runtimeType}');
       }
     } catch (e) {
-      _logMessage('JSON decode error: $e');
+      _logMessage('Data processing error: $e');
       onError?.call(e);
     }
   }
+
+  // MARK: - Error Handling
 
   /// Handle errors and update connection state
   void _handleError(Object error, Function(Object)? onError) {
@@ -324,46 +439,59 @@ class FirebaseSSEListener {
   void _updateConnectionState(SSEConnectionState newState) {
     if (_connectionState != newState) {
       _connectionState = newState;
-      _logMessage(_connectionState.toString());
+      _logMessage('Connection state changed to: $newState');
 
-      // Only add if the controller is still open
-      if (!_stateController.isClosed) {
+      // Only add if the controller is initialized and not closed
+      if (_isInitialized && !_stateController.isClosed) {
         _stateController.add(newState);
       }
     }
   }
 
+  // MARK: - Cleanup
+
   /// Stop listening and clean up resources
   Future<void> _stopListening() async {
     if (_subscription != null) {
-      _logMessage('Stopping listener...');
+      _logMessage('Stopping active listener');
       await _subscription!.cancel();
       _subscription = null;
       _currentTransactionId = null;
+      _currentAuthNSessionID = null;
 
-      // Safely update connection state
-      if (!_stateController.isClosed) {
-        _updateConnectionState(SSEConnectionState.disconnected);
-      }
-    } else {
-      _logMessage('No active listener.');
+      // Update connection state
+      _updateConnectionState(SSEConnectionState.disconnected);
     }
+  }
+
+  /// Stop listening to all events and close the connection
+  Future<void> stopAllListening() async {
+    await _stopListening();
+    _logMessage('All listeners stopped');
   }
 
   /// Dispose the SSE service when no longer needed
-  void dispose() {
-    _logMessage('Disposing resources...');
+  Future<void> dispose() async {
+    _logMessage('Disposing all resources');
 
-    // Stop listening first
-    _stopListening();
+    // Stop active listeners
+    await _stopListening();
 
-    // Close the state controller only if it's not already closed
-    if (!_stateController.isClosed) {
-      _stateController.close();
+    // Close the state controller if open
+    if (_isInitialized && !_stateController.isClosed) {
+      await _stateController.close();
     }
+
+    // Close the HTTP client
+    _httpClient.close();
+
+    _isInitialized = false;
+    _logMessage('Successfully disposed all resources');
   }
 
-  /// Logging utility
+  // MARK: - Logging
+
+  /// Logging utility with automatic emoji categorization
   void _logMessage(String message) {
     String emoji;
 
@@ -382,6 +510,10 @@ class FirebaseSSEListener {
       emoji = '🛑'; // Stop sign for disposal or stopping
     } else if (message.contains('success') || message.contains('Success')) {
       emoji = '✅'; // Green checkmark for success
+    } else if (message.contains('event')) {
+      emoji = '📬'; // Mailbox for events
+    } else if (message.contains('process')) {
+      emoji = '⚙️'; // Gear for processing
     } else {
       emoji = '📝'; // Memo for general messages
     }
