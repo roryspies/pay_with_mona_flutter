@@ -12,8 +12,11 @@ enum AuthState {
   /// An error occurred during authentication
   error,
 
-  /// An error occurred during authentication
+  /// The User is not a Mona User
   notAMonaUser,
+
+  /// Currently doing login with strong auth token
+  performingLogin,
 }
 
 /// A singleton that manages a broadcast stream of [AuthState] events.

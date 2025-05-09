@@ -18,8 +18,12 @@ class _CheckoutViewState extends State<CheckoutView> {
   @override
   void initState() {
     super.initState();
-    sdkNotifier.initSDK(
-      phoneNumber: "2347019017218",
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) async {
+        await sdkNotifier.initSDK(
+          phoneNumber: "2347019017218",
+        );
+      },
     );
   }
 

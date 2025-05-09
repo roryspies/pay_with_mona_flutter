@@ -33,7 +33,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
-        await sdkNotifier.initiatePayment();
+        //await sdkNotifier.initiatePayment();
         sdkNotifier
           ..txnStateStream.listen(
             (state) {
@@ -88,6 +88,10 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   break;
                 case AuthState.notAMonaUser:
                   ('👤 PayWithMonaWidget ==>> Auth is Not A Mona User').log();
+                  break;
+                case AuthState.performingLogin:
+                  ('🚴‍♀️ PayWithMonaWidget ==>> Currently Doing Login with Strong Auth token')
+                      .log();
                   break;
               }
             },

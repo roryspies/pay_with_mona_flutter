@@ -198,11 +198,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> checkIfUserHasKeyID() async {
-    return await _secureStorage.read(
-      key: SecureStorageKeys.monaCheckoutID,
-    );
-  }
+  Future<String?> checkIfUserHasKeyID() async => await _secureStorage.read(
+        key: SecureStorageKeys.monaCheckoutID,
+      );
 
   Future<void> initSDK({
     String? phoneNumber,
@@ -222,6 +220,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       return;
     }
 
+    _updateState(MonaSDKState.idle);
     switch (response["exists"] as bool) {
       /// *** This is a Mona User
       case true:
@@ -250,8 +249,6 @@ class MonaSDKNotifier extends ChangeNotifier {
         _authStream.emit(state: AuthState.notAMonaUser);
         break;
     }
-
-    _updateState(MonaSDKState.idle);
   }
 
   /// Starts the payment initiation process.
@@ -283,21 +280,20 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
 
     _handleTransactionId(txId);
-    await getPaymentMethods();
+    _updateState(MonaSDKState.idle);
+
+    /// *** @ThatSaxyDev - I doubt we still need this - below, considering we're already using PII
+    /// *** Kindly confirm
+    //await getPaymentMethods();
   }
 
   Future<void> getPaymentMethods() async {
     _updateState(MonaSDKState.loading);
 
-    "NO CHECKOUT ID".log();
-
     final userCheckoutID = await checkIfUserHasKeyID();
 
     if (userCheckoutID == null) {
-      "NO CHECKOUT ID IN IF STATEMENT".log();
-
       _handleError('User identifier not found. Please login again.');
-      "User identifier not found. Please log in again.".log();
       return;
     }
 
@@ -310,11 +306,11 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       if (failure != null) {
         _handleError('Payment initiation failed. Please try again.');
+        _updateState(MonaSDKState.idle);
         return;
       }
 
       setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
-      _pendingPaymentResponseModel?.toJson().log();
       _updateState(MonaSDKState.success);
     } catch (error, trace) {
       _handleError('Error fetching payment methods: $error ::: $trace');
@@ -429,9 +425,15 @@ class MonaSDKNotifier extends ChangeNotifier {
     await _firebaseSSE.listenToAuthNEvents(
       sessionID: sessionId,
       onDataChange: (event) async {
-        /* _strongAuthToken = token;
+        if (event.contains("strongAuthToken")) {
+          _strongAuthToken =
+              (jsonDecode(event) as Map<String, dynamic>)["strongAuthToken"];
+
+          _authStream.emit(state: AuthState.performingLogin);
+        }
+
         await closeCustomTabs();
-        await loginWithStrongAuth(); */
+        await loginWithStrongAuth();
       },
       onError: (error) {
         _handleError('Error during strong authentication.');
@@ -487,6 +489,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         strongAuthToken: _strongAuthToken ?? '',
         phoneNumber: _monaCheckOut?.phoneNumber ?? '',
       );
+
       if (response == null) {
         _handleError('Strong authentication failed.');
         return;
@@ -510,6 +513,7 @@ class MonaSDKNotifier extends ChangeNotifier {
           );
 
           _updateState(MonaSDKState.success);
+          _authStream.emit(state: AuthState.loggedIn);
         },
       );
     } catch (e) {
