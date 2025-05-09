@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:pay_with_mona/src/core/api/api_endpoints.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
 class AuthService {
@@ -18,31 +18,25 @@ class AuthService {
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
 
-  Future<PaymentUserType?> validatePhoneNumberAsMonaUser({
-    required String phoneNumber,
+  Future<Map<String, dynamic>?> validatePII({
+    String? phoneNumber,
+    String? bvn,
+    String? dob,
   }) async {
     try {
       final response = await _apiService.post(
-        "/login/validate",
+        APIEndpoints.validatePII,
         data: {
-          'phoneNumber': phoneNumber,
+          if (phoneNumber != null) "phoneNumber": phoneNumber,
+          if (bvn != null) "bvn": bvn,
+          if (dob != null) "dob": dob,
         },
       );
 
-      final responseInMap = jsonDecode(response.body) as Map<String, dynamic>;
-      final isMonaUser = responseInMap["success"] as bool? ?? false;
-
-      "Is Mona User: $isMonaUser".log();
-      if (!isMonaUser) {
-        return PaymentUserType.nonMonaUser;
-      }
-
-      return PaymentUserType.monaUser;
+      return (jsonDecode(response.body) as Map<String, dynamic>)["data"]
+          as Map<String, dynamic>;
     } catch (error) {
       "$error".log();
-      if (error.toString().toLowerCase().contains("404")) {
-        return PaymentUserType.nonMonaUser;
-      }
 
       return null;
     }
