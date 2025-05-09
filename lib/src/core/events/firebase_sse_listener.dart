@@ -474,16 +474,17 @@ class FirebaseSSEListener {
   Future<void> dispose() async {
     _logMessage('Disposing all resources');
 
-    // Stop active listeners
     await _stopListening();
 
-    // Close the state controller if open
     if (_isInitialized && !_stateController.isClosed) {
       await _stateController.close();
+      _logMessage('State controller closed');
     }
 
-    // Close the HTTP client
-    _httpClient.close();
+    if (_isInitialized) {
+      _httpClient.close();
+      _logMessage('HTTP client closed');
+    }
 
     _isInitialized = false;
     _logMessage('Successfully disposed all resources');
