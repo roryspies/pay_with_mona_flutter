@@ -463,6 +463,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String type,
     required String frequency,
     required String? amount,
+    required String merchantId,
   }) async {
     _updateState(MonaSDKState.loading);
     try {
@@ -477,6 +478,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         type: type,
         frequency: frequency,
         amount: amount,
+        merchantId: merchantId,
       );
 
       if (failure != null) {

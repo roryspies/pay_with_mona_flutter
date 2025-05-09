@@ -12,7 +12,7 @@ class CollectionsService {
   factory CollectionsService() => _instance;
 
   final _apiService =
-      ApiService(baseUrl: 'https://3dab-105-113-103-231.ngrok-free.app//');
+      ApiService(baseUrl: 'https://89d4-105-113-108-45.ngrok-free.app');
 
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
@@ -25,35 +25,35 @@ class CollectionsService {
     required String type,
     required String frequency,
     required String? amount,
+    required String merchantId,
   }) async {
     try {
-      final response = await _apiService.post(
-        '/collections',
-        data: {
-          "bankId": bankId,
-          "maximumAmount": maximumAmount,
-          "expiryDate": expiryDate,
-          "startDate": startDate,
-          "monthlyLimit": monthlyLimit,
-          "reference": reference,
-          "schedule": {
-            "type": type,
-            "frequency": frequency,
-            "amount": amount,
-            if (type == 'VARIABLE')
-              "entries": [
-                {
-                  "date": "2025-06-15T00:00:00.000Z",
-                  "amount": "2000",
-                },
-                {
-                  "date": "2025-07-01T00:00:00.000Z",
-                  "amount": "3000",
-                }
-              ]
-          }
-        },
-      );
+      final response = await _apiService.post('/collections', data: {
+        "bankId": bankId,
+        "maximumAmount": maximumAmount,
+        "expiryDate": expiryDate,
+        "startDate": startDate,
+        "monthlyLimit": monthlyLimit,
+        "reference": reference,
+        "schedule": {
+          "type": type,
+          "frequency": frequency,
+          "amount": amount,
+          if (type == 'VARIABLE')
+            "entries": [
+              {
+                "date": "2025-06-15T00:00:00.000Z",
+                "amount": "2000",
+              },
+              {
+                "date": "2025-07-01T00:00:00.000Z",
+                "amount": "3000",
+              }
+            ]
+        }
+      }, headers: {
+        "x-merchant-Id": merchantId,
+      });
 
       return right(
         jsonDecode(response.body) as Map<String, dynamic>,

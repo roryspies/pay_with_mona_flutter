@@ -37,7 +37,7 @@ class ApiService {
     this.logCurlCommands = true,
     this.prettyPrintJson = true,
     this.jsonIndent = 2,
-  }) : baseUrl = (baseUrl ?? _defaultBaseUrl).replaceAll(r'\/+\\$', '');
+  }) : baseUrl = (baseUrl ?? _defaultBaseUrl);
 
   /// POST to [endpoint], passing optional JSON [data] and [headers].
   Future<ApiResponse> post(
@@ -46,6 +46,8 @@ class ApiService {
     Map<String, String>? headers,
   }) async {
     final uri = Uri.parse('$baseUrl$endpoint');
+
+    print(uri.toString());
 
     if (logRequests) {
       '🚀 POST Request to $uri'.log();

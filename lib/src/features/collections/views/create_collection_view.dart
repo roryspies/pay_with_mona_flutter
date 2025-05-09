@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
+import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -48,6 +49,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   @override
   void initState() {
     super.initState();
+    sdkNotifier.addListener(_onSdktateChange);
     controllers = [
       _debitLimitController,
       _merchantNameController,
@@ -57,6 +59,27 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     paymentScheduleTextControllers = [firstPayment];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setData();
+      sdkNotifier.sdkStateStream.listen(
+        (state) {
+          switch (state) {
+            case MonaSDKState.idle:
+              ('🎉  PayWithMonaWidget ==>> SDK is Idle').log();
+              break;
+            case MonaSDKState.loading:
+              ('🔄 PayWithMonaWidget ==>>  SDK is Loading').log();
+              break;
+            case MonaSDKState.error:
+              ('⛔  PayWithMonaWidget ==>> SDK Has Errors').log();
+              break;
+            case MonaSDKState.success:
+              ('👍  PayWithMonaWidget ==>> SDK is in Success state').log();
+              break;
+          }
+        },
+        onError: (err) {
+          ('Error from transactionStateStream: $err').log();
+        },
+      );
     });
   }
 
@@ -92,6 +115,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
           .toList();
     });
   }
+
+  void _onSdktateChange() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
@@ -400,29 +425,38 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                           ],
                         ),
                       ),
-                      CustomButton(
-                        onTap: () {
-                          sdkNotifier.createCollections(
-                            bankId: '60d21b4667d0d8992e610c85',
-                            maximumAmount: _debitLimitController.text.trim(),
-                            expiryDate: _expDateController.text.trim(),
-                            startDate: '',
-                            monthlyLimit: '',
-                            reference: _referenceController.text.trim(),
-                            type: collectionMethod.value ==
-                                    CollectionsMethod.scheduled
-                                ? 'VARIABLE'
-                                : 'SCHEDULED',
-                            frequency:
-                                subscriptionFrequency.value.name.toUpperCase(),
-                            amount: collectionMethod.value ==
-                                    CollectionsMethod.scheduled
-                                ? null
-                                : _debitLimitController.text.trim(),
-                          );
-                        },
-                        label: 'Continue',
-                      ),
+                      sdkNotifier.state == MonaSDKState.loading
+                          ? Align(
+                              alignment: Alignment.center,
+                              child: CircularProgressIndicator(
+                                color: MonaColors.primaryBlue,
+                              ),
+                            )
+                          : CustomButton(
+                              onTap: () {
+                                sdkNotifier.createCollections(
+                                    bankId: '60d21b4667d0d8992e610c85',
+                                    maximumAmount:
+                                        _debitLimitController.text.trim(),
+                                    expiryDate: _expDateController.text.trim(),
+                                    startDate: '',
+                                    monthlyLimit: '',
+                                    reference: _referenceController.text.trim(),
+                                    type: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? 'VARIABLE'
+                                        : 'SCHEDULED',
+                                    frequency: subscriptionFrequency.value.name
+                                        .toUpperCase(),
+                                    amount: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? null
+                                        : _debitLimitController.text.trim(),
+                                    merchantId:
+                                        widget.merchantName ?? 'ngdeals');
+                              },
+                              label: 'Continue',
+                            ),
                     ],
                   ),
                 );
