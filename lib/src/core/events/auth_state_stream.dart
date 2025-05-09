@@ -10,7 +10,10 @@ enum AuthState {
   loggedOut,
 
   /// An error occurred during authentication
-  error
+  error,
+
+  /// An error occurred during authentication
+  notAMonaUser,
 }
 
 /// A singleton that manages a broadcast stream of [AuthState] events.

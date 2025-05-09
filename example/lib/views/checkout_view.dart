@@ -5,8 +5,23 @@ import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
-class CheckoutView extends StatelessWidget {
+class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
+
+  @override
+  State<CheckoutView> createState() => _CheckoutViewState();
+}
+
+class _CheckoutViewState extends State<CheckoutView> {
+  final sdkNotifier = MonaSDKNotifier();
+
+  @override
+  void initState() {
+    super.initState();
+    sdkNotifier.initSDK(
+      phoneNumber: "2347019017218",
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +81,7 @@ class CheckoutView extends StatelessWidget {
               PayWithMona.payWidget(
                 firstName: "John",
                 lastName: "Doe Smith",
-                dateOfBirth: DateTime(1995, 2, 1),
+                dateOfBirth: DateTime(2001, 05, 12),
                 transactionId: "1234567890",
                 merchantName: "NGDeals",
                 phoneNumber: "2347019017218",

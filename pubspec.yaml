@@ -1,6 +1,7 @@
 name: pay_with_mona
 description: "Flutter SDK for integrating the Mona payment gateway"
 version: 0.0.1
+publish_to: none
 
 environment:
   sdk: ^3.6.1
@@ -16,8 +17,8 @@ dependencies:
   flutter_svg: ^2.0.17
   local_auth: ^2.3.0
   local_auth_signature: ^1.0.12
-  package_info_plus: ^8.1.2
   crypto: ^3.0.6
+  webview_flutter: ^4.11.0
 
 dev_dependencies:
   flutter_test:

@@ -111,13 +111,23 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// Sets the internal state and notifies listeners of changes.
   void _updateState(MonaSDKState newState) {
     _state = newState;
+    _sdkStateStream.emit(state: newState);
     notifyListeners();
   }
 
   /// Records an error, updates state, and notifies listeners.
   void _handleError(String message) {
     _errorMessage = message;
+
+    if (message.toLowerCase().contains("please login")) {
+      "Message Contains Please Login".log();
+      _updateState(MonaSDKState.idle);
+      _authStream.emit(state: AuthState.loggedOut);
+      return;
+    }
+
     _updateState(MonaSDKState.error);
+    _errorMessage?.log();
   }
 
   /// Stores the transaction ID and notifies listeners.
@@ -158,7 +168,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  setSelectedBankOption({
+  void setSelectedBankOption({
     required BankOption bankOption,
   }) {
     _selectedBankOption = () {
@@ -168,7 +178,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  setSelectedCardOption({
+  void setSelectedCardOption({
     required CardOption cardOption,
   }) {
     _selectedCardOption = () {
@@ -186,6 +196,62 @@ class MonaSDKNotifier extends ChangeNotifier {
       return pendingPayment;
     }();
     notifyListeners();
+  }
+
+  Future<String?> checkIfUserHasKeyID() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.monaCheckoutID,
+    );
+  }
+
+  Future<void> initSDK({
+    String? phoneNumber,
+    String? bvn,
+    String? dob,
+  }) async {
+    _updateState(MonaSDKState.loading);
+
+    final response = await _authService.validatePII(
+      phoneNumber: phoneNumber,
+      bvn: bvn,
+      dob: dob,
+    );
+
+    if (response == null) {
+      _handleError("Failed to validate user PII - Experienced an Error");
+      return;
+    }
+
+    switch (response["exists"] as bool) {
+      /// *** This is a Mona User
+      case true:
+        setPendingPaymentData(
+          pendingPayment: PendingPaymentResponseModel(
+            savedPaymentOptions: SavedPaymentOptions.fromJSON(
+              json: response["savedPaymentOptions"],
+            ),
+          ),
+        );
+
+        final userHasCheckoutID = await checkIfUserHasKeyID();
+
+        /// *** User has not done key exchange
+        if (userHasCheckoutID == null) {
+          _authStream.emit(state: AuthState.loggedOut);
+          return;
+        }
+
+        /// *** User has done key exchange
+        _authStream.emit(state: AuthState.loggedIn);
+        break;
+
+      /// *** Non Mona User
+      default:
+        _authStream.emit(state: AuthState.notAMonaUser);
+        break;
+    }
+
+    _updateState(MonaSDKState.idle);
   }
 
   /// Starts the payment initiation process.
@@ -223,12 +289,14 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> getPaymentMethods() async {
     _updateState(MonaSDKState.loading);
 
-    final userCheckoutID = await _secureStorage.read(
-      key: SecureStorageKeys.monaCheckoutID,
-    );
+    "NO CHECKOUT ID".log();
+
+    final userCheckoutID = await checkIfUserHasKeyID();
 
     if (userCheckoutID == null) {
-      _handleError('User identifier not found. Please log in again.');
+      "NO CHECKOUT ID IN IF STATEMENT".log();
+
+      _handleError('User identifier not found. Please login again.');
       "User identifier not found. Please log in again.".log();
       return;
     }

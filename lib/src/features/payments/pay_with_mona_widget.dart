@@ -84,7 +84,10 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   ('👀 PayWithMonaWidget ==>>  Auth State Logged Out').log();
                   break;
                 case AuthState.error:
-                  ('⛔  PayWithMonaWidget ==>> Auth Has Error').log();
+                  ('⛔ PayWithMonaWidget ==>> Auth Has Error').log();
+                  break;
+                case AuthState.notAMonaUser:
+                  ('👤 PayWithMonaWidget ==>> Auth is Not A Mona User').log();
                   break;
               }
             },
