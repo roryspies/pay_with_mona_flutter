@@ -1,6 +1,6 @@
-part of "payment_notifier.dart";
+part of "sdk_notifier.dart";
 
-extension PaymentNotifierHelpers on PaymentNotifier {
+extension PaymentNotifierHelpers on MonaSDKNotifier {
   Future<Map<String, dynamic>> buildBankPaymentPayload() async {
     final userCheckoutID = await _secureStorage.read(
       key: SecureStorageKeys.monaCheckoutID,

@@ -44,9 +44,7 @@ extension ListenableBuilderExtension on List<Listenable> {
 extension Log on Object {
   void log() {
     if (kDebugMode) {
-      dev_tools.log(
-        'PWM - ${toString()}',
-      );
+      dev_tools.log("PWM - ${toString()}");
     }
   }
 }
