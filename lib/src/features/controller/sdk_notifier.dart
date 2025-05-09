@@ -448,4 +448,29 @@ class MonaSDKNotifier extends ChangeNotifier {
       _handleError('Unexpected error during authentication.');
     }
   }
+
+  /// Resets the entire SDKNotifier back to its initial, un-initialized state.
+  ///
+  /// - Clears all stored data and tokens
+  /// - Tears down and re-creates SSE listeners & streams
+  /// - Returns state to [MonaSDKState.idle] and notifies subscribers
+  void invalidate() {
+    _firebaseSSE.dispose();
+    _txnStateStream.dispose();
+    _authStream.dispose();
+    _sdkStateStream.dispose();
+
+    _errorMessage = null;
+    _currentTransactionId = null;
+    _strongAuthToken = null;
+    _monaCheckOut = null;
+    _callingBuildContext = null;
+    _state = MonaSDKState.idle;
+    _selectedPaymentMethod = PaymentMethod.none;
+    _pendingPaymentResponseModel = null;
+    _selectedBankOption = null;
+    _selectedCardOption = null;
+
+    notifyListeners();
+  }
 }

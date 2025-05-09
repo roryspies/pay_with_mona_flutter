@@ -184,8 +184,30 @@ class AuthService {
     }
   }
 
+  /// Deletes all entries in secure storage for this app.
+  ///
+  /// Use with caution, as this will remove all persisted sensitive data.
+  ///
+  /// Throws:
+  /// - [PlatformException] if the operation fails.
+  Future<void> permanentlyClearKeys() async {
+    try {
+      await _secureStorage.permanentlyClearKeys();
+      "Cleared Secure Storage Keys".log();
+    } catch (e, stackTrace) {
+      throw Exception('Failed to clear secure storage keys: $e\n$stackTrace');
+    }
+  }
+
+  /// Deletes all entries using default options (no platform-specific settings).
+  ///
+  /// Provided for compatibility; preferred method is [clear()].
   Future<void> clearKeys() async {
-    await _secureStorage.deleteAll();
-    "Cleared Secure Storage Keys".log();
+    try {
+      await _secureStorage.clearKeys();
+      "Deleted Storage Keys".log();
+    } catch (e, stackTrace) {
+      throw Exception('Failed to delete storage keys: $e\n$stackTrace');
+    }
   }
 }
