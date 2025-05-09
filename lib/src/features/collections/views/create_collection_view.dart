@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -30,6 +31,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _referenceController = TextEditingController();
   final collectionMethod = CollectionsMethod.none.notifier;
   final subscriptionFrequency = SubscriptionFrequency.none.notifier;
+  final sdkNotifier = MonaSDKNotifier();
 
   List<TextEditingController> controllers = [];
 
@@ -399,7 +401,26 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                         ),
                       ),
                       CustomButton(
-                        onTap: () {},
+                        onTap: () {
+                          sdkNotifier.createCollections(
+                            bankId: '60d21b4667d0d8992e610c85',
+                            maximumAmount: _debitLimitController.text.trim(),
+                            expiryDate: _expDateController.text.trim(),
+                            startDate: '',
+                            monthlyLimit: '',
+                            reference: _referenceController.text.trim(),
+                            type: collectionMethod.value ==
+                                    CollectionsMethod.scheduled
+                                ? 'VARIABLE'
+                                : 'SCHEDULED',
+                            frequency:
+                                subscriptionFrequency.value.name.toUpperCase(),
+                            amount: collectionMethod.value ==
+                                    CollectionsMethod.scheduled
+                                ? null
+                                : _debitLimitController.text.trim(),
+                          );
+                        },
                         label: 'Continue',
                       ),
                     ],

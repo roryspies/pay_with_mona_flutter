@@ -8,6 +8,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
@@ -51,6 +52,9 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   /// Service responsible for handling strong authentication.
   late AuthService _authService;
+
+  /// Service responsible for managing collections.
+  late CollectionsService _collectionsService;
 
   /// Secure storage for persisting user identifiers.
   late SecureStorage _secureStorage;
@@ -446,6 +450,47 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
     } catch (e) {
       _handleError('Unexpected error during authentication.');
+    }
+  }
+
+  Future<void> createCollections({
+    required String bankId,
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+  }) async {
+    _updateState(MonaSDKState.loading);
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _collectionsService.createCollections(
+        bankId: bankId,
+        maximumAmount: maximumAmount,
+        expiryDate: expiryDate,
+        startDate: startDate,
+        monthlyLimit: monthlyLimit,
+        reference: reference,
+        type: type,
+        frequency: frequency,
+        amount: amount,
+      );
+
+      if (failure != null) {
+        _handleError('Collection creation failed.');
+        throw (failure.message);
+      }
+
+      if (success != null) {
+        success.log();
+      }
+
+      _updateState(MonaSDKState.success);
+    } catch (e) {
+      _handleError('Unexpected error during collection creation.');
     }
   }
 
