@@ -1,16 +1,17 @@
+import 'package:example/my_home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:example/views/checkout_view.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const PayWithMona());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class PayWithMona extends StatelessWidget {
+  const PayWithMona({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Pay With Mona',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Color(
@@ -20,34 +21,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const MyHomePage(
-        title: 'Flutter Demo Home Page',
-      ),
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("NGDeals")),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CheckoutView()),
-            );
-          },
-          child: const Text(
-            "Pay Now",
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
+        title: 'Pay With Mona',
       ),
     );
   }

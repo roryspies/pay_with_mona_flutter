@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:pay_with_mona/src/core/api_service.dart';
-import 'package:pay_with_mona/src/core/secure_storage.dart';
-import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/core/signatures.dart';
-import 'package:pay_with_mona/src/core/uuid_generator.dart';
-import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/api/api_service.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
+import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
+import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
 class AuthService {
@@ -78,7 +78,7 @@ class AuthService {
     Function()? move,
     Function()? onBioError,
   }) async {
-    final signatureService = BiometricSignatureHelper();
+    final signatureService = BiometricService();
 
     final id = UUIDGenerator.v4();
     Map<String, dynamic> payload = {
@@ -181,6 +181,33 @@ class AuthService {
       "$error".log();
 
       return null;
+    }
+  }
+
+  /// Deletes all entries in secure storage for this app.
+  ///
+  /// Use with caution, as this will remove all persisted sensitive data.
+  ///
+  /// Throws:
+  /// - [PlatformException] if the operation fails.
+  Future<void> permanentlyClearKeys() async {
+    try {
+      await _secureStorage.permanentlyClearKeys();
+      "Cleared Secure Storage Keys".log();
+    } catch (e, stackTrace) {
+      throw Exception('Failed to clear secure storage keys: $e\n$stackTrace');
+    }
+  }
+
+  /// Deletes all entries using default options (no platform-specific settings).
+  ///
+  /// Provided for compatibility; preferred method is [clear()].
+  Future<void> clearKeys() async {
+    try {
+      await _secureStorage.clearKeys();
+      "Deleted Storage Keys".log();
+    } catch (e, stackTrace) {
+      throw Exception('Failed to delete storage keys: $e\n$stackTrace');
     }
   }
 }

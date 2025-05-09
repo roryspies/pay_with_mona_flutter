@@ -1,6 +1,6 @@
-part of "payment_notifier.dart";
+part of "sdk_notifier.dart";
 
-extension PaymentNotifierHelpers on PaymentNotifier {
+extension PaymentNotifierHelpers on MonaSDKNotifier {
   Future<Map<String, dynamic>> buildBankPaymentPayload() async {
     final userCheckoutID = await _secureStorage.read(
       key: SecureStorageKeys.monaCheckoutID,
@@ -8,20 +8,8 @@ extension PaymentNotifierHelpers on PaymentNotifier {
 
     return {
       "origin": _selectedBankOption?.bankId ?? "",
-      "destination": {
-        "type": "bank",
-        "typeDetail": "p2p",
-        "params": {
-          "institutionCode": _selectedBankOption?.institutionCode ?? "",
-          "accountNumber": _selectedBankOption?.accountNumber ?? "",
-        },
-      },
-      "amount":
-          (num.parse(_pendingPaymentResponseModel?.amount.toString() ?? "0") *
-                  100)
-              .toInt(),
-      "narration": "Sent from Mona",
       "hasDeviceKey": userCheckoutID != null,
+      "transactionId": _currentTransactionId,
     };
   }
 

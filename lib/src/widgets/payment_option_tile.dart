@@ -1,5 +1,7 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 
@@ -19,7 +21,12 @@ class PaymentOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(paymentMethod.icon),
+      leading: CircleAvatar(
+        backgroundColor: MonaColors.primaryBlue.withOpacity(
+          0.1,
+        ),
+        child: Icon(paymentMethod.icon),
+      ),
       contentPadding: EdgeInsets.zero,
       title: Text(
         paymentMethod.title,

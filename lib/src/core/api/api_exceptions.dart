@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 /// A generic API exception for wrapping HTTP/client errors.
-/// A generic API exception for wrapping HTTP/client errors.
 class APIException implements Exception {
   final String message;
   final int? statusCode;

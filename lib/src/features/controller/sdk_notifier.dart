@@ -1,29 +1,34 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:pay_with_mona/src/core/firebase_sse_listener.dart';
-import 'package:pay_with_mona/src/core/secure_storage.dart';
-import 'package:pay_with_mona/src/core/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/features/payments/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/core/auth_service.dart';
-import 'package:pay_with_mona/src/core/payments_service.dart';
+import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/services/auth_service.dart';
+import 'package:pay_with_mona/src/core/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
-part 'payment_notifier.helpers.dart';
+part 'sdk_notifier.helpers.dart';
 
 /// Manages the entire payment workflow, from initiation to completion,
 /// including real-time event listening and strong authentication.
 ///
 /// Implements a singleton pattern to ensure a single source of truth
 /// throughout the app lifecycle.
-class PaymentNotifier extends ChangeNotifier {
-  /// The single, shared instance of [PaymentNotifier].
-  static final PaymentNotifier _instance = PaymentNotifier._internal();
+class MonaSDKNotifier extends ChangeNotifier {
+  /// The single, shared instance of [MonaSDKNotifier].
+  static final MonaSDKNotifier _instance = MonaSDKNotifier._internal();
 
   /// Factory constructor returning the singleton instance.
-  factory PaymentNotifier({
+  factory MonaSDKNotifier({
     PaymentService? paymentsService,
     AuthService? authService,
     SecureStorage? secureStorage,
@@ -36,7 +41,7 @@ class PaymentNotifier extends ChangeNotifier {
   }
 
   /// Internal constructor initializes default services.
-  PaymentNotifier._internal()
+  MonaSDKNotifier._internal()
       : _paymentsService = PaymentService(),
         _authService = AuthService(),
         _secureStorage = SecureStorage();
@@ -59,14 +64,14 @@ class PaymentNotifier extends ChangeNotifier {
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
 
-  PaymentState _state = PaymentState.idle;
+  MonaSDKState _state = MonaSDKState.idle;
   PaymentMethod _selectedPaymentMethod = PaymentMethod.none;
   PendingPaymentResponseModel? _pendingPaymentResponseModel;
   BankOption? _selectedBankOption;
   CardOption? _selectedCardOption;
 
   /// Current payment process state.
-  PaymentState get state => _state;
+  MonaSDKState get state => _state;
 
   /// The method chosen by the user for payment.
   PaymentMethod get selectedPaymentMethod => _selectedPaymentMethod;
@@ -84,15 +89,27 @@ class PaymentNotifier extends ChangeNotifier {
 
   CardOption? get selectedCardOption => _selectedCardOption;
 
+  // Streams
+  final _txnStateStream = TransactionStateStream();
+  final _authStream = AuthStateStream();
+  final _sdkStateStream = MonaSdkStateStream();
+
+  Stream<TransactionState> get txnStateStream => _txnStateStream.stream;
+  Stream<AuthState> get authStateStream => _authStream.stream;
+  Stream<MonaSDKState> get sdkStateStream => _sdkStateStream.stream;
+
   /// Clean up SSE listener when this notifier is disposed.
   @override
   void dispose() {
     _firebaseSSE.dispose();
+    _txnStateStream.dispose();
+    _authStream.dispose();
+    _sdkStateStream.dispose();
     super.dispose();
   }
 
   /// Sets the internal state and notifies listeners of changes.
-  void _updateState(PaymentState newState) {
+  void _updateState(MonaSDKState newState) {
     _state = newState;
     notifyListeners();
   }
@@ -100,7 +117,7 @@ class PaymentNotifier extends ChangeNotifier {
   /// Records an error, updates state, and notifies listeners.
   void _handleError(String message) {
     _errorMessage = message;
-    _updateState(PaymentState.error);
+    _updateState(MonaSDKState.error);
   }
 
   /// Stores the transaction ID and notifies listeners.
@@ -173,20 +190,24 @@ class PaymentNotifier extends ChangeNotifier {
 
   /// Starts the payment initiation process.
   ///
-  /// 1. Updates state to [PaymentState.loading].
+  /// 1. Updates state to [MonaSDKState.loading].
   /// 2. Calls [_paymentsService.initiatePayment].
   /// 3. Handles failure or missing transaction ID.
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
-  Future<void> initiatePayment() async {
-    _updateState(PaymentState.loading);
+  Future<void> initiatePayment({
+    num? tnxAmountInKobo,
+  }) async {
+    _updateState(MonaSDKState.loading);
 
     final (Map<String, dynamic>? success, failure) =
-        await _paymentsService.initiatePayment();
+        await _paymentsService.initiatePayment(
+      tnxAmountInKobo: tnxAmountInKobo ?? 2000,
+    );
 
     if (failure != null) {
       _handleError('Payment initiation failed. Please try again.');
-      return;
+      throw (failure.message);
     }
 
     final txId = success?['transactionId'] as String?;
@@ -200,7 +221,7 @@ class PaymentNotifier extends ChangeNotifier {
   }
 
   Future<void> getPaymentMethods() async {
-    _updateState(PaymentState.loading);
+    _updateState(MonaSDKState.loading);
 
     final userCheckoutID = await _secureStorage.read(
       key: SecureStorageKeys.monaCheckoutID,
@@ -208,6 +229,7 @@ class PaymentNotifier extends ChangeNotifier {
 
     if (userCheckoutID == null) {
       _handleError('User identifier not found. Please log in again.');
+      "User identifier not found. Please log in again.".log();
       return;
     }
 
@@ -225,7 +247,7 @@ class PaymentNotifier extends ChangeNotifier {
 
       setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
       _pendingPaymentResponseModel?.toJson().log();
-      _updateState(PaymentState.success);
+      _updateState(MonaSDKState.success);
     } catch (error, trace) {
       _handleError('Error fetching payment methods: $error ::: $trace');
       return;
@@ -236,41 +258,66 @@ class PaymentNotifier extends ChangeNotifier {
   ///
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
-  Future<void> makePayment({required String method}) async {
-    _updateState(PaymentState.loading);
+  Future<void> makePayment() async {
+    _updateState(MonaSDKState.loading);
+
+    if (_currentTransactionId == null) {
+      await initiatePayment();
+    }
 
     // Initialize SSE listener for real-time events
-    _firebaseSSE.initialize(
-      databaseUrl:
-          'https://mona-money-default-rtdb.europe-west1.firebasedatabase.app',
-    );
+    _firebaseSSE.initialize();
 
-    final sessionID = math.Random.secure().nextInt(999999999).toString();
     bool hasError = false;
+    bool hasTransactionUpdateError = false;
     bool authError = false;
 
     // Concurrently listen for transaction completion and authentication tokens
     await Future.wait([
-      _listenForTransactionEvents(hasError),
-      _listenForAuthEvents(sessionID, authError),
+      _listenForPaymentUpdates(hasError),
+      _listenForTransactionUpdateEvents(hasTransactionUpdateError),
     ]);
 
     // ignore: dead_code
     if (hasError || authError) return;
 
-    final url = _buildPaymentUrl(sessionID, method);
-    await _launchPaymentUrl(url);
+    switch (_selectedPaymentMethod) {
+      case PaymentMethod.savedBank:
+        try {
+          await _paymentsService.makePaymentRequest(
+            onPayComplete: () {
+              "Payment Notifier ::: Make Payment Request Complete".log();
+
+              clearSelectedPaymentMethod();
+              _currentTransactionId = null;
+            },
+          );
+
+          _updateState(MonaSDKState.idle);
+        } catch (error, trace) {
+          _handleError('Error listening for transaction updates.');
+          "Payment Notifier ::: makePayment ::: PaymentMethod.savedBank ::: ERROR ::: $error TRACE ::: $trace"
+              .log();
+        }
+        break;
+
+      default:
+        final sessionID = math.Random.secure().nextInt(999999999).toString();
+        await _listenForAuthEvents(sessionID, authError);
+
+        final url = _buildPaymentUrl(
+          sessionID,
+          _selectedPaymentMethod.type,
+        );
+        await _launchPaymentUrl(url);
+        break;
+    }
   }
 
-  Future<void> _listenForTransactionEvents(bool errorFlag) async {
-    await _firebaseSSE.startListening(
+  Future<void> _listenForPaymentUpdates(bool errorFlag) async {
+    await _firebaseSSE.listenForPaymentUpdates(
       transactionId: _currentTransactionId ?? '',
-      onDataChange: (event) {
-        if (event == 'transaction_completed' || event == 'transaction_failed') {
-          _firebaseSSE.dispose();
-          closeCustomTabs();
-        }
-      },
+      onDataChange: (event) {},
       onError: (error) {
         _handleError('Error listening for transaction updates.');
         errorFlag = true;
@@ -278,13 +325,45 @@ class PaymentNotifier extends ChangeNotifier {
     );
   }
 
+  Future<void> _listenForTransactionUpdateEvents(bool errorFlag) async {
+    await _firebaseSSE.listenForTransactionMessages(
+      transactionId: _currentTransactionId ?? "",
+      onDataChange: (event) async {
+        "_listenForTransactionUpdateEvents ::: EVENT $event".log();
+        final eventData = jsonDecode(event) as Map<String, dynamic>;
+        final theEvent = eventData["event"];
+
+        if (theEvent == "transaction_initiated") {
+          "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
+              .log();
+          _txnStateStream.emit(state: TransactionState.initiated);
+        }
+
+        if (theEvent == "transaction_failed") {
+          "😭 _listenForTransactionUpdateEvents ::: transaction_initiated"
+              .log();
+          _txnStateStream.emit(state: TransactionState.failed);
+        }
+
+        if (theEvent == "transaction_completed") {
+          "✅ _listenForTransactionUpdateEvents ::: transaction_initiated".log();
+          _txnStateStream.emit(state: TransactionState.completed);
+        }
+      },
+      onError: (error) {
+        _handleError('Error during strong authentication.');
+        errorFlag = true;
+      },
+    );
+  }
+
   Future<void> _listenForAuthEvents(String sessionId, bool errorFlag) async {
-    await _firebaseSSE.listenToCustomEvents(
+    await _firebaseSSE.listenToAuthNEvents(
       sessionID: sessionId,
-      onDataChange: (token) async {
-        _strongAuthToken = token;
+      onDataChange: (event) async {
+        /* _strongAuthToken = token;
         await closeCustomTabs();
-        await loginWithStrongAuth();
+        await loginWithStrongAuth(); */
       },
       onError: (error) {
         _handleError('Error during strong authentication.');
@@ -334,7 +413,7 @@ class PaymentNotifier extends ChangeNotifier {
   ///
   /// Updates payment methods upon success.
   Future<void> loginWithStrongAuth() async {
-    _updateState(PaymentState.loading);
+    _updateState(MonaSDKState.loading);
     try {
       final response = await _authService.loginWithStrongAuth(
         strongAuthToken: _strongAuthToken ?? '',
@@ -362,11 +441,36 @@ class PaymentNotifier extends ChangeNotifier {
             userEnrolledCheckoutID: userCheckoutID,
           );
 
-          _updateState(PaymentState.success);
+          _updateState(MonaSDKState.success);
         },
       );
     } catch (e) {
       _handleError('Unexpected error during authentication.');
     }
+  }
+
+  /// Resets the entire SDKNotifier back to its initial, un-initialized state.
+  ///
+  /// - Clears all stored data and tokens
+  /// - Tears down and re-creates SSE listeners & streams
+  /// - Returns state to [MonaSDKState.idle] and notifies subscribers
+  void invalidate() {
+    _firebaseSSE.dispose();
+    _txnStateStream.dispose();
+    _authStream.dispose();
+    _sdkStateStream.dispose();
+
+    _errorMessage = null;
+    _currentTransactionId = null;
+    _strongAuthToken = null;
+    _monaCheckOut = null;
+    _callingBuildContext = null;
+    _state = MonaSDKState.idle;
+    _selectedPaymentMethod = PaymentMethod.none;
+    _pendingPaymentResponseModel = null;
+    _selectedBankOption = null;
+    _selectedCardOption = null;
+
+    notifyListeners();
   }
 }
