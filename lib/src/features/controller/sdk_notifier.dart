@@ -108,6 +108,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     super.dispose();
   }
 
+  ///
+  /// *** MARK: - In - house setters / update functions
+  ///
   /// Sets the internal state and notifies listeners of changes.
   void _updateState(MonaSDKState newState) {
     _state = newState;
@@ -120,7 +123,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     _errorMessage = message;
 
     if (message.toLowerCase().contains("please login")) {
-      "Message Contains Please Login".log();
       _updateState(MonaSDKState.idle);
       _authStream.emit(state: AuthState.loggedOut);
       return;
@@ -202,6 +204,8 @@ class MonaSDKNotifier extends ChangeNotifier {
         key: SecureStorageKeys.monaCheckoutID,
       );
 
+  ///
+  /// *** MARK: - Init SDK & Major Methods
   Future<void> initSDK({
     String? phoneNumber,
     String? bvn,
@@ -323,11 +327,13 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
   Future<void> makePayment() async {
-    _updateState(MonaSDKState.loading);
-
     if (_currentTransactionId == null) {
+      _sdkStateStream.emit(state: MonaSDKState.idle);
       await initiatePayment();
+      //throw ("No transaction amount or ID yet");
     }
+
+    _updateState(MonaSDKState.loading);
 
     // Initialize SSE listener for real-time events
     _firebaseSSE.initialize();
@@ -342,11 +348,17 @@ class MonaSDKNotifier extends ChangeNotifier {
       _listenForTransactionUpdateEvents(hasTransactionUpdateError),
     ]);
 
-    // ignore: dead_code
-    if (hasError || authError) return;
+    final userHasCheckoutID = await checkIfUserHasKeyID();
+
+    /// *** There is no saved credential, Key Exchange has not been done.
+    /// *** Initiate Login and Key Exchange Process.
+    if (userHasCheckoutID == null) {
+      "MONA SDK ::: makePayment ::: USER HAS NOT DONE KEY EXCHANGE".log();
+      return;
+    }
 
     switch (_selectedPaymentMethod) {
-      case PaymentMethod.savedBank:
+      case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
           await _paymentsService.makePaymentRequest(
             onPayComplete: () {
@@ -378,10 +390,13 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
+  /// *** MARK: Event Listeners
   Future<void> _listenForPaymentUpdates(bool errorFlag) async {
     await _firebaseSSE.listenForPaymentUpdates(
       transactionId: _currentTransactionId ?? '',
-      onDataChange: (event) {},
+      onDataChange: (event) {
+        "PAYMENT UPDATE EVENT $event".log();
+      },
       onError: (error) {
         _handleError('Error listening for transaction updates.');
         errorFlag = true;
@@ -442,6 +457,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     );
   }
 
+  ///
+  /// *** MARK: Custom Tabs and URL's
   /// Builds the URL for the in-app payment custom tab.
   String _buildPaymentUrl(String sessionID, String method) {
     final redirect = Uri.encodeComponent(
