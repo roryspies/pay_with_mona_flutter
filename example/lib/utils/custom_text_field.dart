@@ -22,7 +22,7 @@ class CustomTextField extends StatefulWidget {
     this.initialValue,
     this.obscureText,
     this.enabled,
-    this.maxlines,
+    this.maxLines,
     this.icon,
     this.keyboardType,
     this.textInputAction,
@@ -85,7 +85,7 @@ class CustomTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final Widget? icon;
   final Widget? prefix;
-  final int? maxlines;
+  final int? maxLines;
   final int? maxLength;
   final Widget? prefixIcon;
   final BoxBorder? border;
@@ -164,7 +164,7 @@ class _CustomTextFieldState extends State<CustomTextField> with ValidatorMixin {
             onTap: widget.onTap,
             readOnly: widget.readOnly,
             enabled: widget.enabled,
-            maxLines: widget.maxlines ?? 1,
+            maxLines: widget.maxLines ?? 1,
             cursorColor: widget.cursorColor,
             textDirection: widget.textDirection ?? TextDirection.ltr,
             controller: widget.controller,

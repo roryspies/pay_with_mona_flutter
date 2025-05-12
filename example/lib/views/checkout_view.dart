@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:example/views/customer_info_view.dart';
-import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
@@ -13,12 +13,18 @@ class CheckoutView extends StatefulWidget {
 }
 
 class _CheckoutViewState extends State<CheckoutView> {
-  final paymentOption = ''.notifier;
+  final sdkNotifier = MonaSDKNotifier();
 
   @override
-  void dispose() {
-    paymentOption.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) async {
+        await sdkNotifier.validatePII(
+          phoneNumber: "2347019017218",
+        );
+      },
+    );
   }
 
   @override
@@ -76,7 +82,17 @@ class _CheckoutViewState extends State<CheckoutView> {
                 ),
               ),
               context.sbH(8),
-              // PayWithMona.payWidget(),
+              PayWithMona.payWidget(
+                firstName: "John",
+                lastName: "Doe Smith",
+                dateOfBirth: DateTime(2001, 05, 12),
+                transactionId: "1234567890",
+                merchantName: "NGDeals",
+                phoneNumber: "2347019017218",
+                primaryColor: MonaColors.primaryBlue,
+                secondaryColor: MonaColors.neutralWhite,
+                bvn: "1234567890",
+              ),
             ],
           ),
         ),

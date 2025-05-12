@@ -1,6 +1,6 @@
 name: example
 description: "A new Flutter project."
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -13,6 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   pay_with_mona:
     path: ../
+  flutter_svg: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -22,6 +23,8 @@ dev_dependencies:
   change_app_package_name: ^1.5.0
 
 flutter:
-
+  assets:
+    - assets/icons/
+    - assets/images/
 
   uses-material-design: true
