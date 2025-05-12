@@ -333,6 +333,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
   Future<void> makePayment() async {
+    if (_selectedPaymentMethod == PaymentMethod.none) {
+      return;
+    }
     _updateState(MonaSDKState.loading);
 
     if (_currentTransactionId == null) {
