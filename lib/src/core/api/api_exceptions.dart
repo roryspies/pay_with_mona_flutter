@@ -90,3 +90,13 @@ class APIException implements Exception {
     );
   }
 }
+
+class MonaSDKError implements Exception {
+  final String message;
+  MonaSDKError({
+    required this.message,
+  });
+
+  @override
+  String toString() => "MonaSDKException: $message";
+}

@@ -68,9 +68,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 case MonaSDKState.success:
                   ('👍  PayWithMonaWidget ==>> SDK is in Success state').log();
                   break;
-                default:
-                  ('👍  PayWithMonaWidget ==>> SDK is in $state').log();
-                  break;
               }
             },
             onError: (err) {
@@ -359,7 +356,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       sdkNotifier
                         ..setCallingBuildContext(context: context)
                         ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
-                        ..makePayment();
+                        ..makePayment(tnxAmountInKobo: 2000);
                     },
                     child: Text(
                       "Proceed to pay ",

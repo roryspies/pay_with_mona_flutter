@@ -2,6 +2,7 @@ import "dart:async";
 import "dart:convert";
 import "package:flutter/material.dart";
 import "package:flutter_custom_tabs/flutter_custom_tabs.dart";
+import "package:pay_with_mona/src/core/api/api_exceptions.dart";
 import "package:pay_with_mona/src/core/events/auth_state_stream.dart";
 import "package:pay_with_mona/src/core/events/firebase_sse_listener.dart";
 import "package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart";
@@ -17,6 +18,7 @@ import "package:pay_with_mona/src/utils/extensions.dart";
 import "package:pay_with_mona/src/utils/size_config.dart";
 import "dart:math" as math;
 part "sdk_notifier.helpers.dart";
+part "sdk_notifier.listeners.dart";
 
 /// Manages the entire payment workflow, from initiation to completion,
 /// including real-time event listening and strong authentication.
@@ -261,13 +263,13 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
   Future<void> initiatePayment({
-    num? tnxAmountInKobo,
+    required num tnxAmountInKobo,
   }) async {
     _updateState(MonaSDKState.loading);
 
     final (Map<String, dynamic>? success, failure) =
         await _paymentsService.initiatePayment(
-      tnxAmountInKobo: tnxAmountInKobo ?? 2000,
+      tnxAmountInKobo: tnxAmountInKobo,
     );
 
     if (failure != null) {
@@ -283,13 +285,10 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     _handleTransactionId(txId);
     _updateState(MonaSDKState.idle);
-
-    /// *** @ThatSaxyDev - I doubt we still need this - below, considering we"re already using PII
-    /// *** Kindly confirm
-    //await getPaymentMethods();
   }
 
-  Future<void> getPaymentMethods() async {
+  /// *** Currently not in use - Keep for a forth night
+/*   Future<void> getPaymentMethods() async {
     _updateState(MonaSDKState.loading);
 
     final userCheckoutID = await checkIfUserHasKeyID();
@@ -318,42 +317,66 @@ class MonaSDKNotifier extends ChangeNotifier {
       _handleError("Error fetching payment methods: $error ::: $trace");
       return;
     }
+  } */
+
+  Future<void> initKeyExchange() async {
+    try {
+      final sessionID = math.Random.secure().nextInt(999999999).toString();
+      await _listenForAuthEvents(sessionID);
+
+      final url = _buildURL(
+        sessionID: sessionID,
+        method: _selectedPaymentMethod.type,
+      );
+
+      await _launchURL(url);
+    } catch (error, trace) {
+      "initKeyExchange ERROR ::: $error ::: TRACE ::: $trace".log();
+      _handleError("Error Initiating Key Exchange");
+    }
   }
 
   /// Orchestrates the in-app payment flow with SSE and strong authentication.
   ///
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
-  Future<void> makePayment() async {
-    if (_currentTransactionId == null) {
-      _sdkStateStream.emit(state: MonaSDKState.idle);
-      await initiatePayment();
-      //throw ("No transaction amount or ID yet");
-    }
-
+  Future<void> makePayment({
+    required num tnxAmountInKobo,
+  }) async {
     _updateState(MonaSDKState.loading);
 
     // Initialize SSE listener for real-time events
     _firebaseSSE.initialize();
 
+    /// *** This is only for DEMO.
+    /// *** Real world scenario, client would attach a transaction ID to this.
+    /// *** For now - Check if we have an initiated Transaction ID else do a demo one
+    if (_currentTransactionId == null) {
+      await initiatePayment(tnxAmountInKobo: tnxAmountInKobo);
+    }
+
+    _updateState(MonaSDKState.loading);
+
+    /// *** If the user doesn't have a keyID and they want to use a saved payment method,
+    /// *** Key exchange needs to be done, so handle first.
+    final doKeyExchange = await checkIfUserHasKeyID() == null &&
+        [
+          PaymentMethod.savedBank,
+          PaymentMethod.savedCard,
+        ].contains(_selectedPaymentMethod);
+
+    if (doKeyExchange) {
+      await initKeyExchange();
+    }
+
     bool hasError = false;
     bool hasTransactionUpdateError = false;
-    bool authError = false;
 
-    // Concurrently listen for transaction completion and authentication tokens
+    /// *** Concurrently listen for transaction completion.
     await Future.wait([
       _listenForPaymentUpdates(hasError),
       _listenForTransactionUpdateEvents(hasTransactionUpdateError),
     ]);
-
-    final userHasCheckoutID = await checkIfUserHasKeyID();
-
-    /// *** There is no saved credential, Key Exchange has not been done.
-    /// *** Initiate Login and Key Exchange Process.
-    if (userHasCheckoutID == null) {
-      "MONA SDK ::: makePayment ::: USER HAS NOT DONE KEY EXCHANGE".log();
-      return;
-    }
 
     switch (_selectedPaymentMethod) {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
@@ -375,130 +398,25 @@ class MonaSDKNotifier extends ChangeNotifier {
         }
         break;
 
+      /// ***
+      /// *** At this point, it's a regular payment method with either card or transfer
+      /// *** Regardless of if saved methods are available or not.
       default:
-        final sessionID = math.Random.secure().nextInt(999999999).toString();
-        await _listenForAuthEvents(sessionID, authError);
-
-        final url = _buildPaymentUrl(
-          sessionID,
-          _selectedPaymentMethod.type,
-        );
-        await _launchPaymentUrl(url);
+        await handleRegularPayment();
         break;
     }
   }
 
-  /// *** MARK: Event Listeners
-  Future<void> _listenForPaymentUpdates(bool errorFlag) async {
-    await _firebaseSSE.listenForPaymentUpdates(
-      transactionId: _currentTransactionId ?? "",
-      onDataChange: (event) {
-        "PAYMENT UPDATE EVENT $event".log();
-      },
-      onError: (error) {
-        _handleError("Error listening for transaction updates.");
-        errorFlag = true;
-      },
+  Future<void> handleRegularPayment() async {
+    final sessionID = _generateSessionID();
+    await _listenForAuthEvents(sessionID);
+
+    final url = _buildURL(
+      sessionID: sessionID,
+      method: _selectedPaymentMethod.type,
     );
-  }
 
-  Future<void> _listenForTransactionUpdateEvents(bool errorFlag) async {
-    await _firebaseSSE.listenForTransactionMessages(
-      transactionId: _currentTransactionId ?? "",
-      onDataChange: (event) async {
-        "_listenForTransactionUpdateEvents ::: EVENT $event".log();
-        final eventData = jsonDecode(event) as Map<String, dynamic>;
-        final theEvent = eventData["event"];
-
-        if (theEvent == "transaction_initiated") {
-          "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
-              .log();
-          _txnStateStream.emit(state: TransactionState.initiated);
-        }
-
-        if (theEvent == "transaction_failed") {
-          "😭 _listenForTransactionUpdateEvents ::: transaction_initiated"
-              .log();
-          _txnStateStream.emit(state: TransactionState.failed);
-        }
-
-        if (theEvent == "transaction_completed") {
-          "✅ _listenForTransactionUpdateEvents ::: transaction_initiated".log();
-          _txnStateStream.emit(state: TransactionState.completed);
-        }
-      },
-      onError: (error) {
-        _handleError("Error during strong authentication.");
-        errorFlag = true;
-      },
-    );
-  }
-
-  Future<void> _listenForAuthEvents(String sessionId, bool errorFlag) async {
-    await _firebaseSSE.listenToAuthNEvents(
-      sessionID: sessionId,
-      onDataChange: (event) async {
-        if (event.contains("strongAuthToken")) {
-          _strongAuthToken =
-              (jsonDecode(event) as Map<String, dynamic>)["strongAuthToken"];
-
-          _authStream.emit(state: AuthState.performingLogin);
-        }
-
-        await closeCustomTabs();
-        await loginWithStrongAuth();
-      },
-      onError: (error) {
-        _handleError("Error during strong authentication.");
-        errorFlag = true;
-      },
-    );
-  }
-
-  ///
-  /// *** MARK: Custom Tabs and URL"s
-  /// Builds the URL for the in-app payment custom tab.
-  String _buildPaymentUrl(
-    String sessionID,
-    String method, {
-    bool withRedirect = true,
-  }) {
-    final baseUrl = "https://pay.development.mona.ng/login";
-    final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
-
-    final redirectParam = withRedirect
-        ? "&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$method")}"
-        : "";
-
-    return "$baseUrl"
-        "?loginScope=$loginScope"
-        "$redirectParam"
-        "&sessionId=${Uri.encodeComponent(sessionID)}";
-  }
-
-  /// Launches the payment URL using platform-specific custom tab settings.
-  Future<void> _launchPaymentUrl(String url) async {
-    final uri = Uri.parse(url);
-
-    "🚀 Launching payment URL: $url".log();
-
-    await launchUrl(
-      uri,
-      customTabsOptions: CustomTabsOptions.partial(
-        configuration: PartialCustomTabsConfiguration(
-          activityHeightResizeBehavior:
-              CustomTabsActivityHeightResizeBehavior.fixed,
-          initialHeight: _callingBuildContext!.screenHeight * 0.95,
-        ),
-      ),
-      safariVCOptions: SafariViewControllerOptions.pageSheet(
-        configuration: const SheetPresentationControllerConfiguration(
-          detents: {SheetPresentationControllerDetent.large},
-          prefersEdgeAttachedInCompactHeight: true,
-          preferredCornerRadius: 16.0,
-        ),
-      ),
-    );
+    await _launchURL(url);
   }
 
   /// Performs strong authentication using the received SSE token.

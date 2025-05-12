@@ -38,8 +38,8 @@ enum PaymentMethod {
         return "transfer";
       case PaymentMethod.none:
         return "none";
-      default:
-        return "";
+      case PaymentMethod.savedBank || PaymentMethod.savedCard:
+        return "oneTap";
     }
   }
 
