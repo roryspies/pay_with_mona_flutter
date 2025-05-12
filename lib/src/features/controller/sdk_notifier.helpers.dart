@@ -55,13 +55,17 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
 
     "🚀 Launching payment URL: $url".log();
 
+    assert(_callingBuildContext != null,
+        "Build context must be set before launching URL");
+    final screenHeight = _callingBuildContext!.screenHeight;
+
     await launchUrl(
       uri,
       customTabsOptions: CustomTabsOptions.partial(
         configuration: PartialCustomTabsConfiguration(
           activityHeightResizeBehavior:
               CustomTabsActivityHeightResizeBehavior.fixed,
-          initialHeight: _callingBuildContext!.screenHeight * 0.95,
+          initialHeight: screenHeight,
         ),
       ),
       safariVCOptions: SafariViewControllerOptions.pageSheet(
@@ -93,20 +97,21 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     );
 
     return {
-      "origin": _selectedBankOption?.bankId ?? "",
+      "origin": _selectedCardOption?.cardId ?? "",
       "destination": {
-        "type": "bank",
-        "typeDetail": "p2p",
+        "type": "card",
+        "typeDetail": "charge",
         "params": {
-          //"institutionCode": destinationBank?.institutionCode ?? "",
-          "accountNumber": _selectedBankOption?.accountNumber ?? "",
+          "cardNumber": _selectedCardOption?.maskedPan ?? "",
+          "expiry": _selectedCardOption?.expiryDate ?? "",
+          "cvv": _selectedCardOption?.cardNetwork ?? "",
         },
       },
       "amount":
           (num.parse(_pendingPaymentResponseModel?.amount.toString() ?? "0") *
                   100)
               .toInt(),
-      "narration": "Sent from Mona",
+      "narration": "Payment via Card",
       "hasDeviceKey": userCheckoutID != null,
     };
   }

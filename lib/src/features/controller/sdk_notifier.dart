@@ -287,42 +287,15 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.idle);
   }
 
-  /// *** Currently not in use - Keep for a forth night
-/*   Future<void> getPaymentMethods() async {
-    _updateState(MonaSDKState.loading);
-
-    final userCheckoutID = await checkIfUserHasKeyID();
-
-    if (userCheckoutID == null) {
-      _handleError("User identifier not found. Please login again.");
-      return;
-    }
-
-    try {
-      final (paymentDataAndMethods, failure) =
-          await _paymentsService.getPaymentMethods(
-        transactionId: _currentTransactionId ?? "",
-        userEnrolledCheckoutID: userCheckoutID,
-      );
-
-      if (failure != null) {
-        _handleError("Payment initiation failed. Please try again.");
-        _updateState(MonaSDKState.idle);
-        return;
-      }
-
-      setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
-      _updateState(MonaSDKState.success);
-    } catch (error, trace) {
-      _handleError("Error fetching payment methods: $error ::: $trace");
-      return;
-    }
-  } */
-
+  /// Initializes key exchange process by generating a session ID, listening for auth events,
+  /// launching the custom tab, and waiting for the auth process to complete.
+  ///
+  /// Throws [MonaSDKError] if any step fails.
   Future<void> initKeyExchange() async {
     try {
-      final sessionID = math.Random.secure().nextInt(999999999).toString();
-      await _listenForAuthEvents(sessionID);
+      final sessionID = _generateSessionID();
+      final authCompleter = Completer<void>();
+      await _listenForAuthEvents(sessionID, authCompleter);
 
       final url = _buildURL(
         sessionID: sessionID,
@@ -330,9 +303,11 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
 
       await _launchURL(url);
+      await authCompleter.future;
     } catch (error, trace) {
       "initKeyExchange ERROR ::: $error ::: TRACE ::: $trace".log();
       _handleError("Error Initiating Key Exchange");
+      rethrow;
     }
   }
 
@@ -369,14 +344,19 @@ class MonaSDKNotifier extends ChangeNotifier {
       await initKeyExchange();
     }
 
-    bool hasError = false;
-    bool hasTransactionUpdateError = false;
-
     /// *** Concurrently listen for transaction completion.
-    await Future.wait([
-      _listenForPaymentUpdates(hasError),
-      _listenForTransactionUpdateEvents(hasTransactionUpdateError),
-    ]);
+    try {
+      await Future.wait(
+        [
+          _listenForPaymentUpdates(),
+          _listenForTransactionUpdateEvents(),
+        ],
+      );
+    } catch (error) {
+      "MonaSDKNotifier ::: makePayment ::: ```Concurrently listen for transaction completion.``` ::: Error ::: $error"
+          .log();
+      _handleError("Error during payment process: $error");
+    }
 
     switch (_selectedPaymentMethod) {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
@@ -409,7 +389,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   Future<void> handleRegularPayment() async {
     final sessionID = _generateSessionID();
-    await _listenForAuthEvents(sessionID);
+    final authCompleter = Completer<void>();
+    await _listenForAuthEvents(sessionID, authCompleter);
 
     final url = _buildURL(
       sessionID: sessionID,
