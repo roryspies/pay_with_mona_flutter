@@ -419,7 +419,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     await _launchURL(url);
   }
 
-  /// Performs strong authentication using the received SSE token.
+  ///
+  /// *** Performs strong authentication using the received SSE token.
   ///
   /// Updates payment methods upon success.
   Future<void> loginWithStrongAuth() async {
