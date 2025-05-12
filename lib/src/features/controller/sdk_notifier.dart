@@ -296,11 +296,6 @@ class MonaSDKNotifier extends ChangeNotifier {
       final sessionID = _generateSessionID();
       final authCompleter = Completer<void>();
 
-      ///
-      /// *** These two are done here, to help SDK listen to event's on said transaction and emit necessary states
-      await _listenForPaymentUpdates();
-      await _listenForTransactionUpdateEvents();
-
       /// *** Needed to trigger necessary Key Exchange stuffs.
       await _listenForAuthEvents(sessionID, authCompleter);
 
@@ -342,20 +337,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     _updateState(MonaSDKState.loading);
 
-    /// *** If the user doesn't have a keyID and they want to use a saved payment method,
-    /// *** Key exchange needs to be done, so handle first.
-    final doKeyExchange = await checkIfUserHasKeyID() == null &&
-        [
-          PaymentMethod.savedBank,
-          PaymentMethod.savedCard,
-        ].contains(_selectedPaymentMethod);
-
-    /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
-    /// *** previously
-    if (doKeyExchange) {
-      await initKeyExchange();
-    }
-
     /// *** Concurrently listen for transaction completion.
     try {
       await Future.wait(
@@ -368,6 +349,20 @@ class MonaSDKNotifier extends ChangeNotifier {
       "MonaSDKNotifier ::: makePayment ::: ```Concurrently listen for transaction completion.``` ::: Error ::: $error"
           .log();
       _handleError("Error during payment process: $error");
+    }
+
+    /// *** If the user doesn't have a keyID and they want to use a saved payment method,
+    /// *** Key exchange needs to be done, so handle first.
+    final doKeyExchange = await checkIfUserHasKeyID() == null &&
+        [
+          PaymentMethod.savedBank,
+          PaymentMethod.savedCard,
+        ].contains(_selectedPaymentMethod);
+
+    /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
+    /// *** previously
+    if (doKeyExchange) {
+      await initKeyExchange();
     }
 
     switch (_selectedPaymentMethod) {
