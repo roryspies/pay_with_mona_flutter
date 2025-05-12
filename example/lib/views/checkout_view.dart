@@ -20,7 +20,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
-        await sdkNotifier.initSDK(
+        await sdkNotifier.validatePII(
           phoneNumber: "2347019017218",
         );
       },
