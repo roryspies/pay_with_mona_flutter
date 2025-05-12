@@ -434,26 +434,31 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             )
                           : CustomButton(
                               onTap: () {
-                                sdkNotifier.createCollections(
-                                    bankId: '60d21b4667d0d8992e610c85',
-                                    maximumAmount:
-                                        _debitLimitController.text.trim(),
-                                    expiryDate: _expDateController.text.trim(),
-                                    startDate: '',
-                                    monthlyLimit: '',
-                                    reference: _referenceController.text.trim(),
-                                    type: collectionMethod.value ==
-                                            CollectionsMethod.scheduled
-                                        ? 'VARIABLE'
-                                        : 'SCHEDULED',
-                                    frequency: subscriptionFrequency.value.name
-                                        .toUpperCase(),
-                                    amount: collectionMethod.value ==
-                                            CollectionsMethod.scheduled
-                                        ? null
-                                        : _debitLimitController.text.trim(),
-                                    merchantId:
-                                        widget.merchantName ?? 'ngdeals');
+                                sdkNotifier
+                                  ..setCallingBuildContext(context: context)
+                                  ..createCollections(
+                                      bankId: '680f5d983bccd31f1312645d',
+                                      maximumAmount:
+                                          _debitLimitController.text.trim(),
+                                      expiryDate: convertToIsoDate(
+                                          _expDateController.text.trim())!,
+                                      startDate: convertToIsoDate(
+                                          _expDateController.text.trim())!,
+                                      monthlyLimit: '1',
+                                      reference:
+                                          _referenceController.text.trim(),
+                                      type: collectionMethod.value ==
+                                              CollectionsMethod.scheduled
+                                          ? 'SCHEDULED'
+                                          : 'SUBSCRIPTION',
+                                      frequency: subscriptionFrequency
+                                          .value.name
+                                          .toUpperCase(),
+                                      amount: collectionMethod.value ==
+                                              CollectionsMethod.scheduled
+                                          ? null
+                                          : _debitLimitController.text.trim(),
+                                      merchantId: '67e41f884126830aded0b43c');
                               },
                               label: 'Continue',
                             ),
@@ -491,5 +496,20 @@ class PaymentScheduleTextController {
           paymentTextcontroller ?? this.paymentTextcontroller,
       dateTextcontroller: dateTextcontroller ?? this.dateTextcontroller,
     );
+  }
+}
+
+String? convertToIsoDate(dynamic input) {
+  try {
+    if (input is String) {
+      final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(input);
+      return parsedDate.toIso8601String().split('T').first;
+    } else if (input is DateTime) {
+      return input.toIso8601String().split('T').first;
+    } else {
+      throw FormatException('Unsupported type');
+    }
+  } catch (_) {
+    return null;
   }
 }

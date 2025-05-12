@@ -26,7 +26,6 @@ class CollectionsService {
     required String frequency,
     required String? amount,
     required String merchantId,
-    required String signature,
   }) async {
     try {
       final response = await _apiService.post('/collections', data: {
@@ -36,25 +35,28 @@ class CollectionsService {
         "startDate": startDate,
         "monthlyLimit": monthlyLimit,
         "reference": reference,
+        "debitType": "MERCHANT",
         "schedule": {
           "type": type,
           "frequency": frequency,
           "amount": amount,
-          if (type == 'SCHEDULED')
-            "entries": [
-              {
-                "date": "2025-06-15T00:00:00.000Z",
-                "amount": "2000",
-              },
-              {
-                "date": "2025-07-01T00:00:00.000Z",
-                "amount": "3000",
-              }
-            ]
+          "entries": type == 'SCHEDULED'
+              ? [
+                  {
+                    "date": "2025-06-15T00:00:00.000Z",
+                    "amount": "2",
+                  },
+                  {
+                    "date": "2025-07-01T00:00:00.000Z",
+                    "amount": "3",
+                  }
+                ]
+              : []
         }
       }, headers: {
         "x-merchant-Id": merchantId,
-        'x-mona-pay-auth': signature,
+        "Authorization":
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzA2MzE2OSwiZXhwIjoxNzQ3MTQ5NTY5fQ.ngrLdmQr6Got7-H-zpSWnzPQ0ApPl7apW0utFO3aghQ"
       });
 
       return right(
