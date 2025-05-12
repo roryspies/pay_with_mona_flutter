@@ -29,15 +29,17 @@ class MonaSDKNotifier extends ChangeNotifier {
   static final MonaSDKNotifier _instance = MonaSDKNotifier._internal();
 
   /// Factory constructor returning the singleton instance.
-  factory MonaSDKNotifier({
-    PaymentService? paymentsService,
-    AuthService? authService,
-    SecureStorage? secureStorage,
-  }) {
+  factory MonaSDKNotifier(
+      {PaymentService? paymentsService,
+      AuthService? authService,
+      SecureStorage? secureStorage,
+      CollectionsService? collectionsService}) {
     // Allow dependency injection for testing or customization
     _instance._paymentsService = paymentsService ?? _instance._paymentsService;
     _instance._authService = authService ?? _instance._authService;
     _instance._secureStorage = secureStorage ?? _instance._secureStorage;
+    _instance._collectionsService =
+        collectionsService ?? _instance._collectionsService;
     return _instance;
   }
 
@@ -45,7 +47,8 @@ class MonaSDKNotifier extends ChangeNotifier {
   MonaSDKNotifier._internal()
       : _paymentsService = PaymentService(),
         _authService = AuthService(),
-        _secureStorage = SecureStorage();
+        _secureStorage = SecureStorage(),
+        _collectionsService = CollectionsService();
 
   /// Service responsible for initiating and completing payments.
   late PaymentService _paymentsService;
@@ -560,6 +563,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         frequency: frequency,
         amount: amount,
         merchantId: merchantId,
+        signature: '',
       );
 
       if (failure != null) {
@@ -573,7 +577,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       _updateState(MonaSDKState.success);
     } catch (e) {
-      _handleError('Unexpected error during collection creation.');
+      print(e.toString());
+      _handleError(e.toString());
     }
   }
 
