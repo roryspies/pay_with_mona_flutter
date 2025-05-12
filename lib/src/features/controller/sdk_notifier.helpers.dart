@@ -55,8 +55,11 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
 
     "🚀 Launching payment URL: $url".log();
 
-    assert(_callingBuildContext != null,
-        "Build context must be set before launching URL");
+    assert(
+      _callingBuildContext != null,
+      "Build context must be set before launching URL",
+    );
+
     final screenHeight = _callingBuildContext!.screenHeight;
 
     await launchUrl(
@@ -98,6 +101,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
 
     return {
       "origin": _selectedCardOption?.cardId ?? "",
+      "hasDeviceKey": userCheckoutID != null,
       "destination": {
         "type": "card",
         "typeDetail": "charge",
@@ -112,7 +116,6 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
                   100)
               .toInt(),
       "narration": "Payment via Card",
-      "hasDeviceKey": userCheckoutID != null,
     };
   }
 }

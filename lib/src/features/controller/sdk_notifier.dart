@@ -295,11 +295,21 @@ class MonaSDKNotifier extends ChangeNotifier {
     try {
       final sessionID = _generateSessionID();
       final authCompleter = Completer<void>();
+
+      ///
+      /// *** These two are done here, to help SDK listen to event's on said transaction and emit necessary states
+      await _listenForPaymentUpdates();
+      await _listenForTransactionUpdateEvents();
+
+      /// *** Needed to trigger necessary Key Exchange stuffs.
       await _listenForAuthEvents(sessionID, authCompleter);
 
       final url = _buildURL(
         sessionID: sessionID,
         method: _selectedPaymentMethod,
+        bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
+            ? _selectedBankOption?.bankId
+            : _selectedCardOption?.cardId,
       );
 
       await _launchURL(url);
@@ -340,6 +350,8 @@ class MonaSDKNotifier extends ChangeNotifier {
           PaymentMethod.savedCard,
         ].contains(_selectedPaymentMethod);
 
+    /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
+    /// *** previously
     if (doKeyExchange) {
       await initKeyExchange();
     }
@@ -395,6 +407,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     final url = _buildURL(
       sessionID: sessionID,
       method: _selectedPaymentMethod,
+      bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
+          ? _selectedBankOption?.bankId
+          : _selectedCardOption?.cardId,
     );
 
     await _launchURL(url);
