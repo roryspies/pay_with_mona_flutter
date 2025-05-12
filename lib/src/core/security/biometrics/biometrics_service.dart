@@ -81,8 +81,8 @@ class BiometricService {
         ),
       );
       return publicKey;
-    } on BiometricException catch (e) {
-      'BiometricService ::: generatePublicKey ::: Biometric error: ${e.message}'
+    } on BiometricException catch (e, trace) {
+      'BiometricService ::: generatePublicKey ::: Biometric error: ${e.message} TRACE ::: $trace'
           .log();
       return null;
     }

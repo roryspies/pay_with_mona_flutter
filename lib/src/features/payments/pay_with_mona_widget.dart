@@ -356,7 +356,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       sdkNotifier
                         ..setCallingBuildContext(context: context)
                         ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
-                        ..makePayment();
+                        ..makePayment(tnxAmountInKobo: 2000);
                     },
                     child: Text(
                       "Proceed to pay ",
