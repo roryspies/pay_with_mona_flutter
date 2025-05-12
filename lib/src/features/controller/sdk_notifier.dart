@@ -1,22 +1,22 @@
-import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
-import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
-import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
-import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
-import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
-import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/core/services/auth_service.dart';
-import 'package:pay_with_mona/src/core/services/payments_service.dart';
-import 'package:pay_with_mona/src/models/mona_checkout.dart';
-import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'dart:math' as math;
-part 'sdk_notifier.helpers.dart';
+import "dart:async";
+import "dart:convert";
+import "package:flutter/material.dart";
+import "package:flutter_custom_tabs/flutter_custom_tabs.dart";
+import "package:pay_with_mona/src/core/events/auth_state_stream.dart";
+import "package:pay_with_mona/src/core/events/firebase_sse_listener.dart";
+import "package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart";
+import "package:pay_with_mona/src/core/events/transaction_state_stream.dart";
+import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
+import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
+import "package:pay_with_mona/src/features/controller/notifier_enums.dart";
+import "package:pay_with_mona/src/core/services/auth_service.dart";
+import "package:pay_with_mona/src/core/services/payments_service.dart";
+import "package:pay_with_mona/src/models/mona_checkout.dart";
+import "package:pay_with_mona/src/models/pending_payment_response_model.dart";
+import "package:pay_with_mona/src/utils/extensions.dart";
+import "package:pay_with_mona/src/utils/size_config.dart";
+import "dart:math" as math;
+part "sdk_notifier.helpers.dart";
 
 /// Manages the entire payment workflow, from initiation to completion,
 /// including real-time event listening and strong authentication.
@@ -132,7 +132,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     _errorMessage?.log();
   }
 
-  /// Stores the transaction ID and notifies listeners.
+  /// Stores the transaction ID and notifies listeners .
   void _handleTransactionId(String transactionId) {
     _currentTransactionId = transactionId;
     notifyListeners();
@@ -205,8 +205,8 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
 
   ///
-  /// *** MARK: - Init SDK & Major Methods
-  Future<void> initSDK({
+  /// *** MARK: -  Major Methods
+  Future<void> validatePII({
     String? phoneNumber,
     String? bvn,
     String? dob,
@@ -236,10 +236,8 @@ class MonaSDKNotifier extends ChangeNotifier {
           ),
         );
 
-        final userHasCheckoutID = await checkIfUserHasKeyID();
-
         /// *** User has not done key exchange
-        if (userHasCheckoutID == null) {
+        if (await checkIfUserHasKeyID() == null) {
           _authStream.emit(state: AuthState.loggedOut);
           return;
         }
@@ -273,20 +271,20 @@ class MonaSDKNotifier extends ChangeNotifier {
     );
 
     if (failure != null) {
-      _handleError('Payment initiation failed. Please try again.');
+      _handleError("Payment initiation failed. Please try again.");
       throw (failure.message);
     }
 
-    final txId = success?['transactionId'] as String?;
+    final txId = success?["transactionId"] as String?;
     if (txId == null) {
-      _handleError('Invalid response from payment service.');
+      _handleError("Invalid response from payment service.");
       return;
     }
 
     _handleTransactionId(txId);
     _updateState(MonaSDKState.idle);
 
-    /// *** @ThatSaxyDev - I doubt we still need this - below, considering we're already using PII
+    /// *** @ThatSaxyDev - I doubt we still need this - below, considering we"re already using PII
     /// *** Kindly confirm
     //await getPaymentMethods();
   }
@@ -297,19 +295,19 @@ class MonaSDKNotifier extends ChangeNotifier {
     final userCheckoutID = await checkIfUserHasKeyID();
 
     if (userCheckoutID == null) {
-      _handleError('User identifier not found. Please login again.');
+      _handleError("User identifier not found. Please login again.");
       return;
     }
 
     try {
       final (paymentDataAndMethods, failure) =
           await _paymentsService.getPaymentMethods(
-        transactionId: _currentTransactionId ?? '',
+        transactionId: _currentTransactionId ?? "",
         userEnrolledCheckoutID: userCheckoutID,
       );
 
       if (failure != null) {
-        _handleError('Payment initiation failed. Please try again.');
+        _handleError("Payment initiation failed. Please try again.");
         _updateState(MonaSDKState.idle);
         return;
       }
@@ -317,7 +315,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
       _updateState(MonaSDKState.success);
     } catch (error, trace) {
-      _handleError('Error fetching payment methods: $error ::: $trace');
+      _handleError("Error fetching payment methods: $error ::: $trace");
       return;
     }
   }
@@ -371,7 +369,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
           _updateState(MonaSDKState.idle);
         } catch (error, trace) {
-          _handleError('Error listening for transaction updates.');
+          _handleError("Error listening for transaction updates.");
           "Payment Notifier ::: makePayment ::: PaymentMethod.savedBank ::: ERROR ::: $error TRACE ::: $trace"
               .log();
         }
@@ -393,12 +391,12 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// *** MARK: Event Listeners
   Future<void> _listenForPaymentUpdates(bool errorFlag) async {
     await _firebaseSSE.listenForPaymentUpdates(
-      transactionId: _currentTransactionId ?? '',
+      transactionId: _currentTransactionId ?? "",
       onDataChange: (event) {
         "PAYMENT UPDATE EVENT $event".log();
       },
       onError: (error) {
-        _handleError('Error listening for transaction updates.');
+        _handleError("Error listening for transaction updates.");
         errorFlag = true;
       },
     );
@@ -430,7 +428,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         }
       },
       onError: (error) {
-        _handleError('Error during strong authentication.');
+        _handleError("Error during strong authentication.");
         errorFlag = true;
       },
     );
@@ -451,24 +449,31 @@ class MonaSDKNotifier extends ChangeNotifier {
         await loginWithStrongAuth();
       },
       onError: (error) {
-        _handleError('Error during strong authentication.');
+        _handleError("Error during strong authentication.");
         errorFlag = true;
       },
     );
   }
 
   ///
-  /// *** MARK: Custom Tabs and URL's
+  /// *** MARK: Custom Tabs and URL"s
   /// Builds the URL for the in-app payment custom tab.
-  String _buildPaymentUrl(String sessionID, String method) {
-    final redirect = Uri.encodeComponent(
-      'https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$method',
-    );
+  String _buildPaymentUrl(
+    String sessionID,
+    String method, {
+    bool withRedirect = true,
+  }) {
+    final baseUrl = "https://pay.development.mona.ng/login";
+    final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
 
-    return 'https://pay.development.mona.ng/login'
-        '?loginScope=${Uri.encodeComponent('67e41f884126830aded0b43c')}'
-        '&redirect=$redirect'
-        '&sessionId=${Uri.encodeComponent(sessionID)}';
+    final redirectParam = withRedirect
+        ? "&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$method")}"
+        : "";
+
+    return "$baseUrl"
+        "?loginScope=$loginScope"
+        "$redirectParam"
+        "&sessionId=${Uri.encodeComponent(sessionID)}";
   }
 
   /// Launches the payment URL using platform-specific custom tab settings.
@@ -503,29 +508,29 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.loading);
     try {
       final response = await _authService.loginWithStrongAuth(
-        strongAuthToken: _strongAuthToken ?? '',
-        phoneNumber: _monaCheckOut?.phoneNumber ?? '',
+        strongAuthToken: _strongAuthToken ?? "",
+        phoneNumber: _monaCheckOut?.phoneNumber ?? "",
       );
 
       if (response == null) {
-        _handleError('Strong authentication failed.');
+        _handleError("Strong authentication failed.");
         return;
       }
 
       await _authService.signAndCommitAuthKeys(
-        deviceAuth: response['deviceAuth'],
+        deviceAuth: response["deviceAuth"],
         onSuccess: () async {
           final userCheckoutID = await _secureStorage.read(
             key: SecureStorageKeys.monaCheckoutID,
           );
 
           if (userCheckoutID == null) {
-            _handleError('User identifier missing.');
+            _handleError("User identifier missing.");
             return;
           }
 
           await _paymentsService.getPaymentMethods(
-            transactionId: _currentTransactionId ?? '',
+            transactionId: _currentTransactionId ?? "",
             userEnrolledCheckoutID: userCheckoutID,
           );
 
@@ -534,7 +539,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _handleError('Unexpected error during authentication.');
+      _handleError("Unexpected error during authentication.");
     }
   }
 
