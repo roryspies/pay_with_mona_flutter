@@ -326,7 +326,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       final url = _buildURL(
         sessionID: sessionID,
-        method: _selectedPaymentMethod.type,
+        method: _selectedPaymentMethod,
       );
 
       await _launchURL(url);
@@ -413,7 +413,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     final url = _buildURL(
       sessionID: sessionID,
-      method: _selectedPaymentMethod.type,
+      method: _selectedPaymentMethod,
     );
 
     await _launchURL(url);

@@ -10,22 +10,37 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
   /// Builds the URL for the in-app payment custom tab.
   String _buildURL({
     required String sessionID,
-    String? method,
+    PaymentMethod? method,
+    String? bankOrCardId,
     bool withRedirect = true,
   }) {
-    if (withRedirect && (method == null || method.isEmpty)) {
+    if (withRedirect && (method == null || method == PaymentMethod.none)) {
       throw MonaSDKError(
         message: "Payment method must be provided when withRedirect is true.",
       );
     }
 
     final baseUrl = "https://pay.development.mona.ng/login";
-
-    /// *** TODO: @Serticode - Update the below to use custom passed in scope or default to mona
     final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
 
+    final String? methodType = method?.type;
+
+    // Build extra params for saved methods
+    String extraParam = '';
+    if (method == PaymentMethod.savedBank ||
+        method == PaymentMethod.savedCard) {
+      if (bankOrCardId == null || bankOrCardId.isEmpty) {
+        throw MonaSDKError(
+          message:
+              "bankOrCardId must be provided when using savedBank or savedCard.",
+        );
+      }
+
+      extraParam = "&bankId=$bankOrCardId";
+    }
+
     final redirectParam = withRedirect
-        ? "&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$method")}"
+        ? "&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$methodType$extraParam")}"
         : "";
 
     return "$baseUrl"
