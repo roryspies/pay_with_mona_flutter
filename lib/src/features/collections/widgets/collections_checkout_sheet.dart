@@ -56,29 +56,48 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                           spacing: context.w(8),
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircleAvatar(
-                              radius: context.w(28),
-                              backgroundImage: AssetImage('logo'.png),
+                            SvgPicture.asset(
+                              'bank'.svg,
+                              height: context.h(48),
                             ),
                             SvgPicture.asset(
-                              'securelink'.svg,
-                              height: context.h(16),
+                              'forback'.svg,
+                              height: context.h(22),
                             ),
                             CircleAvatar(
-                              radius: context.w(28),
-                              backgroundImage: AssetImage('credpal'.png),
+                              radius: context.w(24),
+                              child: Text(
+                                'NG',
+                                style: TextStyle(
+                                    fontSize: context.sp(10),
+                                    fontWeight: FontWeight.w500,
+                                    color: MonaColors.textHeading),
+                              ),
                             ),
                           ],
                         ),
-                        context.sbH(10),
+                        context.sbH(24),
                         Text(
-                          "CredPal uses Mona to requests for your transaction information.",
+                          "NGdeals wants to automate repayments",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: context.sp(16),
                             fontWeight: FontWeight.w600,
                             color: MonaColors.textHeading,
                           ),
+                        ),
+                        context.sbH(2),
+                        Text(
+                          "Please verify the details below",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: context.sp(14),
+                            color: MonaColors.textBody,
+                          ),
+                        ),
+                        context.sbH(24),
+                        CustomButton(
+                          label: 'Continue to Mona',
                         ),
                       ],
                     ),
@@ -102,12 +121,12 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                               color: MonaColors.textHeading),
                         ),
                         const SizedBox(height: 30),
-                        ...FeatureItem.values
+                        ...DetailsItem.values
                             .map((feature) => [
-                                  FeatureRow(
+                                  DetailsRow(
                                     feature: feature,
                                   ),
-                                  if (feature != FeatureItem.values.last)
+                                  if (feature != DetailsItem.values.last)
                                     context.sbH(24),
                                 ])
                             .expand((element) => element),
@@ -148,10 +167,6 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
-                  context.sbH(8),
-                  CustomButton(
-                    label: 'Continue to Mona',
                   ),
                   context.sbH(13),
                   RichText(
@@ -213,22 +228,22 @@ class CollectionsCheckoutSheet extends StatelessWidget {
   }
 }
 
-enum FeatureItem {
-  quickEasy(
+enum DetailsItem {
+  debitor(
       'Quick & Easy', 'New users verify once, then sharing is just one tap.'),
-  securePrivate('Secure & Private',
+  duration('Secure & Private',
       'Your info is encrypted and only CredPal can see it.'),
   control('You\'re in Control', 'You choose what to share—nothing more.');
 
-  const FeatureItem(this.label, this.description);
+  const DetailsItem(this.label, this.description);
   final String label;
   final String description;
 }
 
-class FeatureRow extends StatelessWidget {
-  final FeatureItem feature;
+class DetailsRow extends StatelessWidget {
+  final DetailsItem feature;
 
-  const FeatureRow({
+  const DetailsRow({
     super.key,
     required this.feature,
   });
@@ -240,7 +255,7 @@ class FeatureRow extends StatelessWidget {
       children: [
         SvgPicture.asset(
           feature.name.svg,
-          height: context.h(36),
+          height: context.h(24),
         ),
         context.sbW(20),
         Expanded(

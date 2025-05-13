@@ -5,6 +5,7 @@ import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -434,31 +435,40 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             )
                           : CustomButton(
                               onTap: () {
-                                sdkNotifier
-                                  ..setCallingBuildContext(context: context)
-                                  ..createCollections(
-                                      bankId: '680f5d983bccd31f1312645d',
-                                      maximumAmount:
-                                          _debitLimitController.text.trim(),
-                                      expiryDate: convertToIsoDate(
-                                          _expDateController.text.trim())!,
-                                      startDate: convertToIsoDate(
-                                          _expDateController.text.trim())!,
-                                      monthlyLimit: '1',
-                                      reference:
-                                          _referenceController.text.trim(),
-                                      type: collectionMethod.value ==
-                                              CollectionsMethod.scheduled
-                                          ? 'SCHEDULED'
-                                          : 'SUBSCRIPTION',
-                                      frequency: subscriptionFrequency
-                                          .value.name
-                                          .toUpperCase(),
-                                      amount: collectionMethod.value ==
-                                              CollectionsMethod.scheduled
-                                          ? null
-                                          : _debitLimitController.text.trim(),
-                                      merchantId: '67e41f884126830aded0b43c');
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  builder: (_) => Wrap(
+                                    children: [
+                                      CollectionsCheckoutSheet(),
+                                    ],
+                                  ),
+                                );
+                                // sdkNotifier
+                                //   ..setCallingBuildContext(context: context)
+                                //   ..createCollections(
+                                //       bankId: '680f5d983bccd31f1312645d',
+                                //       maximumAmount:
+                                //           _debitLimitController.text.trim(),
+                                //       expiryDate: convertToIsoDate(
+                                //           _expDateController.text.trim())!,
+                                //       startDate: convertToIsoDate(
+                                //           _expDateController.text.trim())!,
+                                //       monthlyLimit: '1',
+                                //       reference:
+                                //           _referenceController.text.trim(),
+                                //       type: collectionMethod.value ==
+                                //               CollectionsMethod.scheduled
+                                //           ? 'SCHEDULED'
+                                //           : 'SUBSCRIPTION',
+                                //       frequency: subscriptionFrequency
+                                //           .value.name
+                                //           .toUpperCase(),
+                                //       amount: collectionMethod.value ==
+                                //               CollectionsMethod.scheduled
+                                //           ? null
+                                //           : _debitLimitController.text.trim(),
+                                //       merchantId: '67e41f884126830aded0b43c');
                               },
                               label: 'Continue',
                             ),
