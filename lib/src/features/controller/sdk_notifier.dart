@@ -6,6 +6,7 @@ import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
