@@ -313,11 +313,6 @@ class MonaSDKNotifier extends ChangeNotifier {
   }) async {
     _updateState(MonaSDKState.loading);
 
-    if ((tnxAmountInKobo / 100) < 20) {
-      _handleError("Transaction amount cannot be less than 20");
-      return;
-    }
-
     final (Map<String, dynamic>? success, failure) =
         await _paymentsService.initiatePayment(
       tnxAmountInKobo: tnxAmountInKobo,
@@ -380,6 +375,12 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** This is only for DEMO.
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
+    
+    if ((tnxAmountInKobo / 100) < 20) {
+      _handleError("Transaction amount cannot be less than 20");
+      return;
+    }
+
     if (_currentTransactionId == null) {
       await _initiatePayment(
         tnxAmountInKobo: _monaCheckOut!.amount,
