@@ -1,8 +1,15 @@
-import 'package:example/my_home_page.dart';
+import 'package:example/firebase_options.dart';
+import 'package:example/views/products_view.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  runApp(const PayWithMona());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(ProviderScope(child: const PayWithMona()));
 }
 
 class PayWithMona extends StatelessWidget {
@@ -10,19 +17,12 @@ class PayWithMona extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Pay With Mona',
+      title: 'NG Deals',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(
-            0xFF3045FB,
-          ),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(
-        title: 'Pay With Mona',
-      ),
+      home: const ProductsView(),
     );
   }
 }

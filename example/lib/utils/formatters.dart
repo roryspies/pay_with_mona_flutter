@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class DOBTextInputFormatter extends TextInputFormatter {
   @override
@@ -51,6 +52,29 @@ class CapitalizeWordsTextFormatter extends TextInputFormatter {
     return newValue.copyWith(
       text: capitalizedText,
       selection: TextSelection.collapsed(offset: capitalizedText.length),
+    );
+  }
+}
+
+class ThousandsFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat.decimalPattern();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (newText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final formatted = _formatter.format(int.parse(newText));
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

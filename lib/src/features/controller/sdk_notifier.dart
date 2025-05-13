@@ -161,9 +161,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   /// Provides checkout details (e.g., colors, phone number) for UI integration.
-  void setMonaCheckOut({
-    required MonaCheckOut checkoutDetails,
-  }) {
+  void setMonaCheckOut({required MonaCheckOut checkoutDetails, F}) {
     _monaCheckOut = checkoutDetails;
     notifyListeners();
   }

@@ -1,13 +1,56 @@
 part of "sdk_notifier.dart";
 
 extension SDKNotifierListeners on MonaSDKNotifier {
+  void handleTransactionEvents({
+    required String listenerName,
+    required String eventName,
+  }) {
+    if (["transaction_initiated", "progress_update"].contains(eventName)) {
+      "🥰 $listenerName ::: transaction_initiated".log();
+
+      _txnStateStream.emit(
+        state: TransactionStateInitiated(
+          transactionID: _currentTransactionId,
+        ),
+      );
+    }
+
+    if (eventName == "transaction_failed") {
+      "😭 $listenerName ::: transaction_failed".log();
+
+      _txnStateStream.emit(
+        state: TransactionStateFailed(),
+      );
+    }
+
+    if (eventName == "transaction_completed") {
+      "✅ $listenerName ::: transaction_completed".log();
+
+      _txnStateStream.emit(
+        state: TransactionStateCompleted(
+          transactionID: _currentTransactionId,
+        ),
+      );
+    }
+
+    _updateState(MonaSDKState.idle);
+  }
+
+  ///
   /// *** MARK: Event Listeners
   Future<void> _listenForPaymentUpdates() async {
     try {
       await _firebaseSSE.listenForPaymentUpdates(
         transactionId: _currentTransactionId ?? "",
         onDataChange: (event) {
-          "PAYMENT UPDATE EVENT $event".log();
+          "_listenForPaymentUpdates ::: EVENT $event".log();
+          final eventData = jsonDecode(event) as Map<String, dynamic>;
+          final theEvent = eventData["event"];
+
+          handleTransactionEvents(
+            eventName: theEvent,
+            listenerName: "_listenForPaymentUpdates()",
+          );
         },
         onError: (error) {
           _handleError("Error listening for transaction updates.");
@@ -29,7 +72,12 @@ extension SDKNotifierListeners on MonaSDKNotifier {
           final eventData = jsonDecode(event) as Map<String, dynamic>;
           final theEvent = eventData["event"];
 
-          if (theEvent == "transaction_initiated") {
+          handleTransactionEvents(
+            eventName: theEvent,
+            listenerName: "_listenForTransactionUpdateEvents()",
+          );
+
+          /* if (theEvent == "transaction_initiated") {
             "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
                 .log();
 
@@ -57,7 +105,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
                 transactionID: _currentTransactionId,
               ),
             );
-          }
+          } */
         },
         onError: (error) {
           _handleError("Error during transaction updates.");
