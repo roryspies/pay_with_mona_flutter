@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/models/colllection_response.dart';
 
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -13,22 +16,33 @@ class CollectionsCheckoutSheet extends StatelessWidget {
     super.key,
     this.details,
     required this.method,
+    required this.merchantName,
   });
 
   final Map<String, dynamic>? details;
   final CollectionsMethod method;
+  final String merchantName;
+
+  String formatDate(String? iso) {
+    if (iso == null) return '-';
+    final parsed = DateTime.tryParse(iso);
+    return parsed != null ? DateFormat('d MMM y').format(parsed) : iso;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final collection =
+        CollectionResponse.fromJson(details!).requests.last.collection;
+    final schedule = collection.schedule;
+    final isScheduled = schedule.type == 'SCHEDULED';
+
     return Padding(
-      padding: MediaQuery.of(context).viewInsets, // for keyboard safety
+      padding: MediaQuery.of(context).viewInsets,
       child: Container(
         decoration: BoxDecoration(
           color: MonaColors.textField,
           borderRadius: BorderRadius.circular(10),
         ),
-        // padding: const EdgeInsets.all(16),
-
         width: double.infinity,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -38,19 +52,15 @@ class CollectionsCheckoutSheet extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: MonaColors.primaryBlue,
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(10),
                   topRight: Radius.circular(10),
                 ),
               ),
             ),
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: context.w(16),
-              ).copyWith(
-                top: context.h(20),
-                bottom: context.h(21),
-              ),
+              padding: EdgeInsets.symmetric(horizontal: context.w(16))
+                  .copyWith(top: context.h(20), bottom: context.h(21)),
               child: Column(
                 children: [
                   Container(
@@ -65,29 +75,25 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                           spacing: context.w(8),
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SvgPicture.asset(
-                              'bank'.svg,
-                              height: context.h(48),
-                            ),
-                            SvgPicture.asset(
-                              'forback'.svg,
-                              height: context.h(22),
-                            ),
+                            SvgPicture.asset('bank'.svg, height: context.h(48)),
+                            SvgPicture.asset('forback'.svg,
+                                height: context.h(22)),
                             CircleAvatar(
                               radius: context.w(24),
                               child: Text(
-                                'NG',
+                                getInitials(merchantName).toUpperCase(),
                                 style: TextStyle(
-                                    fontSize: context.sp(10),
-                                    fontWeight: FontWeight.w500,
-                                    color: MonaColors.textHeading),
+                                  fontSize: context.sp(10),
+                                  fontWeight: FontWeight.w500,
+                                  color: MonaColors.textHeading,
+                                ),
                               ),
                             ),
                           ],
                         ),
                         context.sbH(24),
                         Text(
-                          "NGdeals wants to automate repayments",
+                          "${collection.reference} wants to automate repayments",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: context.sp(16),
@@ -105,134 +111,189 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                           ),
                         ),
                         context.sbH(24),
-                        Padding(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: context.w(8)),
-                          child: Row(
-                            children: List.generate(
-                              2,
-                              (index) {
-                                return Flexible(
-                                  child: Row(
-                                    children: [
-                                      SvgPicture.asset(
-                                        index == 0
-                                            ? 'person'.svg
-                                            : 'calendar'.svg,
-                                        height: context.h(24),
-                                      ),
-                                      context.sbW(8),
-                                      Flexible(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              index == 0
-                                                  ? "Debitor"
-                                                  : method ==
-                                                          CollectionsMethod
-                                                              .scheduled
-                                                      ? 'Duration'
-                                                      : 'Frequency',
-                                              style: TextStyle(
-                                                fontSize: context.sp(10),
-                                                fontWeight: FontWeight.w300,
-                                                color: MonaColors.textBody,
-                                              ),
-                                            ),
-                                            context.sbH(2),
-                                            Text(
-                                              "NGdeals",
-                                              style: TextStyle(
-                                                fontSize: context.sp(14),
-                                                fontWeight: FontWeight.w500,
-                                                color: MonaColors.textHeading,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        context.sbH(20),
-                        Padding(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: context.w(8)),
-                          child: Row(
-                            children: List.generate(
-                              2,
-                              (index) {
-                                return Flexible(
-                                  child: Row(
-                                    children: [
-                                      SvgPicture.asset(
-                                        index == 0
-                                            ? 'money'.svg
-                                            : method ==
-                                                    CollectionsMethod.scheduled
-                                                ? 'money'.svg
-                                                : 'calendar'.svg,
-                                        height: context.h(24),
-                                      ),
-                                      context.sbW(8),
-                                      Flexible(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              index == 0
-                                                  ? method ==
-                                                          CollectionsMethod
-                                                              .scheduled
-                                                      ? 'Total debit limit'
-                                                      : 'Amount'
-                                                  : method ==
-                                                          CollectionsMethod
-                                                              .scheduled
-                                                      ? 'Monthly debit limit'
-                                                      : 'Start',
-                                              style: TextStyle(
-                                                fontSize: context.sp(10),
-                                                fontWeight: FontWeight.w300,
-                                                color: MonaColors.textBody,
-                                              ),
-                                            ),
-                                            context.sbH(2),
-                                            Text(
-                                              "NGdeals",
-                                              style: TextStyle(
-                                                fontSize: context.sp(14),
-                                                fontWeight: FontWeight.w500,
-                                                color: MonaColors.textHeading,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        context.sbH(20),
+
+                        // Debitor & Duration/Frequency
                         Padding(
                           padding:
                               EdgeInsets.symmetric(horizontal: context.w(8)),
                           child: Row(
                             children: [
-                              SvgPicture.asset(
-                                'reference'.svg,
-                                height: context.h(24),
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset('person'.svg,
+                                        height: context.h(24)),
+                                    context.sbW(8),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Debitor",
+                                            style: TextStyle(
+                                              fontSize: context.sp(10),
+                                              fontWeight: FontWeight.w300,
+                                              color: MonaColors.textBody,
+                                            ),
+                                          ),
+                                          context.sbH(2),
+                                          Text(
+                                            collection.reference,
+                                            style: TextStyle(
+                                              fontSize: context.sp(14),
+                                              fontWeight: FontWeight.w500,
+                                              color: MonaColors.textHeading,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset('calendar'.svg,
+                                        height: context.h(24)),
+                                    context.sbW(8),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            isScheduled
+                                                ? 'Duration'
+                                                : 'Frequency',
+                                            style: TextStyle(
+                                              fontSize: context.sp(10),
+                                              fontWeight: FontWeight.w300,
+                                              color: MonaColors.textBody,
+                                            ),
+                                          ),
+                                          context.sbH(2),
+                                          Text(
+                                            isScheduled
+                                                ? formatDate(
+                                                    collection.expiryDate)
+                                                : schedule.frequency ?? '-',
+                                            style: TextStyle(
+                                              fontSize: context.sp(14),
+                                              fontWeight: FontWeight.w500,
+                                              color: MonaColors.textHeading,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        context.sbH(20),
+
+                        // Amount + Monthly Limit or Start
+                        Padding(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: context.w(8)),
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset('money'.svg,
+                                        height: context.h(24)),
+                                    context.sbW(8),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            isScheduled
+                                                ? 'Total debit limit'
+                                                : 'Amount',
+                                            style: TextStyle(
+                                              fontSize: context.sp(10),
+                                              fontWeight: FontWeight.w300,
+                                              color: MonaColors.textBody,
+                                            ),
+                                          ),
+                                          context.sbH(2),
+                                          Text(
+                                            '₦${isScheduled ? collection.maxAmount : schedule.amount ?? '-'}',
+                                            style: TextStyle(
+                                              fontSize: context.sp(14),
+                                              fontWeight: FontWeight.w500,
+                                              color: MonaColors.textHeading,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Flexible(
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      isScheduled
+                                          ? 'money'.svg
+                                          : 'calendar'.svg,
+                                      height: context.h(24),
+                                    ),
+                                    context.sbW(8),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            isScheduled
+                                                ? 'Monthly debit limit'
+                                                : 'Start',
+                                            style: TextStyle(
+                                              fontSize: context.sp(10),
+                                              fontWeight: FontWeight.w300,
+                                              color: MonaColors.textBody,
+                                            ),
+                                          ),
+                                          context.sbH(2),
+                                          Text(
+                                            isScheduled
+                                                ? collection.monthlyLimit ?? '-'
+                                                : formatDate(
+                                                    collection.startDate),
+                                            style: TextStyle(
+                                              fontSize: context.sp(14),
+                                              fontWeight: FontWeight.w500,
+                                              color: MonaColors.textHeading,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        context.sbH(20),
+
+                        // Reference
+                        Padding(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: context.w(8)),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset('reference'.svg,
+                                  height: context.h(24)),
                               context.sbW(8),
                               Flexible(
                                 child: Column(
@@ -248,7 +309,7 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                                     ),
                                     context.sbH(2),
                                     Text(
-                                      "NGdeals",
+                                      collection.reference,
                                       style: TextStyle(
                                         fontSize: context.sp(14),
                                         fontWeight: FontWeight.w500,
@@ -262,9 +323,33 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                           ),
                         ),
                         context.sbH(24),
-                        CustomButton(
-                          label: 'Continue to Mona',
-                        ),
+                        Builder(
+                          builder: (context) {
+                            final sdkNotifier = MonaSDKNotifier();
+                            return sdkNotifier.state == MonaSDKState.loading
+                                ? Align(
+                                    alignment: Alignment.center,
+                                    child: CircularProgressIndicator(
+                                      color: MonaColors.primaryBlue,
+                                    ),
+                                  )
+                                : CustomButton(
+                                    label: 'Continue to Mona',
+                                    onTap: () {
+                                      sdkNotifier
+                                        ..setCallingBuildContext(
+                                            context: context)
+                                        ..triggerCollection(
+                                          merchantId:
+                                              '67e41f884126830aded0b43c',
+                                          onSuccess: (p0) {
+                                            Navigator.of(context).pop();
+                                          },
+                                        );
+                                    },
+                                  );
+                          },
+                        )
                       ],
                     ),
                   ),
@@ -297,106 +382,8 @@ class CollectionsCheckoutSheet extends StatelessWidget {
   }
 }
 
-// class DetailsItem {
-//   const DetailsItem(
-//     this.label,
-//     this.description,
-//   );
-//   final String label;
-//   final String description;
-// }
-
-// class DetailsRow extends StatelessWidget {
-//   final DetailsItem feature;
-
-//   const DetailsRow({
-//     super.key,
-//     required this.feature,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         SvgPicture.asset(
-//           feature.name.svg,
-//           height: context.h(24),
-//         ),
-//         context.sbW(20),
-//         Expanded(
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             spacing: context.h(1),
-//             children: [
-//               Text(
-//                 feature.label,
-//                 style: TextStyle(
-//                     fontSize: context.sp(14),
-//                     fontWeight: FontWeight.w600,
-//                     color: MonaColors.textHeading),
-//               ),
-//               Text(
-//                 feature.description,
-//                 style: TextStyle(
-//                     fontSize: context.sp(12),
-//                     fontWeight: FontWeight.w400,
-//                     color: MonaColors.textBody),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
-
-// enum InfoType {
-//   account('Account info'),
-//   spending('Spending records');
-
-//   const InfoType(this.label);
-//   final String label;
-// }
-
-// class InfoButton extends StatelessWidget {
-//   final InfoType infoType;
-
-//   const InfoButton({
-//     super.key,
-//     required this.infoType,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: EdgeInsets.symmetric(
-//           vertical: context.h(8), horizontal: context.w(8)),
-//       decoration: BoxDecoration(
-//         color: const Color(0xFFF8F8F8),
-//         borderRadius: BorderRadius.circular(8),
-//         border: Border.all(
-//           color: const Color(0xFFE0E0E0),
-//           width: 1,
-//         ),
-//       ),
-//       child: Row(
-//         spacing: context.w(4),
-//         children: [
-//           SvgPicture.asset(
-//             infoType.name.svg,
-//             height: context.h(16),
-//           ),
-//           Text(
-//             infoType.label,
-//             style: TextStyle(
-//               fontSize: context.sp(12),
-//               fontWeight: FontWeight.w500,
-//               color: MonaColors.textBody,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+String getInitials(String input) {
+  final trimmed = input.trim();
+  if (trimmed.isEmpty) return '';
+  return trimmed.length < 2 ? trimmed : trimmed.substring(0, 2);
+}

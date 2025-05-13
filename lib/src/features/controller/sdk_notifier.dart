@@ -491,22 +491,24 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String frequency,
     required String? amount,
     required String merchantId,
+    required List<Map<String, dynamic>> scheduleEntries,
+    void Function(Map<String, dynamic>?)? onSuccess,
   }) async {
     _updateState(MonaSDKState.loading);
     try {
       final (Map<String, dynamic>? success, failure) =
           await _collectionsService.createCollections(
-        bankId: bankId,
-        maximumAmount: maximumAmount,
-        expiryDate: expiryDate,
-        startDate: startDate,
-        monthlyLimit: monthlyLimit,
-        reference: reference,
-        type: type,
-        frequency: frequency,
-        amount: amount,
-        merchantId: merchantId,
-      );
+              bankId: bankId,
+              maximumAmount: maximumAmount,
+              expiryDate: expiryDate,
+              startDate: startDate,
+              monthlyLimit: monthlyLimit,
+              reference: reference,
+              type: type,
+              frequency: frequency,
+              amount: amount,
+              merchantId: merchantId,
+              scheduleEntries: scheduleEntries);
 
       if (failure != null) {
         _handleError('Collection creation failed.');
@@ -515,6 +517,35 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       if (success != null) {
         success.log();
+        onSuccess?.call(success);
+      }
+
+      _updateState(MonaSDKState.success);
+    } catch (e) {
+      print(e.toString());
+      _handleError(e.toString());
+    }
+  }
+
+  Future<void> triggerCollection({
+    required String merchantId,
+    void Function(Map<String, dynamic>?)? onSuccess,
+  }) async {
+    _updateState(MonaSDKState.loading);
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _collectionsService.triggerCollection(
+        merchantId: merchantId,
+      );
+
+      if (failure != null) {
+        _handleError('Collection trigger failed.');
+        throw (failure.message);
+      }
+
+      if (success != null) {
+        success.log();
+        onSuccess?.call(success);
       }
 
       _updateState(MonaSDKState.success);

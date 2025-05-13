@@ -26,6 +26,7 @@ class CollectionsService {
     required String frequency,
     required String? amount,
     required String merchantId,
+    required List<Map<String, dynamic>> scheduleEntries,
   }) async {
     try {
       final response = await _apiService.post('/collections', data: {
@@ -40,24 +41,39 @@ class CollectionsService {
           "type": type,
           "frequency": frequency,
           "amount": amount,
-          "entries": type == 'SCHEDULED'
-              ? [
-                  {
-                    "date": "2025-06-15T00:00:00.000Z",
-                    "amount": "2",
-                  },
-                  {
-                    "date": "2025-07-01T00:00:00.000Z",
-                    "amount": "3",
-                  }
-                ]
-              : []
+          "entries": type == 'SCHEDULED' ? scheduleEntries : []
         }
       }, headers: {
         "x-merchant-Id": merchantId,
         "Authorization":
             "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzA2MzE2OSwiZXhwIjoxNzQ3MTQ5NTY5fQ.ngrLdmQr6Got7-H-zpSWnzPQ0ApPl7apW0utFO3aghQ"
       });
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } catch (e) {
+      final apiEx = APIException.fromHttpError(e);
+      '❌ createCollections() Error: ${apiEx.message}'.log();
+      return left(Failure(apiEx.message));
+    }
+  }
+
+  FutureOutcome<Map<String, dynamic>> triggerCollection({
+    required String merchantId,
+  }) async {
+    try {
+      final response = await _apiService.put(
+        '/collections/trigger',
+        data: {
+          "userId": "67d8a94ef832d319320bb832",
+        },
+        headers: {
+          "x-merchant-Id": merchantId,
+          "Authorization":
+              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzA2MzE2OSwiZXhwIjoxNzQ3MTQ5NTY5fQ.ngrLdmQr6Got7-H-zpSWnzPQ0ApPl7apW0utFO3aghQ"
+        },
+      );
 
       return right(
         jsonDecode(response.body) as Map<String, dynamic>,

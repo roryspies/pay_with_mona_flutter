@@ -17,10 +17,10 @@ import 'package:pay_with_mona/src/widgets/custom_text_field.dart';
 class CreateCollectionView extends StatefulWidget {
   const CreateCollectionView({
     super.key,
-    this.merchantName,
+    required this.merchantName,
   });
 
-  final String? merchantName;
+  final String merchantName;
 
   @override
   State<CreateCollectionView> createState() => _CreateCollectionViewState();
@@ -115,6 +115,35 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
           .where((p) => p.index != indexId)
           .toList();
     });
+  }
+
+  List<Map<String, dynamic>> getScheduleEntries() {
+    final entries = <Map<String, dynamic>>[];
+
+    for (final controller in paymentScheduleTextControllers) {
+      // Only add if both payment amount and date are filled
+      if (controller.paymentTextcontroller.text.isNotEmpty &&
+          controller.dateTextcontroller.text.isNotEmpty) {
+        // Parse the date and time from the format "HH:mm dd/MM/yy"
+        final dateTimeStr = controller.dateTextcontroller.text;
+        DateTime? dateTime;
+
+        try {
+          dateTime = DateFormat('HH:mm dd/MM/yy').parse(dateTimeStr);
+        } catch (e) {
+          print('Error parsing date: $e');
+          continue; // Skip this entry if date parsing fails
+        }
+
+        // Create the map entry in the exact format the server expects
+        entries.add({
+          'date': dateTime.toIso8601String(), // Server expects "date" key
+          'amount': controller.paymentTextcontroller.text.trim(),
+        });
+      }
+    }
+
+    return entries;
   }
 
   void _onSdktateChange() => setState(() {});
@@ -435,42 +464,48 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             )
                           : CustomButton(
                               onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  builder: (_) => Wrap(
-                                    children: [
-                                      CollectionsCheckoutSheet(
-                                        method: collectionMethod.value,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                // sdkNotifier
-                                //   ..setCallingBuildContext(context: context)
-                                //   ..createCollections(
-                                //       bankId: '680f5d983bccd31f1312645d',
-                                //       maximumAmount:
-                                //           _debitLimitController.text.trim(),
-                                //       expiryDate: convertToIsoDate(
-                                //           _expDateController.text.trim())!,
-                                //       startDate: convertToIsoDate(
-                                //           _expDateController.text.trim())!,
-                                //       monthlyLimit: '1',
-                                //       reference:
-                                //           _referenceController.text.trim(),
-                                //       type: collectionMethod.value ==
-                                //               CollectionsMethod.scheduled
-                                //           ? 'SCHEDULED'
-                                //           : 'SUBSCRIPTION',
-                                //       frequency: subscriptionFrequency
-                                //           .value.name
-                                //           .toUpperCase(),
-                                //       amount: collectionMethod.value ==
-                                //               CollectionsMethod.scheduled
-                                //           ? null
-                                //           : _debitLimitController.text.trim(),
-                                //       merchantId: '67e41f884126830aded0b43c');
+                                final scheduleEntries = getScheduleEntries();
+
+                                sdkNotifier
+                                  ..setCallingBuildContext(context: context)
+                                  ..createCollections(
+                                    scheduleEntries: scheduleEntries,
+                                    bankId: '680f5d983bccd31f1312645d',
+                                    maximumAmount:
+                                        _debitLimitController.text.trim(),
+                                    expiryDate: convertToIsoDate(
+                                        _expDateController.text.trim())!,
+                                    startDate: convertToIsoDate(
+                                        _expDateController.text.trim())!,
+                                    monthlyLimit: '1',
+                                    reference: _referenceController.text.trim(),
+                                    type: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? 'SCHEDULED'
+                                        : 'SUBSCRIPTION',
+                                    frequency: subscriptionFrequency.value.name
+                                        .toUpperCase(),
+                                    amount: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? null
+                                        : _debitLimitController.text.trim(),
+                                    merchantId: '67e41f884126830aded0b43c',
+                                    onSuccess: (success) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        builder: (_) => Wrap(
+                                          children: [
+                                            CollectionsCheckoutSheet(
+                                              method: collectionMethod.value,
+                                              details: success,
+                                              merchantName: widget.merchantName,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
                               },
                               label: 'Continue',
                             ),
