@@ -475,8 +475,15 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                         _debitLimitController.text.trim(),
                                     expiryDate: convertToIsoDate(
                                         _expDateController.text.trim())!,
-                                    startDate: convertToIsoDate(
-                                        _expDateController.text.trim())!,
+                                    startDate: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? convertToIsoDate(
+                                            paymentScheduleTextControllers[0]
+                                                .dateTextcontroller
+                                                .text
+                                                .trim())!
+                                        : convertToIsoDate(
+                                            _expDateController.text.trim())!,
                                     monthlyLimit: '1',
                                     reference: _referenceController.text.trim(),
                                     type: collectionMethod.value ==
@@ -549,14 +556,23 @@ class PaymentScheduleTextController {
 String? convertToIsoDate(dynamic input) {
   try {
     if (input is String) {
-      final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(input);
-      return parsedDate.toIso8601String().split('T').first;
+      // Try to parse as "HH:mm dd/MM/yy" format first
+      try {
+        final parsedDateTime = DateFormat('HH:mm dd/MM/yy').parseStrict(input);
+        return parsedDateTime
+            .toIso8601String(); // Return full ISO string with time
+      } catch (_) {
+        // Fall back to original format "dd/MM/yyyy" if first format fails
+        final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(input);
+        return parsedDate.toIso8601String().split('T').first;
+      }
     } else if (input is DateTime) {
-      return input.toIso8601String().split('T').first;
+      return input.toIso8601String();
     } else {
       throw FormatException('Unsupported type');
     }
-  } catch (_) {
+  } catch (e) {
+    print('Error converting date: $e');
     return null;
   }
 }
