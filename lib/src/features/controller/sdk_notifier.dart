@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
@@ -10,8 +9,6 @@ import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
-import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
-import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
@@ -24,9 +21,7 @@ import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
 
-import 'package:pay_with_mona/src/utils/type_defs.dart';
 part 'sdk_notifier.helpers.dart';
-part 'sdk_notifier.collections.dart';
 part 'sdk_notifier.listeners.dart';
 
 /// Manages the entire payment workflow, from initiation to completion,
