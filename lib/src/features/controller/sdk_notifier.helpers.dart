@@ -90,6 +90,8 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
       "origin": _selectedBankOption?.bankId ?? "",
       "hasDeviceKey": userCheckoutID != null,
       "transactionId": _currentTransactionId,
+      if (_transactionOTP != null) "otp": _transactionOTP,
+      if (_transactionPIN != null) "pin": _transactionPIN,
     };
   }
 
@@ -117,5 +119,46 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
               .toInt(),
       "narration": "Payment via Card",
     };
+  }
+
+  /// Emits the state and waits for user input via `completeOtpFlow`
+  Future<String?> triggerPinOrOTPFlow({
+    required PaymentTaskType pinOrOTP,
+    required TransactionTaskModel pinOrOTPTask,
+  }) {
+    _pinOrOTPCompleter = Completer<String>();
+
+    if (pinOrOTP == PaymentTaskType.pin) {
+      _txnStateStream.emit(
+        state: TransactionStateRequestPINTask(
+          task: pinOrOTPTask,
+        ),
+      );
+    } else if (pinOrOTP == PaymentTaskType.otp) {
+      _txnStateStream.emit(
+        state: TransactionStateRequestOTPTask(
+          task: pinOrOTPTask,
+        ),
+      );
+    }
+
+    return _pinOrOTPCompleter!.future;
+  }
+
+  /// Call this from your mobile app side when user enters OTP/PIN
+  void complete({
+    required String pinOrOTP,
+  }) {
+    if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
+      _pinOrOTPCompleter!.complete(pinOrOTP);
+    }
+  }
+
+  /// Optionally allow cancelling the flow (user cancelled)
+  void cancelOtpFlow() {
+    if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
+      // ignore: null_argument_to_non_null_type
+      _pinOrOTPCompleter!.complete(null);
+    }
   }
 }

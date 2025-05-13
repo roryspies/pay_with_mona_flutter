@@ -86,3 +86,5 @@ enum PaymentMethod {
     }
   }
 }
+
+enum PaymentTaskType { sign, pin, otp }

@@ -5,7 +5,9 @@ import "package:flutter_custom_tabs/flutter_custom_tabs.dart";
 import "package:pay_with_mona/src/core/api/api_exceptions.dart";
 import "package:pay_with_mona/src/core/events/auth_state_stream.dart";
 import "package:pay_with_mona/src/core/events/firebase_sse_listener.dart";
+import "package:pay_with_mona/src/core/events/models/transaction_task_model.dart";
 import "package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart";
+import "package:pay_with_mona/src/core/events/transaction_state_classes.dart";
 import "package:pay_with_mona/src/core/events/transaction_state_stream.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
@@ -63,6 +65,8 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _errorMessage;
   String? _currentTransactionId;
   String? _strongAuthToken;
+  String? _transactionOTP;
+  String? _transactionPIN;
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
 
@@ -71,6 +75,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   PendingPaymentResponseModel? _pendingPaymentResponseModel;
   BankOption? _selectedBankOption;
   CardOption? _selectedCardOption;
+
+  ///
+  Completer<String>? _pinOrOTPCompleter;
 
   /// Current payment process state.
   MonaSDKState get state => _state;
@@ -198,6 +205,26 @@ class MonaSDKNotifier extends ChangeNotifier {
     _pendingPaymentResponseModel = () {
       _pendingPaymentResponseModel = null;
       return pendingPayment;
+    }();
+    notifyListeners();
+  }
+
+  void setTransactionOTP({
+    required String receivedOTP,
+  }) {
+    _transactionOTP = () {
+      _transactionOTP = null;
+      return receivedOTP;
+    }();
+    notifyListeners();
+  }
+
+  void setTransactionPIN({
+    required String receivedPIN,
+  }) {
+    _transactionPIN = () {
+      _transactionPIN = null;
+      return receivedPIN;
     }();
     notifyListeners();
   }
@@ -374,6 +401,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
               clearSelectedPaymentMethod();
               _currentTransactionId = null;
+              _transactionOTP = null;
+              _transactionPIN = null;
             },
           );
 
@@ -474,6 +503,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     _pendingPaymentResponseModel = null;
     _selectedBankOption = null;
     _selectedCardOption = null;
+    _transactionPIN = null;
+    _transactionOTP = null;
 
     notifyListeners();
   }

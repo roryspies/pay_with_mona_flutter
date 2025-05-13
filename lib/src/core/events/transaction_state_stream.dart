@@ -1,12 +1,21 @@
 import 'dart:async';
+import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
-/// Defines the possible states of a transaction.
+/* /// Defines the possible states of a transaction.
 enum TransactionState {
   initiated, // Transaction has been started
   completed, // Transaction was successful
-  failed // Transaction encountered an error
-}
+  failed, // Transaction encountered an error
+  requestOTPTask(task: {}), // Got a transaction task requesting OTP
+  requestPINTask(task: {}); // Got a transaction task requesting PIN
+
+  const TransactionState({this.task});
+
+  final Map<String, dynamic>? task;
+} */
+
+/// Make TransactionState an abstract base class…
 
 /// A singleton that manages a broadcast stream of [TransactionState] events.
 ///
@@ -38,8 +47,8 @@ class TransactionStateStream {
   }
 
   /// The current state of the transaction.
-  /// Returns [TransactionState.initiated] if no state has been emitted yet.
-  TransactionState _currentState = TransactionState.initiated;
+  /// Returns [TransactionStateIdle] if no state has been emitted yet.
+  TransactionState _currentState = TransactionStateIdle();
   TransactionState get currentState => _currentState;
 
   /// Ensures the stream controller is initialized.
@@ -68,7 +77,7 @@ class TransactionStateStream {
 
   /// Resets the transaction to its initial state (initiated).
   void reset() {
-    emit(state: TransactionState.initiated);
+    emit(state: TransactionStateIdle());
     _log("🔄 Transaction state reset");
   }
 

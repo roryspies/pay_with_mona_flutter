@@ -32,18 +32,31 @@ extension SDKNotifierListeners on MonaSDKNotifier {
           if (theEvent == "transaction_initiated") {
             "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
                 .log();
-            _txnStateStream.emit(state: TransactionState.initiated);
+
+            _txnStateStream.emit(
+              state: TransactionStateInitiated(
+                transactionID: _currentTransactionId,
+              ),
+            );
           }
 
           if (theEvent == "transaction_failed") {
             "😭 _listenForTransactionUpdateEvents ::: transaction_failed".log();
-            _txnStateStream.emit(state: TransactionState.failed);
+
+            _txnStateStream.emit(
+              state: TransactionStateFailed(),
+            );
           }
 
           if (theEvent == "transaction_completed") {
             "✅ _listenForTransactionUpdateEvents ::: transaction_completed"
                 .log();
-            _txnStateStream.emit(state: TransactionState.completed);
+
+            _txnStateStream.emit(
+              state: TransactionStateCompleted(
+                transactionID: _currentTransactionId,
+              ),
+            );
           }
         },
         onError: (error) {

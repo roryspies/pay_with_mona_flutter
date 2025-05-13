@@ -3,10 +3,12 @@ import 'package:crypto/crypto.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_header_model.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
+import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -164,7 +166,7 @@ class PaymentService {
 
       return;
     } else {
-      " submitPaymentRequest ==>> RESPONSE[SUCCESS] ==>> FALSE ==>> $res".log();
+      "submitPaymentRequest ==>> RESPONSE[SUCCESS] ==>> FALSE ==>> $res".log();
 
       if (res.containsKey("task") &&
           (res["task"] as Map<String, dynamic>).isNotEmpty) {
@@ -181,6 +183,56 @@ class PaymentService {
             sign: true,
             onPayComplete: onPayComplete,
           );
+        } else {
+          final monaSDK = MonaSDKNotifier();
+
+          switch (task["fieldType"].toString().toLowerCase()) {
+            case "pin":
+              final pin = await monaSDK.triggerPinOrOTPFlow(
+                pinOrOTP: PaymentTaskType.pin,
+                pinOrOTPTask: TransactionTaskModel.fromJSON(
+                  json: task,
+                ),
+              );
+
+              if (pin != null && pin.isNotEmpty) {
+                monaSDK.setTransactionPIN(receivedPIN: pin);
+
+                await makePaymentRequest(
+                  paymentType: paymentType,
+                  sign: true,
+                  onPayComplete: onPayComplete,
+                );
+              } else {
+                "User cancelled PIN entry".log();
+              }
+              break;
+
+            case "otp":
+              final otp = await monaSDK.triggerPinOrOTPFlow(
+                pinOrOTP: PaymentTaskType.otp,
+                pinOrOTPTask: TransactionTaskModel.fromJSON(
+                  json: task,
+                ),
+              );
+
+              if (otp != null && otp.isNotEmpty) {
+                monaSDK.setTransactionOTP(receivedOTP: otp);
+
+                await makePaymentRequest(
+                  paymentType: paymentType,
+                  sign: true,
+                  onPayComplete: onPayComplete,
+                );
+              } else {
+                "User cancelled OTP entry".log();
+              }
+              break;
+
+            default:
+              "PAYMENT TASK FIELD".log();
+              break;
+          }
         }
       }
     }
