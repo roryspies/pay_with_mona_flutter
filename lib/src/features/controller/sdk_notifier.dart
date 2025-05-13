@@ -1,26 +1,28 @@
-import "dart:async";
-import "dart:convert";
-import "package:flutter/material.dart";
-import "package:flutter_custom_tabs/flutter_custom_tabs.dart";
-import "package:pay_with_mona/src/core/api/api_exceptions.dart";
-import "package:pay_with_mona/src/core/events/auth_state_stream.dart";
-import "package:pay_with_mona/src/core/events/firebase_sse_listener.dart";
-import "package:pay_with_mona/src/core/events/models/transaction_task_model.dart";
-import "package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart";
-import "package:pay_with_mona/src/core/events/transaction_state_classes.dart";
-import "package:pay_with_mona/src/core/events/transaction_state_stream.dart";
-import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
-import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
-import "package:pay_with_mona/src/features/controller/notifier_enums.dart";
-import "package:pay_with_mona/src/core/services/auth_service.dart";
-import "package:pay_with_mona/src/core/services/payments_service.dart";
-import "package:pay_with_mona/src/models/mona_checkout.dart";
-import "package:pay_with_mona/src/models/pending_payment_response_model.dart";
-import "package:pay_with_mona/src/utils/extensions.dart";
-import "package:pay_with_mona/src/utils/size_config.dart";
-import "dart:math" as math;
-part "sdk_notifier.helpers.dart";
-part "sdk_notifier.listeners.dart";
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
+import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart';
+import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
+import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/services/auth_service.dart';
+import 'package:pay_with_mona/src/core/services/payments_service.dart';
+import 'package:pay_with_mona/src/models/mona_checkout.dart';
+import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
+import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'dart:math' as math;
+
+part 'sdk_notifier.helpers.dart';
+part 'sdk_notifier.listeners.dart';
 
 /// Manages the entire payment workflow, from initiation to completion,
 /// including real-time event listening and strong authentication.
@@ -32,15 +34,17 @@ class MonaSDKNotifier extends ChangeNotifier {
   static final MonaSDKNotifier _instance = MonaSDKNotifier._internal();
 
   /// Factory constructor returning the singleton instance.
-  factory MonaSDKNotifier({
-    PaymentService? paymentsService,
-    AuthService? authService,
-    SecureStorage? secureStorage,
-  }) {
+  factory MonaSDKNotifier(
+      {PaymentService? paymentsService,
+      AuthService? authService,
+      SecureStorage? secureStorage,
+      CollectionsService? collectionsService}) {
     // Allow dependency injection for testing or customization
     _instance._paymentsService = paymentsService ?? _instance._paymentsService;
     _instance._authService = authService ?? _instance._authService;
     _instance._secureStorage = secureStorage ?? _instance._secureStorage;
+    _instance._collectionsService =
+        collectionsService ?? _instance._collectionsService;
     return _instance;
   }
 
@@ -48,13 +52,17 @@ class MonaSDKNotifier extends ChangeNotifier {
   MonaSDKNotifier._internal()
       : _paymentsService = PaymentService(),
         _authService = AuthService(),
-        _secureStorage = SecureStorage();
+        _secureStorage = SecureStorage(),
+        _collectionsService = CollectionsService();
 
   /// Service responsible for initiating and completing payments.
   late PaymentService _paymentsService;
 
   /// Service responsible for handling strong authentication.
   late AuthService _authService;
+
+  /// Service responsible for managing collections.
+  late CollectionsService _collectionsService;
 
   /// Secure storage for persisting user identifiers.
   late SecureStorage _secureStorage;
@@ -134,6 +142,13 @@ class MonaSDKNotifier extends ChangeNotifier {
     if (message.toLowerCase().contains("please login")) {
       _updateState(MonaSDKState.idle);
       _authStream.emit(state: AuthState.loggedOut);
+      return;
+    }
+
+    if (message
+        .toLowerCase()
+        .contains("transaction amount cannot be less than 20")) {
+      _updateState(MonaSDKState.idle);
       return;
     }
 
@@ -360,6 +375,12 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** This is only for DEMO.
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
+
+    if ((_monaCheckOut!.amount / 100) < 20) {
+      _handleError("Transaction amount cannot be less than 20");
+      return;
+    }
+
     if (_currentTransactionId == null) {
       await _initiatePayment(
         tnxAmountInKobo: _monaCheckOut!.amount,
@@ -486,48 +507,98 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-  // Future<void> createCollections({
-  //   required String bankId,
-  //   required String maximumAmount,
-  //   required String expiryDate,
-  //   required String startDate,
-  //   required String monthlyLimit,
-  //   required String reference,
-  //   required String type,
-  //   required String frequency,
-  //   required String? amount,
-  //   required String merchantId,
-  // }) async {
-  //   _updateState(MonaSDKState.loading);
-  //   try {
-  //     final (Map<String, dynamic>? success, failure) =
-  //         await _collectionsService.createCollections(
-  //       bankId: bankId,
-  //       maximumAmount: maximumAmount,
-  //       expiryDate: expiryDate,
-  //       startDate: startDate,
-  //       monthlyLimit: monthlyLimit,
-  //       reference: reference,
-  //       type: type,
-  //       frequency: frequency,
-  //       amount: amount,
-  //       merchantId: merchantId,
-  //     );
+  Future<void> createCollections({
+    required String bankId,
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+    required String merchantId,
+    required List<Map<String, dynamic>> scheduleEntries,
+    void Function(Map<String, dynamic>?)? onSuccess,
+  }) async {
+    _updateState(MonaSDKState.loading);
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _collectionsService.createCollections(
+              bankId: bankId,
+              maximumAmount: maximumAmount,
+              expiryDate: expiryDate,
+              startDate: startDate,
+              monthlyLimit: monthlyLimit,
+              reference: reference,
+              type: type,
+              frequency: frequency,
+              amount: amount,
+              merchantId: merchantId,
+              scheduleEntries: scheduleEntries);
 
-  //     if (failure != null) {
-  //       _handleError('Collection creation failed.');
-  //       throw (failure.message);
-  //     }
+      //     if (failure != null) {
+      //       _handleError('Collection creation failed.');
+      //       throw (failure.message);
+      //     }
 
-  //     if (success != null) {
-  //       success.log();
-  //     }
+      if (success != null) {
+        success.log();
+        onSuccess?.call(success);
+      }
 
-  //     _updateState(MonaSDKState.success);
-  //   } catch (e) {
-  //     _handleError('Unexpected error during collection creation.');
-  //   }
-  // }
+      _updateState(MonaSDKState.success);
+    } catch (e) {
+      print(e.toString());
+      _handleError(e.toString());
+    }
+  }
+
+  Future<void> triggerCollection({
+    required String merchantId,
+    void Function(Map<String, dynamic>?)? onSuccess,
+  }) async {
+    _updateState(MonaSDKState.loading);
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _collectionsService.triggerCollection(
+        merchantId: merchantId,
+      );
+
+      if (failure != null) {
+        _handleError('Collection trigger failed.');
+        throw (failure.message);
+      }
+
+      if (success != null) {
+        success.log();
+
+        // Extract transaction ID from the nested response
+        String? transactionId;
+        if (success['success'] == true &&
+            success['data'] is List &&
+            (success['data'] as List).isNotEmpty) {
+          final firstTransaction = (success['data'] as List).first;
+          if (firstTransaction is Map<String, dynamic>) {
+            // Get the transactionRef which appears to be the transaction ID
+            transactionId = firstTransaction['transactionRef'] as String?;
+          }
+        }
+
+        if (transactionId != null) {
+          _handleTransactionId(transactionId);
+          _listenForTransactionUpdateEvents();
+        }
+
+        onSuccess?.call(success);
+      }
+
+      _updateState(MonaSDKState.success);
+    } catch (e) {
+      print(e.toString());
+      _handleError(e.toString());
+    }
+  }
 
   /// Resets the entire SDKNotifier back to its initial, un-initialized state.
   ///

@@ -5,6 +5,7 @@ import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -16,10 +17,10 @@ import 'package:pay_with_mona/src/widgets/custom_text_field.dart';
 class CreateCollectionView extends StatefulWidget {
   const CreateCollectionView({
     super.key,
-    this.merchantName,
+    required this.merchantName,
   });
 
-  final String? merchantName;
+  final String merchantName;
 
   @override
   State<CreateCollectionView> createState() => _CreateCollectionViewState();
@@ -94,7 +95,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   }
 
   void setData() {
-    _merchantNameController.text = widget.merchantName ?? '';
+    _merchantNameController.text = widget.merchantName;
   }
 
   void addController(
@@ -114,6 +115,35 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
           .where((p) => p.index != indexId)
           .toList();
     });
+  }
+
+  List<Map<String, dynamic>> getScheduleEntries() {
+    final entries = <Map<String, dynamic>>[];
+
+    for (final controller in paymentScheduleTextControllers) {
+      // Only add if both payment amount and date are filled
+      if (controller.paymentTextcontroller.text.isNotEmpty &&
+          controller.dateTextcontroller.text.isNotEmpty) {
+        // Parse the date and time from the format "HH:mm dd/MM/yy"
+        final dateTimeStr = controller.dateTextcontroller.text;
+        DateTime? dateTime;
+
+        try {
+          dateTime = DateFormat('HH:mm dd/MM/yy').parse(dateTimeStr);
+        } catch (e) {
+          print('Error parsing date: $e');
+          continue; // Skip this entry if date parsing fails
+        }
+
+        // Create the map entry in the exact format the server expects
+        entries.add({
+          'date': dateTime.toIso8601String(), // Server expects "date" key
+          'amount': controller.paymentTextcontroller.text.trim(),
+        });
+      }
+    }
+
+    return entries;
   }
 
   void _onSdktateChange() => setState(() {});
@@ -434,26 +464,55 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             )
                           : CustomButton(
                               onTap: () {
-                                // sdkNotifier.createCollections(
-                                //     bankId: '60d21b4667d0d8992e610c85',
-                                //     maximumAmount:
-                                //         _debitLimitController.text.trim(),
-                                //     expiryDate: _expDateController.text.trim(),
-                                //     startDate: '',
-                                //     monthlyLimit: '',
-                                //     reference: _referenceController.text.trim(),
-                                //     type: collectionMethod.value ==
-                                //             CollectionsMethod.scheduled
-                                //         ? 'VARIABLE'
-                                //         : 'SCHEDULED',
-                                //     frequency: subscriptionFrequency.value.name
-                                //         .toUpperCase(),
-                                //     amount: collectionMethod.value ==
-                                //             CollectionsMethod.scheduled
-                                //         ? null
-                                //         : _debitLimitController.text.trim(),
-                                //     merchantId:
-                                //         widget.merchantName ?? 'ngdeals');
+                                final scheduleEntries = getScheduleEntries();
+
+                                sdkNotifier
+                                  ..setCallingBuildContext(context: context)
+                                  ..createCollections(
+                                    scheduleEntries: scheduleEntries,
+                                    bankId: '680f5d983bccd31f1312645d',
+                                    maximumAmount:
+                                        _debitLimitController.text.trim(),
+                                    expiryDate: convertToIsoDate(
+                                        _expDateController.text.trim())!,
+                                    startDate: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? convertToIsoDate(
+                                            paymentScheduleTextControllers[0]
+                                                .dateTextcontroller
+                                                .text
+                                                .trim())!
+                                        : convertToIsoDate(
+                                            _expDateController.text.trim())!,
+                                    monthlyLimit: '1',
+                                    reference: _referenceController.text.trim(),
+                                    type: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? 'SCHEDULED'
+                                        : 'SUBSCRIPTION',
+                                    frequency: subscriptionFrequency.value.name
+                                        .toUpperCase(),
+                                    amount: collectionMethod.value ==
+                                            CollectionsMethod.scheduled
+                                        ? null
+                                        : _debitLimitController.text.trim(),
+                                    merchantId: '67e41f884126830aded0b43c',
+                                    onSuccess: (success) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        builder: (_) => Wrap(
+                                          children: [
+                                            CollectionsCheckoutSheet(
+                                              method: collectionMethod.value,
+                                              details: success,
+                                              merchantName: widget.merchantName,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
                               },
                               label: 'Continue',
                             ),
@@ -491,5 +550,29 @@ class PaymentScheduleTextController {
           paymentTextcontroller ?? this.paymentTextcontroller,
       dateTextcontroller: dateTextcontroller ?? this.dateTextcontroller,
     );
+  }
+}
+
+String? convertToIsoDate(dynamic input) {
+  try {
+    if (input is String) {
+      // Try to parse as "HH:mm dd/MM/yy" format first
+      try {
+        final parsedDateTime = DateFormat('HH:mm dd/MM/yy').parseStrict(input);
+        return parsedDateTime
+            .toIso8601String(); // Return full ISO string with time
+      } catch (_) {
+        // Fall back to original format "dd/MM/yyyy" if first format fails
+        final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(input);
+        return parsedDate.toIso8601String().split('T').first;
+      }
+    } else if (input is DateTime) {
+      return input.toIso8601String();
+    } else {
+      throw FormatException('Unsupported type');
+    }
+  } catch (e) {
+    print('Error converting date: $e');
+    return null;
   }
 }

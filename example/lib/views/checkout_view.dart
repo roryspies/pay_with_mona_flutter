@@ -70,16 +70,18 @@ class CheckoutView extends ConsumerWidget {
               ),
               context.sbH(8),
               PayWithMona.payWidget(
-                firstName: '',
-                lastName: '',
-                dateOfBirth: DateTime.now(),
-                transactionId: transactionId,
-                merchantName: 'NGDeals',
-                primaryColor: Colors.purple,
-                secondaryColor: Colors.indigo,
-                phoneNumber:
-                    ref.watch(customerDetailsNotifierProvider).phoneNumber,
-                amount: num.parse(amount),
+                payload: MonaCheckOut(
+                  firstName: '',
+                  lastName: '',
+                  dateOfBirth: DateTime.now(),
+                  transactionId: transactionId,
+                  merchantName: 'NGDeals',
+                  primaryColor: Colors.purple,
+                  secondaryColor: Colors.indigo,
+                  phoneNumber:
+                      ref.watch(customerDetailsNotifierProvider).phoneNumber,
+                  amount: num.parse(amount),
+                ),
               ),
             ],
           ),
