@@ -15,6 +15,7 @@ dependencies:
   flutter_custom_tabs: ^2.1.0
   flutter_secure_storage: ^9.2.4
   flutter_svg: ^2.0.17
+  intl: ^0.20.2
   local_auth: ^2.3.0
   local_auth_signature: ^1.0.12
   crypto: ^3.0.6
@@ -29,6 +30,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/fonts/
+    - assets/images/
 
   fonts:
     - family: General Sans
