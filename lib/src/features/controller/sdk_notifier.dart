@@ -11,7 +11,6 @@ import "package:pay_with_mona/src/core/events/transaction_state_classes.dart";
 import "package:pay_with_mona/src/core/events/transaction_state_stream.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
-import 'package:pay_with_mona/src/core/services/collections_services.dart';
 import "package:pay_with_mona/src/features/controller/notifier_enums.dart";
 import "package:pay_with_mona/src/core/services/auth_service.dart";
 import "package:pay_with_mona/src/core/services/payments_service.dart";
@@ -56,9 +55,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   /// Service responsible for handling strong authentication.
   late AuthService _authService;
-
-  /// Service responsible for managing collections.
-  late CollectionsService _collectionsService;
 
   /// Secure storage for persisting user identifiers.
   late SecureStorage _secureStorage;
@@ -243,7 +239,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     String? phoneNumber,
     String? bvn,
     String? dob,
-    void Function(String)? onEffect,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -255,7 +250,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     if (response == null) {
       _handleError("Failed to validate user PII - Experienced an Error");
-      onEffect?.call("Failed to validate user PII - Experienced an Error");
       return;
     }
 
@@ -274,20 +268,16 @@ class MonaSDKNotifier extends ChangeNotifier {
         /// *** User has not done key exchange
         if (await checkIfUserHasKeyID() == null) {
           _authStream.emit(state: AuthState.loggedOut);
-          onEffect?.call('PII Auth Result - User has not done key exchange');
           return;
         }
 
         /// *** User has done key exchange
         _authStream.emit(state: AuthState.loggedIn);
-        onEffect?.call(
-            'PII Auth Result - User logged in and has done key exchange');
         break;
 
       /// *** Non Mona User
       default:
         _authStream.emit(state: AuthState.notAMonaUser);
-        onEffect?.call('PII Auth Result - User is not a mona user');
         break;
     }
   }
@@ -360,9 +350,6 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> makePayment({
     required num tnxAmountInKobo,
   }) async {
-    if (_selectedPaymentMethod == PaymentMethod.none) {
-      return;
-    }
     _updateState(MonaSDKState.loading);
 
     // Initialize SSE listener for real-time events
@@ -495,48 +482,48 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> createCollections({
-    required String bankId,
-    required String maximumAmount,
-    required String expiryDate,
-    required String startDate,
-    required String monthlyLimit,
-    required String reference,
-    required String type,
-    required String frequency,
-    required String? amount,
-    required String merchantId,
-  }) async {
-    _updateState(MonaSDKState.loading);
-    try {
-      final (Map<String, dynamic>? success, failure) =
-          await _collectionsService.createCollections(
-        bankId: bankId,
-        maximumAmount: maximumAmount,
-        expiryDate: expiryDate,
-        startDate: startDate,
-        monthlyLimit: monthlyLimit,
-        reference: reference,
-        type: type,
-        frequency: frequency,
-        amount: amount,
-        merchantId: merchantId,
-      );
+  // Future<void> createCollections({
+  //   required String bankId,
+  //   required String maximumAmount,
+  //   required String expiryDate,
+  //   required String startDate,
+  //   required String monthlyLimit,
+  //   required String reference,
+  //   required String type,
+  //   required String frequency,
+  //   required String? amount,
+  //   required String merchantId,
+  // }) async {
+  //   _updateState(MonaSDKState.loading);
+  //   try {
+  //     final (Map<String, dynamic>? success, failure) =
+  //         await _collectionsService.createCollections(
+  //       bankId: bankId,
+  //       maximumAmount: maximumAmount,
+  //       expiryDate: expiryDate,
+  //       startDate: startDate,
+  //       monthlyLimit: monthlyLimit,
+  //       reference: reference,
+  //       type: type,
+  //       frequency: frequency,
+  //       amount: amount,
+  //       merchantId: merchantId,
+  //     );
 
-      if (failure != null) {
-        _handleError('Collection creation failed.');
-        throw (failure.message);
-      }
+  //     if (failure != null) {
+  //       _handleError('Collection creation failed.');
+  //       throw (failure.message);
+  //     }
 
-      if (success != null) {
-        success.log();
-      }
+  //     if (success != null) {
+  //       success.log();
+  //     }
 
-      _updateState(MonaSDKState.success);
-    } catch (e) {
-      _handleError('Unexpected error during collection creation.');
-    }
-  }
+  //     _updateState(MonaSDKState.success);
+  //   } catch (e) {
+  //     _handleError('Unexpected error during collection creation.');
+  //   }
+  // }
 
   /// Resets the entire SDKNotifier back to its initial, un-initialized state.
   ///

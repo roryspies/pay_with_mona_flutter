@@ -434,26 +434,26 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             )
                           : CustomButton(
                               onTap: () {
-                                sdkNotifier.createCollections(
-                                    bankId: '60d21b4667d0d8992e610c85',
-                                    maximumAmount:
-                                        _debitLimitController.text.trim(),
-                                    expiryDate: _expDateController.text.trim(),
-                                    startDate: '',
-                                    monthlyLimit: '',
-                                    reference: _referenceController.text.trim(),
-                                    type: collectionMethod.value ==
-                                            CollectionsMethod.scheduled
-                                        ? 'VARIABLE'
-                                        : 'SCHEDULED',
-                                    frequency: subscriptionFrequency.value.name
-                                        .toUpperCase(),
-                                    amount: collectionMethod.value ==
-                                            CollectionsMethod.scheduled
-                                        ? null
-                                        : _debitLimitController.text.trim(),
-                                    merchantId:
-                                        widget.merchantName ?? 'ngdeals');
+                                // sdkNotifier.createCollections(
+                                //     bankId: '60d21b4667d0d8992e610c85',
+                                //     maximumAmount:
+                                //         _debitLimitController.text.trim(),
+                                //     expiryDate: _expDateController.text.trim(),
+                                //     startDate: '',
+                                //     monthlyLimit: '',
+                                //     reference: _referenceController.text.trim(),
+                                //     type: collectionMethod.value ==
+                                //             CollectionsMethod.scheduled
+                                //         ? 'VARIABLE'
+                                //         : 'SCHEDULED',
+                                //     frequency: subscriptionFrequency.value.name
+                                //         .toUpperCase(),
+                                //     amount: collectionMethod.value ==
+                                //             CollectionsMethod.scheduled
+                                //         ? null
+                                //         : _debitLimitController.text.trim(),
+                                //     merchantId:
+                                //         widget.merchantName ?? 'ngdeals');
                               },
                               label: 'Continue',
                             ),
