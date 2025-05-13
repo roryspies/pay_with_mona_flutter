@@ -37,7 +37,7 @@ class ApiService {
     this.logCurlCommands = true,
     this.prettyPrintJson = true,
     this.jsonIndent = 2,
-  }) : baseUrl = (baseUrl ?? _defaultBaseUrl).replaceAll(r'\/+\\$', '');
+  }) : baseUrl = (baseUrl ?? _defaultBaseUrl);
 
   /// POST to [endpoint], passing optional JSON [data] and [headers].
   Future<ApiResponse> post(
@@ -46,6 +46,8 @@ class ApiService {
     Map<String, String>? headers,
   }) async {
     final uri = Uri.parse('$baseUrl$endpoint');
+
+    print(uri.toString());
 
     if (logRequests) {
       '🚀 POST Request to $uri'.log();
@@ -198,6 +200,93 @@ class ApiService {
     } catch (e) {
       final apiEx = APIException.fromHttpError(e, uri: uri, method: 'GET');
       '❌ GET ERROR: ${apiEx.toString()}'.log();
+      throw apiEx;
+    }
+  }
+
+  /// PUT to [endpoint], passing optional JSON [data] and [headers].
+  Future<ApiResponse> put(
+    String endpoint, {
+    Map<String, dynamic>? data,
+    Map<String, String>? headers,
+  }) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+
+    print(uri.toString());
+
+    if (logRequests) {
+      '🚀 POST Request to $uri'.log();
+      if (data != null) {
+        '📦 Request data: $data'.log();
+      }
+    }
+
+    if (logCurlCommands) {
+      _logCurl('PUT', uri, headers: headers, data: data);
+    }
+
+    try {
+      final request = await _client.openUrl('PUT', uri);
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+      headers?.forEach(request.headers.set);
+
+      if (data != null) {
+        request.add(utf8.encode(jsonEncode(data)));
+      }
+
+      final response = await request.close().timeout(
+            timeout,
+            onTimeout: () =>
+                throw TimeoutException('Request timed out', timeout),
+          );
+
+      final body = await response.transform(utf8.decoder).join();
+
+      // Log raw response
+      if (logResponses) {
+        final contentType = response.headers.contentType?.mimeType ?? '';
+        if (contentType.contains('json') && prettyPrintJson) {
+          try {
+            final jsonData = jsonDecode(body);
+            '🧾 RESPONSE [${response.statusCode}]:\n${_prettyJson(jsonData)}'
+                .log();
+          } catch (e) {
+            // Fallback to regular logging if we can't parse JSON
+            '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
+                .log();
+            '⚠️ Failed to parse response as JSON: ${e.toString()}'.log();
+          }
+        } else {
+          '🧾 RESPONSE [${response.statusCode}]: ${_truncateForLogging(body)}'
+              .log();
+        }
+      }
+
+      final responseHeaders = <String, String>{};
+      response.headers.forEach((name, values) {
+        responseHeaders[name] = values.join(',');
+      });
+
+      final apiResponse = ApiResponse(
+        statusCode: response.statusCode,
+        headers: responseHeaders,
+        body: body,
+      );
+
+      if (!apiResponse.isSuccess) {
+        throw APIException(
+          'Server responded with error code ${response.statusCode}',
+          statusCode: response.statusCode,
+          responseBody: body,
+          requestUrl: uri,
+          requestMethod: 'POST',
+        );
+      }
+
+      return apiResponse;
+    } catch (e) {
+      final apiEx = APIException.fromHttpError(e, uri: uri, method: 'POST');
+      '❌ POST ERROR: ${apiEx.toString()}'.log();
       throw apiEx;
     }
   }

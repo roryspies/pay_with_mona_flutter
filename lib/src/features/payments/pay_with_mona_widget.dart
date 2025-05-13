@@ -362,7 +362,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         ..makePayment();
                     },
                     child: Text(
-                      "Proceed to pay ",
+                      "Proceed to pay",
                       style: TextStyle(
                         fontSize: context.sp(14),
                         color: Colors.white,
