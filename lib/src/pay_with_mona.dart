@@ -10,34 +10,10 @@ import 'package:pay_with_mona/src/models/mona_checkout.dart';
 
 class PayWithMona {
   static Widget payWidget({
-    required String firstName,
-    String? middleName,
-    required String lastName,
-    required DateTime dateOfBirth,
-    required String transactionId,
-    required String merchantName,
-    required Color primaryColor,
-    required Color secondaryColor,
-    required String phoneNumber,
-    required num amount,
-    String? bvn,
+    required MonaCheckOut payload,
   }) {
-    final monaCheckOut = MonaCheckOut(
-      firstName: firstName,
-      middleName: middleName,
-      lastName: lastName,
-      dateOfBirth: dateOfBirth,
-      transactionId: transactionId,
-      merchantName: merchantName,
-      phoneNumber: phoneNumber,
-      primaryColor: primaryColor,
-      secondaryColor: secondaryColor,
-      bvn: bvn,
-      amount: amount,
-    );
-
     return PayWithMonaWidget(
-      monaCheckOut: monaCheckOut,
+      monaCheckOut: payload,
     );
   }
 

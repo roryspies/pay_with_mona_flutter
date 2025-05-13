@@ -375,8 +375,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** This is only for DEMO.
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
-    
-    if ((tnxAmountInKobo / 100) < 20) {
+
+    if ((_monaCheckOut!.amount / 100) < 20) {
       _handleError("Transaction amount cannot be less than 20");
       return;
     }
