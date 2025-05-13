@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
-import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
@@ -38,14 +38,17 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
           ..txnStateStream.listen(
             (state) {
               switch (state) {
-                case TransactionState.initiated:
+                case TransactionStateInitiated():
                   ('🎉  PayWithMonaWidget ==>>  Transaction started').log();
                   break;
-                case TransactionState.completed:
+                case TransactionStateCompleted():
                   ('✅ PayWithMonaWidget ==>>  Transaction completed').log();
                   break;
-                case TransactionState.failed:
+                case TransactionStateFailed():
                   ('⛔  PayWithMonaWidget ==>> Transaction failed').log();
+                  break;
+                default:
+                  ('🏫  PayWithMonaWidget ==>> $state').log();
                   break;
               }
             },

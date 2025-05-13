@@ -2,68 +2,106 @@ part of "sdk_notifier.dart";
 
 extension SDKNotifierListeners on MonaSDKNotifier {
   /// *** MARK: Event Listeners
-  Future<void> _listenForPaymentUpdates(bool errorFlag) async {
-    await _firebaseSSE.listenForPaymentUpdates(
-      transactionId: _currentTransactionId ?? "",
-      onDataChange: (event) {
-        "PAYMENT UPDATE EVENT $event".log();
-      },
-      onError: (error) {
-        _handleError("Error listening for transaction updates.");
-        errorFlag = true;
-      },
-    );
+  Future<void> _listenForPaymentUpdates() async {
+    try {
+      await _firebaseSSE.listenForPaymentUpdates(
+        transactionId: _currentTransactionId ?? "",
+        onDataChange: (event) {
+          "PAYMENT UPDATE EVENT $event".log();
+        },
+        onError: (error) {
+          _handleError("Error listening for transaction updates.");
+          throw error;
+        },
+      );
+    } catch (error) {
+      "_listenForPaymentUpdates error: $error".log();
+      rethrow;
+    }
   }
 
-  Future<void> _listenForTransactionUpdateEvents(bool errorFlag) async {
-    await _firebaseSSE.listenForTransactionMessages(
-      transactionId: _currentTransactionId ?? "",
-      onDataChange: (event) async {
-        "_listenForTransactionUpdateEvents ::: EVENT $event".log();
-        final eventData = jsonDecode(event) as Map<String, dynamic>;
-        final theEvent = eventData["event"];
+  Future<void> _listenForTransactionUpdateEvents() async {
+    try {
+      await _firebaseSSE.listenForTransactionMessages(
+        transactionId: _currentTransactionId ?? "",
+        onDataChange: (event) async {
+          "_listenForTransactionUpdateEvents ::: EVENT $event".log();
+          final eventData = jsonDecode(event) as Map<String, dynamic>;
+          final theEvent = eventData["event"];
 
-        if (theEvent == "transaction_initiated") {
-          "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
-              .log();
-          _txnStateStream.emit(state: TransactionState.initiated);
-        }
+          if (theEvent == "transaction_initiated") {
+            "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
+                .log();
 
-        if (theEvent == "transaction_failed") {
-          "😭 _listenForTransactionUpdateEvents ::: transaction_initiated"
-              .log();
-          _txnStateStream.emit(state: TransactionState.failed);
-        }
+            _txnStateStream.emit(
+              state: TransactionStateInitiated(
+                transactionID: _currentTransactionId,
+              ),
+            );
+          }
 
-        if (theEvent == "transaction_completed") {
-          "✅ _listenForTransactionUpdateEvents ::: transaction_initiated".log();
-          _txnStateStream.emit(state: TransactionState.completed);
-        }
-      },
-      onError: (error) {
-        _handleError("Error during strong authentication.");
-        errorFlag = true;
-      },
-    );
+          if (theEvent == "transaction_failed") {
+            "😭 _listenForTransactionUpdateEvents ::: transaction_failed".log();
+
+            _txnStateStream.emit(
+              state: TransactionStateFailed(),
+            );
+          }
+
+          if (theEvent == "transaction_completed") {
+            "✅ _listenForTransactionUpdateEvents ::: transaction_completed"
+                .log();
+
+            _txnStateStream.emit(
+              state: TransactionStateCompleted(
+                transactionID: _currentTransactionId,
+              ),
+            );
+          }
+        },
+        onError: (error) {
+          _handleError("Error during transaction updates.");
+          throw error;
+        },
+      );
+    } catch (error) {
+      "_listenForTransactionUpdateEvents error: $error".log();
+      rethrow;
+    }
   }
 
-  Future<void> _listenForAuthEvents(String sessionId) async {
-    await _firebaseSSE.listenToAuthNEvents(
-      sessionID: sessionId,
-      onDataChange: (event) async {
-        if (event.contains("strongAuthToken")) {
-          _strongAuthToken =
-              (jsonDecode(event) as Map<String, dynamic>)["strongAuthToken"];
+  Future<void> _listenForAuthEvents(
+    String sessionId,
+    Completer<void> authCompleter,
+  ) async {
+    try {
+      await _firebaseSSE.listenToAuthNEvents(
+        sessionID: sessionId,
+        onDataChange: (event) async {
+          try {
+            "_listenForAuthEvents received event: $event".log();
+            if (event.contains("strongAuthToken")) {
+              _strongAuthToken = (jsonDecode(event)
+                  as Map<String, dynamic>)["strongAuthToken"];
+              _authStream.emit(state: AuthState.performingLogin);
 
-          _authStream.emit(state: AuthState.performingLogin);
-        }
-
-        await closeCustomTabs();
-        await loginWithStrongAuth();
-      },
-      onError: (error) {
-        _handleError("Error during strong authentication.");
-      },
-    );
+              await closeCustomTabs();
+              await loginWithStrongAuth();
+              authCompleter.complete();
+            }
+          } catch (error, stackTrace) {
+            "_listenForAuthEvents error: $error".log();
+            authCompleter.completeError(error, stackTrace);
+          }
+        },
+        onError: (error) {
+          _handleError("Error during strong authentication.");
+          authCompleter.completeError(error);
+        },
+      );
+    } catch (error) {
+      "_listenForTransactionUpdateEvents error: $error".log();
+      rethrow;
+    }
   }
 }
