@@ -137,6 +137,13 @@ class MonaSDKNotifier extends ChangeNotifier {
       return;
     }
 
+    if (message
+        .toLowerCase()
+        .contains("transaction amount cannot be less than 20")) {
+      _updateState(MonaSDKState.idle);
+      return;
+    }
+
     _updateState(MonaSDKState.error);
     _errorMessage?.log();
   }
@@ -297,6 +304,11 @@ class MonaSDKNotifier extends ChangeNotifier {
     required num tnxAmountInKobo,
   }) async {
     _updateState(MonaSDKState.loading);
+
+    if ((tnxAmountInKobo / 100) < 20) {
+      _handleError("Transaction amount cannot be less than 20");
+      return;
+    }
 
     final (Map<String, dynamic>? success, failure) =
         await _paymentsService.initiatePayment(
