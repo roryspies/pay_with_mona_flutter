@@ -564,6 +564,24 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       if (success != null) {
         success.log();
+
+        // Extract transaction ID from the nested response
+        String? transactionId;
+        if (success['success'] == true &&
+            success['data'] is List &&
+            (success['data'] as List).isNotEmpty) {
+          final firstTransaction = (success['data'] as List).first;
+          if (firstTransaction is Map<String, dynamic>) {
+            // Get the transactionRef which appears to be the transaction ID
+            transactionId = firstTransaction['transactionRef'] as String?;
+          }
+        }
+
+        if (transactionId != null) {
+          _handleTransactionId(transactionId);
+          _listenForTransactionUpdateEvents();
+        }
+
         onSuccess?.call(success);
       }
 

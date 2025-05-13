@@ -46,7 +46,7 @@ class CollectionsService {
       }, headers: {
         "x-merchant-Id": merchantId,
         "Authorization":
-            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzA2MzE2OSwiZXhwIjoxNzQ3MTQ5NTY5fQ.ngrLdmQr6Got7-H-zpSWnzPQ0ApPl7apW0utFO3aghQ"
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzE0OTgyNSwiZXhwIjoxNzQ3MjM2MjI1fQ.lobAONjFB2KTJxSl72RSbBBlebgBxTh5R03CQZyH8O8"
       });
 
       return right(
