@@ -10,7 +10,6 @@ import 'package:example/views/customer_info_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class ProductsView extends ConsumerStatefulWidget {
   const ProductsView({super.key});
@@ -110,7 +109,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                 ),
                               ),
                               Text(
-                                "NGdeals",
+                                "NGDeals",
                                 style: TextStyle(
                                   fontSize: context.sp(36),
                                   fontWeight: FontWeight.w500,
@@ -144,37 +143,6 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                     onTap: () async {
                                       switch (product) {
                                         case Products.checkout:
-                                          // if (removeLeadingZero(ref
-                                          //             .read(
-                                          //                 customerDetailsNotifierProvider)
-                                          //             .phoneNumber)
-                                          //         .length <
-                                          //     10) {
-                                          //   ScaffoldMessenger.of(context)
-                                          //       .showSnackBar(
-                                          //     SnackBar(
-                                          //       content: Text(
-                                          //           'Please add your phone number in the customer info section'),
-                                          //       duration: Duration(seconds: 2),
-                                          //     ),
-                                          //   );
-                                          //   return;
-                                          // }
-                                          MonaSDKNotifier monaSDKNotifier =
-                                              MonaSDKNotifier();
-                                          paymentNotifier
-                                              .setState(PaymentState.loading);
-
-                                          await monaSDKNotifier.initiatePayment(
-                                            tnxAmountInKobo: num.parse(
-                                                    _amountController.text
-                                                        .trim()) *
-                                                100,
-                                          );
-
-                                          paymentNotifier
-                                              .setState(PaymentState.success);
-
                                           nav('');
 
                                           break;
@@ -183,7 +151,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                             MaterialPageRoute(
                                               builder: (_) =>
                                                   const CreateCollectionView(
-                                                merchantName: 'ngdeals',
+                                                merchantName: 'NGDeals',
                                               ),
                                             ),
                                           ); */
@@ -195,7 +163,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                             lastName: 'Obi',
                                             dateOfBirth: DateTime(1992, 1, 1),
                                             transactionId: 'txn_1234',
-                                            merchantName: '`NGdeals`',
+                                            merchantName: '`NGDeals`',
                                             phoneNumber: '08012345678',
                                             primaryColor: Colors.deepPurple,
                                             secondaryColor: Colors.orange,

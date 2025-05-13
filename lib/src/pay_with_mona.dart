@@ -19,6 +19,7 @@ class PayWithMona {
     required Color primaryColor,
     required Color secondaryColor,
     required String phoneNumber,
+    required num amount,
     String? bvn,
   }) {
     final monaCheckOut = MonaCheckOut(
@@ -32,6 +33,7 @@ class PayWithMona {
       primaryColor: primaryColor,
       secondaryColor: secondaryColor,
       bvn: bvn,
+      amount: amount,
     );
 
     return PayWithMonaWidget(

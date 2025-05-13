@@ -306,7 +306,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 3. Handles failure or missing transaction ID.
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
-  Future<void> initiatePayment({
+  Future<void> _initiatePayment({
     required num tnxAmountInKobo,
   }) async {
     _updateState(MonaSDKState.loading);
@@ -364,9 +364,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   ///
   /// 1. Opens a custom tab to the payment URL.
   /// 2. Listens for transaction updates and strong auth tokens via SSE.
-  Future<void> makePayment({
-    required num tnxAmountInKobo,
-  }) async {
+  Future<void> makePayment() async {
     _updateState(MonaSDKState.loading);
 
     // Initialize SSE listener for real-time events
@@ -376,7 +374,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
     if (_currentTransactionId == null) {
-      await initiatePayment(tnxAmountInKobo: tnxAmountInKobo);
+      await _initiatePayment(
+        tnxAmountInKobo: _monaCheckOut!.amount,
+      );
     }
 
     _updateState(MonaSDKState.loading);
