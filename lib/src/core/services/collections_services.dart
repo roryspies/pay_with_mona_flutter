@@ -1,11 +1,11 @@
 import 'dart:convert';
-
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
 class CollectionsService {
+  // ignore: unused_field
   final _repoName = "💸 CollectionsService::: ";
   CollectionsService._internal();
   static final CollectionsService _instance = CollectionsService._internal();

@@ -95,7 +95,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   }
 
   void setData() {
-    _merchantNameController.text = widget.merchantName ?? '';
+    _merchantNameController.text = widget.merchantName;
   }
 
   void addController(
