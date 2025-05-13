@@ -440,7 +440,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   isScrollControlled: true,
                                   builder: (_) => Wrap(
                                     children: [
-                                      CollectionsCheckoutSheet(),
+                                      CollectionsCheckoutSheet(
+                                        method: collectionMethod.value,
+                                      ),
                                     ],
                                   ),
                                 );
