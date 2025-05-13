@@ -239,6 +239,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     String? phoneNumber,
     String? bvn,
     String? dob,
+    void Function(String)? onEffect,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -250,6 +251,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     if (response == null) {
       _handleError("Failed to validate user PII - Experienced an Error");
+      onEffect?.call("Failed to validate user PII - Experienced an Error");
       return;
     }
 
@@ -268,16 +270,20 @@ class MonaSDKNotifier extends ChangeNotifier {
         /// *** User has not done key exchange
         if (await checkIfUserHasKeyID() == null) {
           _authStream.emit(state: AuthState.loggedOut);
+          onEffect?.call('PII Auth Result - User has not done key exchange');
           return;
         }
 
         /// *** User has done key exchange
         _authStream.emit(state: AuthState.loggedIn);
+        onEffect?.call(
+            'PII Auth Result - User logged in and has done key exchange');
         break;
 
       /// *** Non Mona User
       default:
         _authStream.emit(state: AuthState.notAMonaUser);
+        onEffect?.call('PII Auth Result - User is not a mona user');
         break;
     }
   }
