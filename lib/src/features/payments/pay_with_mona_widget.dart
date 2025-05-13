@@ -35,6 +35,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
       (_) async {
         //await sdkNotifier.initiatePayment();
         sdkNotifier
+          ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
           ..txnStateStream.listen(
             (state) {
               switch (state) {
@@ -358,8 +359,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     onPressed: () async {
                       sdkNotifier
                         ..setCallingBuildContext(context: context)
-                        ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
-                        ..makePayment(tnxAmountInKobo: 2000);
+                        ..makePayment();
                     },
                     child: Text(
                       "Proceed to pay ",

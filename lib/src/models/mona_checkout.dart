@@ -11,6 +11,7 @@ class MonaCheckOut {
   final String phoneNumber;
   final Color primaryColor;
   final Color secondaryColor;
+  final num amount;
 
   MonaCheckOut({
     required this.firstName,
@@ -23,26 +24,32 @@ class MonaCheckOut {
     required this.phoneNumber,
     required this.primaryColor,
     required this.secondaryColor,
+    required this.amount,
   });
 
-  // Convert from JSON
-  factory MonaCheckOut.fromJson(Map<String, dynamic> json) {
+  factory MonaCheckOut.fromJSON({
+    required Map<String, dynamic> json,
+  }) {
     return MonaCheckOut(
-      firstName: json['first_name'] ?? '',
-      middleName: json['middle_name'] ?? '',
-      lastName: json['last_name'] ?? '',
+      firstName: json['first_name'] as String? ?? '',
+      middleName: json['middle_name'] as String?,
+      lastName: json['last_name'] as String? ?? '',
       dateOfBirth:
           DateTime.tryParse(json['date_of_birth'] ?? '') ?? DateTime.now(),
-      bvn: json['bvn'] ?? '',
-      transactionId: json['transaction_id'] ?? '',
-      merchantName: json['merchant_name'] ?? '',
-      phoneNumber: json['phone'] ?? '',
-      primaryColor: json['primary_color'] ?? Colors.black,
-      secondaryColor: json['secondary_color'] ?? Colors.black,
+      bvn: json['bvn'] as String?,
+      transactionId: json['transaction_id'] as String? ?? '',
+      merchantName: json['merchant_name'] as String? ?? '',
+      phoneNumber: json['phone'] as String? ?? '',
+      primaryColor: json['primary_color'] as int != null
+          ? Color(json['primary_color'] as int)
+          : Colors.black,
+      secondaryColor: json['secondary_color'] as int != null
+          ? Color(json['secondary_color'] as int)
+          : Colors.black,
+      amount: json['amount'] as num? ?? 0,
     );
   }
 
-  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       "first_name": firstName,
@@ -53,8 +60,9 @@ class MonaCheckOut {
       "transaction_id": transactionId,
       "merchant_name": merchantName,
       "phone": phoneNumber,
-      "primary_color": primaryColor,
-      "secondary_color": secondaryColor,
+      "primary_color": primaryColor.value,
+      "secondary_color": secondaryColor.value,
+      "amount": amount,
     };
   }
 
@@ -69,6 +77,7 @@ class MonaCheckOut {
     String? phoneNumber,
     Color? primaryColor,
     Color? secondaryColor,
+    num? amount,
   }) {
     return MonaCheckOut(
       firstName: firstName ?? this.firstName,
@@ -81,12 +90,25 @@ class MonaCheckOut {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       primaryColor: primaryColor ?? this.primaryColor,
       secondaryColor: secondaryColor ?? this.secondaryColor,
+      amount: amount ?? this.amount,
     );
   }
 
   @override
   String toString() {
-    return 'MonaCheckOut(firstName: $firstName, middleName: $middleName, lastName: $lastName, dateOfBirth: $dateOfBirth, bvn: $bvn, transactionId: $transactionId, merchantName: $merchantName, phoneNumber: $phoneNumber, primaryColor: $primaryColor, secondaryColor: $secondaryColor)';
+    return 'MonaCheckOut('
+        'firstName: $firstName, '
+        'middleName: $middleName, '
+        'lastName: $lastName, '
+        'dateOfBirth: $dateOfBirth, '
+        'bvn: $bvn, '
+        'transactionId: $transactionId, '
+        'merchantName: $merchantName, '
+        'phoneNumber: $phoneNumber, '
+        'primaryColor: $primaryColor, '
+        'secondaryColor: $secondaryColor, '
+        'amount: $amount'
+        ')';
   }
 
   @override
@@ -103,7 +125,8 @@ class MonaCheckOut {
         other.merchantName == merchantName &&
         other.phoneNumber == phoneNumber &&
         other.primaryColor == primaryColor &&
-        other.secondaryColor == secondaryColor;
+        other.secondaryColor == secondaryColor &&
+        other.amount == amount;
   }
 
   @override
@@ -117,6 +140,7 @@ class MonaCheckOut {
         merchantName.hashCode ^
         phoneNumber.hashCode ^
         primaryColor.hashCode ^
-        secondaryColor.hashCode;
+        secondaryColor.hashCode ^
+        amount.hashCode;
   }
 }
