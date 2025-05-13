@@ -1,34 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:example/views/customer_info_view.dart';
+import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
-class CheckoutView extends StatefulWidget {
-  const CheckoutView({super.key});
+class CheckoutView extends ConsumerWidget {
+  const CheckoutView({
+    super.key,
+    required this.transactionId,
+    required this.amount,
+  });
+
+  final String transactionId;
+  final String amount;
 
   @override
-  State<CheckoutView> createState() => _CheckoutViewState();
-}
-
-class _CheckoutViewState extends State<CheckoutView> {
-  final sdkNotifier = MonaSDKNotifier();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) async {
-        await sdkNotifier.validatePII(
-          phoneNumber: "2347019017218",
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ResponsiveScaffold(
       child: Scaffold(
         appBar: AppBar(
@@ -38,8 +27,6 @@ class _CheckoutViewState extends State<CheckoutView> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              CustomerInfoView(),
-              context.sbH(8),
               Container(
                 padding: EdgeInsets.all(context.w(20)),
                 width: double.infinity,
@@ -69,7 +56,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                           ),
                         ),
                         Text(
-                          "₦",
+                          "₦$amount",
                           style: TextStyle(
                             fontSize: context.sp(16),
                             fontWeight: FontWeight.w500,
@@ -83,15 +70,15 @@ class _CheckoutViewState extends State<CheckoutView> {
               ),
               context.sbH(8),
               PayWithMona.payWidget(
-                firstName: "John",
-                lastName: "Doe Smith",
-                dateOfBirth: DateTime(2001, 05, 12),
-                transactionId: "1234567890",
-                merchantName: "NGDeals",
-                phoneNumber: "2347019017218",
-                primaryColor: MonaColors.primaryBlue,
-                secondaryColor: MonaColors.neutralWhite,
-                bvn: "1234567890",
+                firstName: '',
+                lastName: '',
+                dateOfBirth: DateTime.now(),
+                transactionId: transactionId,
+                merchantName: 'ngdeals',
+                primaryColor: Colors.purple,
+                secondaryColor: Colors.indigo,
+                phoneNumber:
+                    ref.watch(customerDetailsNotifierProvider).phoneNumber,
               ),
             ],
           ),

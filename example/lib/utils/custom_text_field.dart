@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/regex.dart';
 import 'package:example/utils/size_config.dart';
-import 'package:example/utils/validator_mixin.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomTextField extends StatefulWidget {
   const CustomTextField({
@@ -22,7 +21,7 @@ class CustomTextField extends StatefulWidget {
     this.initialValue,
     this.obscureText,
     this.enabled,
-    this.maxLines,
+    this.maxlines,
     this.icon,
     this.keyboardType,
     this.textInputAction,
@@ -60,6 +59,7 @@ class CustomTextField extends StatefulWidget {
     this.inputFormatters,
     this.onTap,
     this.onEditingComplete,
+    this.prefixText,
   });
 
   final String? title;
@@ -71,6 +71,7 @@ class CustomTextField extends StatefulWidget {
 
   final TextEditingController controller;
   final String? hintText;
+  final String? prefixText;
   final String? initialValue;
   final bool? obscureText;
   final bool? enabled;
@@ -85,7 +86,7 @@ class CustomTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final Widget? icon;
   final Widget? prefix;
-  final int? maxLines;
+  final int? maxlines;
   final int? maxLength;
   final Widget? prefixIcon;
   final BoxBorder? border;
@@ -120,14 +121,16 @@ class CustomTextField extends StatefulWidget {
   State<CustomTextField> createState() => _CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends State<CustomTextField> with ValidatorMixin {
+class _CustomTextFieldState extends State<CustomTextField>
+// with ValidatorMixin
+{
   String? _errorText;
 
-  void _validateInput(String value) {
-    setState(() {
-      _errorText = validateIsEmpty(value, title: widget.title);
-    });
-  }
+  // void _validateInput(String value) {
+  //   setState(() {
+  //     _errorText = validateIsEmpty(value, title: widget.title);
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +167,7 @@ class _CustomTextFieldState extends State<CustomTextField> with ValidatorMixin {
             onTap: widget.onTap,
             readOnly: widget.readOnly,
             enabled: widget.enabled,
-            maxLines: widget.maxLines ?? 1,
+            maxLines: widget.maxlines ?? 1,
             cursorColor: widget.cursorColor,
             textDirection: widget.textDirection ?? TextDirection.ltr,
             controller: widget.controller,
@@ -189,12 +192,13 @@ class _CustomTextFieldState extends State<CustomTextField> with ValidatorMixin {
                   // fontFamily: widget.useFontFamilyText ? Font.fontFamily : '',
                 ),
             decoration: InputDecoration(
+              prefixText: widget.prefixText,
               filled: widget.filled,
               fillColor: widget.fillColor ?? MonaColors.textField,
               isDense: true,
               contentPadding: widget.contentPadding ??
-                  EdgeInsets.symmetric(horizontal: context.w(15)).copyWith(
-                      top: widget.suffixIcon != null ? context.h(10) : 0),
+                  EdgeInsets.symmetric(horizontal: context.w(15))
+                      .copyWith(top: context.h(14)),
               hintText: widget.hintText,
               hintStyle: widget.hintStyle ??
                   TextStyle(
@@ -212,7 +216,7 @@ class _CustomTextFieldState extends State<CustomTextField> with ValidatorMixin {
             ),
             onChanged: (value) {
               widget.onChanged?.call(value);
-              _validateInput(value);
+              // _validateInput(value);
             },
           ),
         ),
