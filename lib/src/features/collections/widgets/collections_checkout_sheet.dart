@@ -93,7 +93,7 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                         ),
                         context.sbH(24),
                         Text(
-                          "${collection.reference} wants to automate repayments",
+                          "$merchantName wants to automate repayments",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: context.sp(16),
