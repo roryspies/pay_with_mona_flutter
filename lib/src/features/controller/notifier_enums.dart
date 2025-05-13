@@ -38,8 +38,10 @@ enum PaymentMethod {
         return "transfer";
       case PaymentMethod.none:
         return "none";
-      case PaymentMethod.savedBank || PaymentMethod.savedCard:
-        return "oneTap";
+      case PaymentMethod.savedBank:
+        return "bank";
+      case PaymentMethod.savedCard:
+        return "card";
     }
   }
 
@@ -84,3 +86,5 @@ enum PaymentMethod {
     }
   }
 }
+
+enum PaymentTaskType { sign, pin, otp }

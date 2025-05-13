@@ -7,6 +7,7 @@ import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
@@ -76,6 +77,8 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _errorMessage;
   String? _currentTransactionId;
   String? _strongAuthToken;
+  String? _transactionOTP;
+  String? _transactionPIN;
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
 
@@ -84,6 +87,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   PendingPaymentResponseModel? _pendingPaymentResponseModel;
   BankOption? _selectedBankOption;
   CardOption? _selectedCardOption;
+
+  ///
+  Completer<String>? _pinOrOTPCompleter;
 
   /// Current payment process state.
   MonaSDKState get state => _state;
@@ -215,6 +221,26 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTransactionOTP({
+    required String receivedOTP,
+  }) {
+    _transactionOTP = () {
+      _transactionOTP = null;
+      return receivedOTP;
+    }();
+    notifyListeners();
+  }
+
+  void setTransactionPIN({
+    required String receivedPIN,
+  }) {
+    _transactionPIN = () {
+      _transactionPIN = null;
+      return receivedPIN;
+    }();
+    notifyListeners();
+  }
+
   Future<String?> checkIfUserHasKeyID() async => await _secureStorage.read(
         key: SecureStorageKeys.monaCheckoutID,
       );
@@ -306,52 +332,32 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.idle);
   }
 
-  /// *** Currently not in use - Keep for a forth night
-/*   Future<void> getPaymentMethods() async {
-    _updateState(MonaSDKState.loading);
-
-    final userCheckoutID = await checkIfUserHasKeyID();
-
-    if (userCheckoutID == null) {
-      _handleError("User identifier not found. Please login again.");
-      return;
-    }
-
-    try {
-      final (paymentDataAndMethods, failure) =
-          await _paymentsService.getPaymentMethods(
-        transactionId: _currentTransactionId ?? "",
-        userEnrolledCheckoutID: userCheckoutID,
-      );
-
-      if (failure != null) {
-        _handleError("Payment initiation failed. Please try again.");
-        _updateState(MonaSDKState.idle);
-        return;
-      }
-
-      setPendingPaymentData(pendingPayment: paymentDataAndMethods!);
-      _updateState(MonaSDKState.success);
-    } catch (error, trace) {
-      _handleError("Error fetching payment methods: $error ::: $trace");
-      return;
-    }
-  } */
-
+  /// Initializes key exchange process by generating a session ID, listening for auth events,
+  /// launching the custom tab, and waiting for the auth process to complete.
+  ///
+  /// Throws [MonaSDKError] if any step fails.
   Future<void> initKeyExchange() async {
     try {
-      final sessionID = math.Random.secure().nextInt(999999999).toString();
-      await _listenForAuthEvents(sessionID);
+      final sessionID = _generateSessionID();
+      final authCompleter = Completer<void>();
+
+      /// *** Needed to trigger necessary Key Exchange stuffs.
+      await _listenForAuthEvents(sessionID, authCompleter);
 
       final url = _buildURL(
         sessionID: sessionID,
-        method: _selectedPaymentMethod.type,
+        method: _selectedPaymentMethod,
+        bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
+            ? _selectedBankOption?.bankId
+            : _selectedCardOption?.cardId,
       );
 
       await _launchURL(url);
+      await authCompleter.future;
     } catch (error, trace) {
       "initKeyExchange ERROR ::: $error ::: TRACE ::: $trace".log();
       _handleError("Error Initiating Key Exchange");
+      rethrow;
     }
   }
 
@@ -376,6 +382,20 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     _updateState(MonaSDKState.loading);
 
+    /// *** Concurrently listen for transaction completion.
+    try {
+      await Future.wait(
+        [
+          _listenForPaymentUpdates(),
+          _listenForTransactionUpdateEvents(),
+        ],
+      );
+    } catch (error) {
+      "MonaSDKNotifier ::: makePayment ::: ```Concurrently listen for transaction completion.``` ::: Error ::: $error"
+          .log();
+      _handleError("Error during payment process: $error");
+    }
+
     /// *** If the user doesn't have a keyID and they want to use a saved payment method,
     /// *** Key exchange needs to be done, so handle first.
     final doKeyExchange = await checkIfUserHasKeyID() == null &&
@@ -384,18 +404,11 @@ class MonaSDKNotifier extends ChangeNotifier {
           PaymentMethod.savedCard,
         ].contains(_selectedPaymentMethod);
 
+    /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
+    /// *** previously
     if (doKeyExchange) {
       await initKeyExchange();
     }
-
-    bool hasError = false;
-    bool hasTransactionUpdateError = false;
-
-    /// *** Concurrently listen for transaction completion.
-    await Future.wait([
-      _listenForPaymentUpdates(hasError),
-      _listenForTransactionUpdateEvents(hasTransactionUpdateError),
-    ]);
 
     switch (_selectedPaymentMethod) {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
@@ -406,6 +419,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
               clearSelectedPaymentMethod();
               _currentTransactionId = null;
+              _transactionOTP = null;
+              _transactionPIN = null;
             },
           );
 
@@ -428,17 +443,22 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   Future<void> handleRegularPayment() async {
     final sessionID = _generateSessionID();
-    await _listenForAuthEvents(sessionID);
+    final authCompleter = Completer<void>();
+    await _listenForAuthEvents(sessionID, authCompleter);
 
     final url = _buildURL(
       sessionID: sessionID,
-      method: _selectedPaymentMethod.type,
+      method: _selectedPaymentMethod,
+      bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
+          ? _selectedBankOption?.bankId
+          : _selectedCardOption?.cardId,
     );
 
     await _launchURL(url);
   }
 
-  /// Performs strong authentication using the received SSE token.
+  ///
+  /// *** Performs strong authentication using the received SSE token.
   ///
   /// Updates payment methods upon success.
   Future<void> loginWithStrongAuth() async {
@@ -510,10 +530,10 @@ class MonaSDKNotifier extends ChangeNotifier {
               merchantId: merchantId,
               scheduleEntries: scheduleEntries);
 
-      if (failure != null) {
-        _handleError('Collection creation failed.');
-        throw (failure.message);
-      }
+      //     if (failure != null) {
+      //       _handleError('Collection creation failed.');
+      //       throw (failure.message);
+      //     }
 
       if (success != null) {
         success.log();
@@ -576,6 +596,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     _pendingPaymentResponseModel = null;
     _selectedBankOption = null;
     _selectedCardOption = null;
+    _transactionPIN = null;
+    _transactionOTP = null;
 
     notifyListeners();
   }
