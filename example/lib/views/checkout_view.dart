@@ -74,11 +74,12 @@ class CheckoutView extends ConsumerWidget {
                 lastName: '',
                 dateOfBirth: DateTime.now(),
                 transactionId: transactionId,
-                merchantName: 'ngdeals',
+                merchantName: 'NGDeals',
                 primaryColor: Colors.purple,
                 secondaryColor: Colors.indigo,
                 phoneNumber:
                     ref.watch(customerDetailsNotifierProvider).phoneNumber,
+                amount: num.parse(amount),
               ),
             ],
           ),
