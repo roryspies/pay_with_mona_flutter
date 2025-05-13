@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import "dart:developer" as dev_tools show log;
 
 extension ImagePath on String {
   String get png => "assets/images/$this.png";
@@ -36,5 +38,15 @@ extension ListenableBuilderExtension on List<Listenable> {
       listenable: Listenable.merge(this),
       builder: builder,
     );
+  }
+}
+
+extension Log on Object {
+  void log() {
+    if (kDebugMode) {
+      dev_tools.log(
+        toString(),
+      );
+    }
   }
 }

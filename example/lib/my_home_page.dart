@@ -37,12 +37,12 @@ class MyHomePage extends StatelessWidget {
               ),
             ),
             onPressed: () async {
-              Navigator.push(
+              /* Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => CheckoutView(),
                 ),
-              );
+              ); */
             },
             child: const Text(
               "Pay Now",

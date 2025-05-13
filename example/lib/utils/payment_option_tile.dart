@@ -1,19 +1,19 @@
-import 'package:flutter/material.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/size_config.dart';
+import 'package:flutter/material.dart';
 
 class PaymentOptionTile extends StatelessWidget {
   const PaymentOptionTile({
     super.key,
     required this.title,
-    required this.descriptiom,
+    required this.description,
     required this.type,
     required this.icon,
     required this.paymentOption,
   });
 
   final String title;
-  final String descriptiom;
+  final String description;
   final String type;
   final Icon icon;
   final ValueNotifier<String> paymentOption;
@@ -40,7 +40,7 @@ class PaymentOptionTile extends StatelessWidget {
                 ),
               ),
               Text(
-                descriptiom,
+                description,
                 style: TextStyle(
                   fontSize: context.sp(12),
                   fontWeight: FontWeight.w400,
@@ -61,14 +61,14 @@ class PaymentOptionTile extends StatelessWidget {
                 border: Border.all(
                   width: 1.5,
                   color: paymentOption.value == type
-                      ? MonaColors.primaryBlue
+                      ? MonaColors.primary
                       : MonaColors.bgGrey,
                 )),
             child: Center(
               child: CircleAvatar(
                 radius: context.w(6),
                 backgroundColor: paymentOption.value == type
-                    ? MonaColors.primaryBlue
+                    ? MonaColors.primary
                     : Colors.transparent,
               ),
             ),
