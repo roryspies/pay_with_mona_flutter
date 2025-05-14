@@ -30,7 +30,7 @@ class PaymentNotifier extends ChangeNotifier {
       _setError("Payment failed. Try again.");
       return '';
     } else if (success != null) {
-      'hiyaa'.log();
+      'hi yaa'.log();
       '$success'.log();
 
       _setTransactionId(success['transactionId']);

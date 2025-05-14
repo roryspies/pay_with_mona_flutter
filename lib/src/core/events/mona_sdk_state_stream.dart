@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
 /// Defines the possible states of the Mona SDK.
-enum MonaSDKState { idle, loading, success, error }
+enum MonaSDKState { idle, loading, success, error, transactionInitiated }
 
 /// A singleton that manages a broadcast stream of [MonaSDKState] events.
 ///

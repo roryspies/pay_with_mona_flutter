@@ -50,3 +50,12 @@ extension Log on Object {
     }
   }
 }
+
+extension KeyboardDismissExtension on BuildContext {
+  void closeKeyboard() {
+    FocusScopeNode currentFocus = FocusScope.of(this);
+    if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+      currentFocus.focusedChild?.unfocus();
+    }
+  }
+}

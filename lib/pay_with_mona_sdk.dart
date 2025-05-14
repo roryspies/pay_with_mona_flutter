@@ -5,3 +5,4 @@ export 'src/core/events/auth_state_stream.dart';
 export 'src/core/events/mona_sdk_state_stream.dart';
 export 'src/core/events/transaction_state_stream.dart';
 export 'src/models/mona_checkout.dart';
+export 'src/core/events/transaction_state_classes.dart';

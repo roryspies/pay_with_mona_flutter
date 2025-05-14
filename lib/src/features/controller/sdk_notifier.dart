@@ -149,7 +149,8 @@ class MonaSDKNotifier extends ChangeNotifier {
         .toLowerCase()
         .contains("transaction amount cannot be less than 20")) {
       _updateState(MonaSDKState.idle);
-      return;
+      message.log();
+      throw (message);
     }
 
     _updateState(MonaSDKState.error);
@@ -243,7 +244,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<String?> checkIfUserHasKeyID() async => await _secureStorage.read(
-        key: SecureStorageKeys.monaCheckoutID,
+        key: SecureStorageKeys.keyID,
       );
 
   ///
@@ -350,7 +351,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         method: _selectedPaymentMethod,
         bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
             ? _selectedBankOption?.bankId
-            : _selectedCardOption?.cardId,
+            : _selectedCardOption?.bankId,
       );
 
       await _launchURL(url);
@@ -424,6 +425,8 @@ class MonaSDKNotifier extends ChangeNotifier {
             onPayComplete: () {
               "Payment Notifier ::: Make Payment Request Complete".log();
 
+              _sdkStateStream.emit(state: MonaSDKState.transactionInitiated);
+
               clearSelectedPaymentMethod();
               _currentTransactionId = null;
               _transactionOTP = null;
@@ -458,7 +461,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       method: _selectedPaymentMethod,
       bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
           ? _selectedBankOption?.bankId
-          : _selectedCardOption?.cardId,
+          : _selectedCardOption?.bankId,
     );
 
     await _launchURL(url);
@@ -549,7 +552,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       _updateState(MonaSDKState.success);
     } catch (e) {
-      print(e.toString());
+      e.toString().log();
       _handleError(e.toString());
     }
   }
@@ -595,7 +598,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       _updateState(MonaSDKState.success);
     } catch (e) {
-      print(e.toString());
+      e.toString().log();
       _handleError(e.toString());
     }
   }

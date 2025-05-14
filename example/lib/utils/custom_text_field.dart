@@ -1,3 +1,4 @@
+import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/regex.dart';
 import 'package:example/utils/size_config.dart';
@@ -213,11 +214,13 @@ class _CustomTextFieldState extends State<CustomTextField>
               focusedBorder: InputBorder.none,
               errorBorder: InputBorder.none,
               focusedErrorBorder: InputBorder.none,
+              counter: SizedBox.shrink(),
             ),
             onChanged: (value) {
               widget.onChanged?.call(value);
               // _validateInput(value);
             },
+            onTapOutside: (event) => context.closeKeyboard(),
           ),
         ),
         if (_errorText != null)
