@@ -31,6 +31,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       sdkNotifier
+        ..validatePII()
         ..txnStateStream.listen(
           (state) {
             ref.read(transactionStatusProvider.notifier).updateState(

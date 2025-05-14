@@ -67,22 +67,29 @@ class TransactionStatusNotifier extends Notifier<TransactionStatusState> {
   void updateState({
     required TransactionState newState,
   }) {
-    if (newState is TransactionStateFailed) {
-      state = state.copyWith(
-        transactionStatus: TransactionStatus.failed,
-        transactionID: newState.transactionID,
-      );
-    } else if (newState is TransactionStateCompleted) {
-      state = state.copyWith(
-        transactionStatus: TransactionStatus.successful,
-        transactionID: newState.transactionID,
-      );
-    } else if (newState is TransactionStateInitiated) {
-      state = state.copyWith(
-        transactionStatus: TransactionStatus.initiated,
-        transactionID: newState.transactionID,
-        amount: newState.amount,
-      );
+    String? txId;
+    num? amt;
+    late TransactionStatus status;
+
+    if (newState is TransactionStateWithInfo) {
+      txId = newState.transactionID;
+      amt = newState.amount;
     }
+
+    if (newState is TransactionStateFailed) {
+      status = TransactionStatus.failed;
+    } else if (newState is TransactionStateCompleted) {
+      status = TransactionStatus.successful;
+    } else if (newState is TransactionStateInitiated) {
+      status = TransactionStatus.initiated;
+    } else {
+      return;
+    }
+
+    state = state.copyWith(
+      transactionStatus: status,
+      transactionID: txId,
+      amount: amt,
+    );
   }
 }

@@ -255,12 +255,20 @@ class MonaSDKNotifier extends ChangeNotifier {
     String? dob,
     void Function(String)? onEffect,
   }) async {
+    if (_pendingPaymentResponseModel != null) {
+      _updateState(MonaSDKState.idle);
+      return;
+    }
+
     _updateState(MonaSDKState.loading);
+
+    final userKeyID = await checkIfUserHasKeyID();
 
     final response = await _authService.validatePII(
       phoneNumber: phoneNumber,
       bvn: bvn,
       dob: dob,
+      userKeyID: userKeyID,
     );
 
     if (response == null) {
@@ -373,15 +381,14 @@ class MonaSDKNotifier extends ChangeNotifier {
     // Initialize SSE listener for real-time events
     _firebaseSSE.initialize();
 
-    /// *** This is only for DEMO.
-    /// *** Real world scenario, client would attach a transaction ID to this.
-    /// *** For now - Check if we have an initiated Transaction ID else do a demo one
-
     if ((_monaCheckOut!.amount / 100) < 20) {
       _handleError("Transaction amount cannot be less than 20");
       return;
     }
 
+    /// *** This is only for DEMO.
+    /// *** Real world scenario, client would attach a transaction ID to this.
+    /// *** For now - Check if we have an initiated Transaction ID else do a demo one
     if (_currentTransactionId == null) {
       await _initiatePayment(
         tnxAmountInKobo: _monaCheckOut!.amount,
