@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
@@ -349,7 +350,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// launching the custom tab, and waiting for the auth process to complete.
   ///
   /// Throws [MonaSDKError] if any step fails.
-  Future<void> initKeyExchange() async {
+  Future<void> initKeyExchange({bool withRedirect = true}) async {
     try {
       final sessionID = _generateSessionID();
       final authCompleter = Completer<void>();
@@ -358,6 +359,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       await _listenForAuthEvents(sessionID, authCompleter);
 
       final url = _buildURL(
+        withRedirect: withRedirect,
         sessionID: sessionID,
         method: _selectedPaymentMethod,
         bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
@@ -658,6 +660,29 @@ class MonaSDKNotifier extends ChangeNotifier {
         ],
       ),
     );
+  }
+
+  Future<void> collectionHandOffToAuth({
+    required Function(bool)? onKeyExchange,
+  }) async {
+    _updateState(MonaSDKState.loading);
+
+    // Initialize SSE listener for real-time events
+    _firebaseSSE.initialize();
+
+    _updateState(MonaSDKState.loading);
+
+    /// *** If the user doesn't have a keyID and they want to use a saved payment method,
+    /// *** Key exchange needs to be done, so handle first.
+    final doKeyExchange = await checkIfUserHasKeyID() == null;
+
+    /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
+    /// *** previously
+    if (doKeyExchange) {
+      await initKeyExchange(withRedirect: false);
+    } else {
+      onKeyExchange?.call(false);
+    }
   }
 
   /// Resets the entire SDKNotifier back to its initial, un-initialized state.

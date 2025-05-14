@@ -398,14 +398,16 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     onTap: () async {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
-                                      if (await sdkNotifier
-                                              .checkIfUserHasKeyID() !=
-                                          null) {
-                                        showCheckoutSheet();
-                                      } else {
-                                        showPopupMessage('NO KEY ID, ENROL');
-                                        'NO KEY ID, ENROL'.log();
-                                      }
+                                      await sdkNotifier.collectionHandOffToAuth(
+                                          onKeyExchange: (value) {
+                                        if (value) {
+                                          showCheckoutSheet();
+                                        } else {
+                                          showPopupMessage('NO KEY ID, ENROL');
+                                          'NO KEY ID, ENROL'.log();
+                                        }
+                                      });
+
                                       // ..triggerCollection(
                                       //   merchantId:
                                       //       '67e41f884126830aded0b43c',
@@ -430,7 +432,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                             },
                             child: Container(
                               margin: EdgeInsets.symmetric(
-                                  horizontal: context.w(20)).copyWith(top: context.h(24)),
+                                      horizontal: context.w(20))
+                                  .copyWith(top: context.h(24)),
                               padding: EdgeInsets.symmetric(
                                 vertical: context.h(10),
                                 horizontal: context.w(16),
