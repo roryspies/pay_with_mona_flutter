@@ -645,6 +645,7 @@ class MonaSDKNotifier extends ChangeNotifier {
               startDate: startDate,
               monthlyLimit: monthlyLimit,
               schedule: Schedule(
+                frequency: frequency,
                 type: type,
                 entries: [],
               ),

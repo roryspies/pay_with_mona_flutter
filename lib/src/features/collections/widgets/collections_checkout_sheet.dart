@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
@@ -31,6 +33,10 @@ class CollectionsCheckoutSheet extends StatefulWidget {
 
 class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   final sdkNotifier = MonaSDKNotifier();
+  String? _popupMessage;
+  bool _showPopup = false;
+  Timer? _popupTimer;
+
   String formatDate(String? iso) {
     if (iso == null) return '-';
     final parsed = DateTime.tryParse(iso);
@@ -43,7 +49,47 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
     sdkNotifier.addListener(_onSdktateChange);
   }
 
+  @override
+  void dispose() {
+    _popupTimer?.cancel();
+    super.dispose();
+  }
+
   void _onSdktateChange() => setState(() {});
+
+  void showPopupMessage(String message,
+      {Duration duration = const Duration(seconds: 2)}) {
+    setState(() {
+      _popupMessage = message;
+      _showPopup = true;
+    });
+
+    // Auto-hide after duration
+    _popupTimer?.cancel();
+    _popupTimer = Timer(duration, () {
+      if (mounted) {
+        setState(() {
+          _showPopup = false;
+        });
+      }
+    });
+  }
+
+  void showCheckoutSheet() {
+    Navigator.of(context).pop();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => Wrap(
+        children: [
+          CollectionsBankSheet(
+            method: widget.method,
+            merchantName: widget.merchantName,
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +286,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                           ),
                                           context.sbH(2),
                                           Text(
-                                            '₦${isScheduled ? collection.maxAmount : schedule.amount ?? '-'}',
+                                            '₦${collection.maxAmount}',
                                             style: TextStyle(
                                               fontSize: context.sp(14),
                                               fontWeight: FontWeight.w500,
@@ -355,20 +401,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                       if (await sdkNotifier
                                               .checkIfUserHasKeyID() !=
                                           null) {
-                                        Navigator.of(context).pop();
-                                        showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          builder: (_) => Wrap(
-                                            children: [
-                                              CollectionsBankSheet(
-                                                  method: widget.method,
-                                                  merchantName:
-                                                      widget.merchantName),
-                                            ],
-                                          ),
-                                        );
+                                        showCheckoutSheet();
                                       } else {
+                                        showPopupMessage('NO KEY ID, ENROL');
                                         'NO KEY ID, ENROL'.log();
                                       }
                                       // ..triggerCollection(
@@ -381,7 +416,58 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     },
                                   );
                           },
-                        )
+                        ),
+
+                        if (_showPopup && _popupMessage != null)
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 400),
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: child,
+                              );
+                            },
+                            child: Container(
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: context.w(20)).copyWith(top: context.h(24)),
+                              padding: EdgeInsets.symmetric(
+                                vertical: context.h(10),
+                                horizontal: context.w(16),
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade700,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.white,
+                                    size: context.w(20),
+                                  ),
+                                  context.sbW(8),
+                                  Expanded(
+                                    child: Text(
+                                      _popupMessage!,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: context.sp(14),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
