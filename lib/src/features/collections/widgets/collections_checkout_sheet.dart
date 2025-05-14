@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_bank_sheet.dart';
 import 'package:pay_with_mona/src/models/colllection_response.dart';
 
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -19,7 +20,7 @@ class CollectionsCheckoutSheet extends StatefulWidget {
     required this.merchantName,
   });
 
-  final Map<String, dynamic>? details;
+  final Collection? details;
   final CollectionsMethod method;
   final String merchantName;
 
@@ -46,8 +47,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final collection =
-        CollectionResponse.fromJson(widget.details!).requests.last.collection;
+    final collection = widget.details!;
     final schedule = collection.schedule;
     final isScheduled = schedule.type == 'SCHEDULED';
 
@@ -281,7 +281,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                           context.sbH(2),
                                           Text(
                                             isScheduled
-                                                ? collection.monthlyLimit ?? '-'
+                                                ? '₦${collection.monthlyLimit ?? '-'}'
                                                 : formatDate(
                                                     collection.startDate),
                                             style: TextStyle(
@@ -349,17 +349,35 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                   )
                                 : CustomButton(
                                     label: 'Continue to Mona',
-                                    onTap: () {
-                                      sdkNotifier
-                                        ..setCallingBuildContext(
-                                            context: context)
-                                        ..triggerCollection(
-                                          merchantId:
-                                              '67e41f884126830aded0b43c',
-                                          onSuccess: (p0) {
-                                            Navigator.of(context).pop();
-                                          },
+                                    onTap: () async {
+                                      sdkNotifier.setCallingBuildContext(
+                                          context: context);
+                                      if (await sdkNotifier
+                                              .checkIfUserHasKeyID() !=
+                                          null) {
+                                        Navigator.of(context).pop();
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          builder: (_) => Wrap(
+                                            children: [
+                                              CollectionsBankSheet(
+                                                  method: widget.method,
+                                                  merchantName:
+                                                      widget.merchantName),
+                                            ],
+                                          ),
                                         );
+                                      } else {
+                                        'NO KEY ID, ENROL'.log();
+                                      }
+                                      // ..triggerCollection(
+                                      //   merchantId:
+                                      //       '67e41f884126830aded0b43c',
+                                      //   onSuccess: (p0) {
+                                      //     Navigator.of(context).pop();
+                                      //   },
+                                      // );
                                     },
                                   );
                           },

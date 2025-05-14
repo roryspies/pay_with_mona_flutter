@@ -12,9 +12,12 @@ import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
+import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
+import 'package:pay_with_mona/src/models/colllection_response.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -243,7 +246,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<String?> checkIfUserHasKeyID() async => await _secureStorage.read(
-        key: SecureStorageKeys.monaCheckoutID,
+        key: SecureStorageKeys.keyID,
       );
 
   ///
@@ -598,6 +601,52 @@ class MonaSDKNotifier extends ChangeNotifier {
       print(e.toString());
       _handleError(e.toString());
     }
+  }
+
+  Future<void> createCollectionsNavigation({
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+    required String merchantId,
+    required String merchantName,
+    required CollectionsMethod method,
+    required List<Map<String, dynamic>> scheduleEntries,
+    void Function(Map<String, dynamic>?)? onSuccess,
+  }) async {
+    //     if (failure != null) {
+    //       _handleError('Collection creation failed.');
+    //       throw (failure.message);
+    //     }
+    showModalBottomSheet(
+      context: _callingBuildContext!,
+      isScrollControlled: true,
+      builder: (_) => Wrap(
+        children: [
+          CollectionsCheckoutSheet(
+            method: method,
+            details: Collection(
+              maxAmount: maximumAmount,
+              expiryDate: expiryDate,
+              startDate: startDate,
+              monthlyLimit: monthlyLimit,
+              schedule: Schedule(
+                type: type,
+                entries: [],
+              ),
+              reference: reference,
+              status: '',
+              nextCollectionAt: '',
+            ),
+            merchantName: merchantName,
+          ),
+        ],
+      ),
+    );
   }
 
   /// Resets the entire SDKNotifier back to its initial, un-initialized state.

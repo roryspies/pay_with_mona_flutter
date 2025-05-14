@@ -6,6 +6,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
+import 'package:pay_with_mona/src/models/colllection_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -468,9 +469,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
                                 sdkNotifier
                                   ..setCallingBuildContext(context: context)
-                                  ..createCollections(
+                                  ..createCollectionsNavigation(
                                     scheduleEntries: scheduleEntries,
-                                    bankId: '680f5d983bccd31f1312645d',
                                     maximumAmount:
                                         _debitLimitController.text.trim(),
                                     expiryDate: convertToIsoDate(
@@ -497,21 +497,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                         ? null
                                         : _debitLimitController.text.trim(),
                                     merchantId: '67e41f884126830aded0b43c',
-                                    onSuccess: (success) {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        builder: (_) => Wrap(
-                                          children: [
-                                            CollectionsCheckoutSheet(
-                                              method: collectionMethod.value,
-                                              details: success,
-                                              merchantName: widget.merchantName,
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
+                                    merchantName: widget.merchantName,
+                                    method: collectionMethod.value,
                                   );
                               },
                               label: 'Continue',
