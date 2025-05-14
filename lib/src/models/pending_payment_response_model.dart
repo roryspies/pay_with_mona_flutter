@@ -113,40 +113,88 @@ class SavedPaymentOptions {
 
 /// Represents a generic card option.
 class CardOption {
-  final String? cardId;
-  final String? maskedPan;
-  final String? cardNetwork;
-  final String? expiryDate;
-  final String? cardType;
-  final bool? isDefault;
+  final String? bankId;
+  final String? institutionCode;
+  final String? accountNumber;
+  final String? bankName;
+  final String? accountName;
+  final String? logo;
 
-  CardOption({
-    this.cardId,
-    this.maskedPan,
-    this.cardNetwork,
-    this.expiryDate,
-    this.cardType,
-    this.isDefault,
+  const CardOption({
+    this.bankId,
+    this.institutionCode,
+    this.accountNumber,
+    this.bankName,
+    this.accountName,
+    this.logo,
   });
 
-  factory CardOption.fromJSON({required Map<String, dynamic> json}) =>
+  factory CardOption.fromJSON({
+    required Map<String, dynamic> json,
+  }) =>
       CardOption(
-        cardId: json['cardId'] as String?,
-        maskedPan: json['maskedPan'] as String?,
-        cardNetwork: json['cardNetwork'] as String?,
-        expiryDate: json['expiryDate'] as String?,
-        cardType: json['cardType'] as String?,
-        isDefault: json['isDefault'] as bool?,
+        bankId: json['bankId'] as String?,
+        institutionCode: json['institutionCode'] as String?,
+        accountNumber: json['accountNumber'] as String?,
+        bankName: json['bankName'] as String?,
+        accountName: json['accountName'] as String?,
+        logo: json['logo'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
-        if (cardId != null) 'cardId': cardId,
-        if (maskedPan != null) 'maskedPan': maskedPan,
-        if (cardNetwork != null) 'cardNetwork': cardNetwork,
-        if (expiryDate != null) 'expiryDate': expiryDate,
-        if (cardType != null) 'cardType': cardType,
-        if (isDefault != null) 'isDefault': isDefault,
+        if (bankId != null) 'bankId': bankId,
+        if (institutionCode != null) 'institutionCode': institutionCode,
+        if (accountNumber != null) 'accountNumber': accountNumber,
+        if (bankName != null) 'bankName': bankName,
+        if (accountName != null) 'accountName': accountName,
+        if (logo != null) 'logo': logo,
       };
+
+  CardOption copyWith({
+    String? bankId,
+    String? institutionCode,
+    String? accountNumber,
+    String? bankName,
+    String? accountName,
+    String? logo,
+  }) {
+    return CardOption(
+      bankId: bankId ?? this.bankId,
+      institutionCode: institutionCode ?? this.institutionCode,
+      accountNumber: accountNumber ?? this.accountNumber,
+      bankName: bankName ?? this.bankName,
+      accountName: accountName ?? this.accountName,
+      logo: logo ?? this.logo,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'CardOption(bankId: $bankId, institutionCode: $institutionCode, '
+        'accountNumber: $accountNumber, bankName: $bankName, '
+        'accountName: $accountName, logo: $logo)';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CardOption &&
+          runtimeType == other.runtimeType &&
+          bankId == other.bankId &&
+          institutionCode == other.institutionCode &&
+          accountNumber == other.accountNumber &&
+          bankName == other.bankName &&
+          accountName == other.accountName &&
+          logo == other.logo;
+
+  @override
+  int get hashCode =>
+      bankId.hashCode ^
+      institutionCode.hashCode ^
+      accountNumber.hashCode ^
+      bankName.hashCode ^
+      accountName.hashCode ^
+      logo.hashCode;
 }
 
 /// Bank-specific payment option.

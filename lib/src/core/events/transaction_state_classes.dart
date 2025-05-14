@@ -1,25 +1,44 @@
 import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart';
 
-abstract class TransactionState {
+sealed class TransactionState {
   const TransactionState();
+}
+
+/// All states that carry a transactionID and amount can extend this.
+abstract class TransactionStateWithInfo extends TransactionState {
+  final String? transactionID;
+  final num? amount;
+  const TransactionStateWithInfo({
+    this.transactionID,
+    this.amount,
+  });
 }
 
 class TransactionStateIdle extends TransactionState {
   const TransactionStateIdle();
 }
 
-class TransactionStateInitiated extends TransactionState {
-  const TransactionStateInitiated({this.transactionID});
-  final String? transactionID;
+class TransactionStateInitiated extends TransactionStateWithInfo {
+  const TransactionStateInitiated({
+    super.transactionID,
+    super.amount,
+  });
 }
 
-class TransactionStateCompleted extends TransactionState {
-  const TransactionStateCompleted({this.transactionID});
-  final String? transactionID;
+class TransactionStateCompleted extends TransactionStateWithInfo {
+  const TransactionStateCompleted({
+    super.transactionID,
+    super.amount,
+  });
 }
 
-class TransactionStateFailed extends TransactionState {
-  const TransactionStateFailed({this.reason});
+class TransactionStateFailed extends TransactionStateWithInfo {
+  const TransactionStateFailed({
+    this.reason,
+    super.transactionID,
+    super.amount,
+  });
+
   final String? reason;
 }
 

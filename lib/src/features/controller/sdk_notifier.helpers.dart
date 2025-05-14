@@ -102,15 +102,13 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     );
 
     return {
-      "origin": _selectedCardOption?.cardId ?? "",
+      "origin": _selectedCardOption?.bankId ?? "",
       "hasDeviceKey": userCheckoutID != null,
       "destination": {
         "type": "card",
         "typeDetail": "charge",
         "params": {
-          "cardNumber": _selectedCardOption?.maskedPan ?? "",
-          "expiry": _selectedCardOption?.expiryDate ?? "",
-          "cvv": _selectedCardOption?.cardNetwork ?? "",
+          "cardNumber": _selectedCardOption?.accountNumber ?? "",
         },
       },
       "amount":

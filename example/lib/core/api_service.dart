@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:example/core/config.dart';
 import 'package:example/core/exceptions.dart';
-import '../core/config.dart';
 
 class ApiService {
   late final Dio _dio;

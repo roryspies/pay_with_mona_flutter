@@ -76,6 +76,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
             case MonaSDKState.success:
               ('👍  PayWithMonaWidget ==>> SDK is in Success state').log();
               break;
+            default:
+              ('🏫  PayWithMonaWidget ==>> $state').log();
+              break;
           }
         },
         onError: (err) {

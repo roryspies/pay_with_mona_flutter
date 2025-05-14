@@ -11,6 +11,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       _txnStateStream.emit(
         state: TransactionStateInitiated(
           transactionID: _currentTransactionId,
+          amount: _monaCheckOut?.amount,
         ),
       );
     }
@@ -19,7 +20,10 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       "😭 $listenerName ::: transaction_failed".log();
 
       _txnStateStream.emit(
-        state: TransactionStateFailed(),
+        state: TransactionStateFailed(
+          transactionID: _currentTransactionId,
+          amount: _monaCheckOut?.amount,
+        ),
       );
     }
 
@@ -29,6 +33,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       _txnStateStream.emit(
         state: TransactionStateCompleted(
           transactionID: _currentTransactionId,
+          amount: _monaCheckOut?.amount,
         ),
       );
     }

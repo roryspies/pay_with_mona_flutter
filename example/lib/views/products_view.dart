@@ -2,6 +2,7 @@ import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/services/payment_notifier.dart';
 import 'package:example/utils/custom_button.dart';
 import 'package:example/utils/custom_text_field.dart';
+import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
@@ -10,6 +11,7 @@ import 'package:example/views/customer_info_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class ProductsView extends ConsumerStatefulWidget {
   const ProductsView({super.key});
@@ -48,7 +50,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
       MaterialPageRoute(
         builder: (context) => CheckoutView(
           transactionId: transactionId,
-          amount: _amountController.text.trim(),
+          amount: num.parse(_amountController.text.trim()) * 100,
         ),
       ),
     );
@@ -109,7 +111,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                 ),
                               ),
                               Text(
-                                "NGDeals",
+                                "NGdeals",
                                 style: TextStyle(
                                   fontSize: context.sp(36),
                                   fontWeight: FontWeight.w500,
@@ -141,23 +143,25 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                         ? context.w(190)
                                         : context.w(335),
                                     onTap: () async {
+                                      context.closeKeyboard();
                                       switch (product) {
                                         case Products.checkout:
                                           nav('');
-
                                           break;
+
                                         case Products.collections:
-                                          /* Navigator.of(context).push(
+                                          Navigator.of(context).push(
                                             MaterialPageRoute(
                                               builder: (_) =>
                                                   const CreateCollectionView(
-                                                merchantName: 'NGDeals',
+                                                merchantName: 'ngdeals',
                                               ),
                                             ),
-                                          ); */
+                                          );
                                           break;
+
                                         case Products.dataShare:
-                                          /* PayWithMona.showDataShareSheet(
+                                          PayWithMona.showDataShareSheet(
                                             context: context,
                                             firstName: 'Ada',
                                             lastName: 'Obi',
@@ -167,7 +171,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                             phoneNumber: '08012345678',
                                             primaryColor: Colors.deepPurple,
                                             secondaryColor: Colors.orange,
-                                          ); */
+                                          );
                                           break;
                                         default:
                                       }
