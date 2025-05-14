@@ -78,7 +78,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   return ListTile(
                     onTap: () {
                       sdkNotifier.setSelectedPaymentMethod(
-                        method: PaymentMethod.card,
+                        method: PaymentMethod.savedCard,
                       );
 
                       sdkNotifier.setSelectedCardOption(

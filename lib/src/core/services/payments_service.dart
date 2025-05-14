@@ -161,7 +161,7 @@ class PaymentService {
     if (res!["success"] == true) {
       "Payment Successful".log();
       if (onPayComplete != null) {
-        onPayComplete();
+        onPayComplete(res, payload);
       }
 
       return;

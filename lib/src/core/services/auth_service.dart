@@ -25,9 +25,11 @@ class AuthService {
     String? userKeyID,
   }) async {
     try {
+      final doNotUseBody = (phoneNumber == null && bvn == null && dob == null);
+
       final response = await _apiService.post(
         APIEndpoints.validatePII,
-        headers: userKeyID != null
+        headers: (userKeyID != null && doNotUseBody)
             ? {
                 "x-client-type": "bioApp",
                 "x-mona-key-id": userKeyID,
