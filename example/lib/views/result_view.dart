@@ -89,7 +89,7 @@ class ResultView extends ConsumerWidget {
                                 Text(
                                   (switch (index) {
                                     0 => "₦${state.amount / 100}",
-                                    1 => state.transactionID,
+                                    1 => state.friendlyID,
                                     _ => state.transactionStatus.status,
                                   }),
                                   style: TextStyle(

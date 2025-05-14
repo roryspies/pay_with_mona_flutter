@@ -27,6 +27,10 @@ class AuthService {
     try {
       final doNotUseBody = (phoneNumber == null && bvn == null && dob == null);
 
+      if (userKeyID == null && doNotUseBody) {
+        return null;
+      }
+
       final response = await _apiService.post(
         APIEndpoints.validatePII,
         headers: (userKeyID != null && doNotUseBody)
@@ -37,7 +41,7 @@ class AuthService {
               }
             : null,
         data: (phoneNumber == null && bvn == null && dob == null)
-            ? null
+            ? {"": ""}
             : {
                 if (phoneNumber != null) "phoneNumber": phoneNumber,
                 if (bvn != null) "bvn": bvn,
