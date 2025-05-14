@@ -5,6 +5,7 @@ import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
 import 'package:example/views/result_view.dart';
+import 'package:example/views/utils/pin_or_otp_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
@@ -33,10 +34,14 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
       sdkNotifier
         ..validatePII()
         ..txnStateStream.listen(
-          (state) {
+          (state) async {
             ref.read(transactionStatusProvider.notifier).updateState(
                   newState: state,
                 );
+
+            /// *** Kept Here to ensure that the transaction ID on the confirmation page is not overwritten
+            /// *** This is a patch
+            sdkNotifier.resetSDKState();
 
             switch (state) {
               case TransactionStateFailed(
@@ -66,6 +71,18 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
 
               case TransactionStateRequestOTPTask(:final task):
                 ("CheckoutView 🔑 Need OTP: ${task.fieldName}").log();
+                await AppUtils.requestPin(
+                  // ignore: use_build_context_synchronously
+                  context,
+                  "Enter your PIN",
+                  {},
+                  callback: () {},
+                  config: {
+                    "colour": Colors.white,
+                    "subtitle": task.taskDescription,
+                    "pinLen": task.fieldLength,
+                  },
+                );
                 break;
 
               case TransactionStateRequestPINTask(:final task):
@@ -108,12 +125,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                 await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) {
-                      return ResultView(
-                          /* paymentSummary: PaymentSummary(
-                          transactionId: transactionId,
-                          amount: amount,
-                        ), */
-                          );
+                      return ResultView();
                     },
                   ),
                 );

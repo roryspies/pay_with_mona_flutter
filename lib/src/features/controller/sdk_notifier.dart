@@ -72,6 +72,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   String? _errorMessage;
   String? _currentTransactionId;
+  String? _currentTransactionFriendlyID;
   String? _strongAuthToken;
   String? _transactionOTP;
   String? _transactionPIN;
@@ -422,6 +423,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
     /// *** previously
     if (doKeyExchange) {
+      "DO KEY EXCHANGE".log();
       await initKeyExchange();
     }
 
@@ -429,15 +431,16 @@ class MonaSDKNotifier extends ChangeNotifier {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
           await _paymentsService.makePaymentRequest(
-            onPayComplete: () {
+            onPayComplete: (res, payload) {
               "Payment Notifier ::: Make Payment Request Complete".log();
 
+              _currentTransactionFriendlyID = res["friendlyID"];
               _sdkStateStream.emit(state: MonaSDKState.transactionInitiated);
 
-              clearSelectedPaymentMethod();
+              /* clearSelectedPaymentMethod();
               _currentTransactionId = null;
               _transactionOTP = null;
-              _transactionPIN = null;
+              _transactionPIN = null; */
             },
           );
 
@@ -608,6 +611,23 @@ class MonaSDKNotifier extends ChangeNotifier {
       e.toString().log();
       _handleError(e.toString());
     }
+  }
+
+  void resetSDKState() {
+    _errorMessage = null;
+    _currentTransactionId = null;
+    _strongAuthToken = null;
+    _monaCheckOut = null;
+    _callingBuildContext = null;
+    _state = MonaSDKState.idle;
+    _selectedPaymentMethod = PaymentMethod.none;
+    _pendingPaymentResponseModel = null;
+    _selectedBankOption = null;
+    _selectedCardOption = null;
+    _transactionPIN = null;
+    _transactionOTP = null;
+
+    notifyListeners();
   }
 
   /// Resets the entire SDKNotifier back to its initial, un-initialized state.

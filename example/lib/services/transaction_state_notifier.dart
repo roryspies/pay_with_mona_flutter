@@ -13,22 +13,26 @@ enum TransactionStatus {
 class TransactionStatusState {
   final TransactionStatus transactionStatus;
   final String transactionID;
+  final String friendlyID;
   final num amount;
 
   const TransactionStatusState({
     required this.transactionStatus,
     required this.transactionID,
+    required this.friendlyID,
     required this.amount,
   });
 
   TransactionStatusState copyWith({
     TransactionStatus? transactionStatus,
     String? transactionID,
+    String? friendlyID,
     num? amount,
   }) {
     return TransactionStatusState(
       transactionStatus: transactionStatus ?? this.transactionStatus,
       transactionID: transactionID ?? this.transactionID,
+      friendlyID: friendlyID ?? this.friendlyID,
       amount: amount ?? this.amount,
     );
   }
@@ -60,6 +64,7 @@ class TransactionStatusNotifier extends Notifier<TransactionStatusState> {
     return TransactionStatusState(
       transactionStatus: TransactionStatus.initiated,
       transactionID: "",
+      friendlyID: "",
       amount: 0,
     );
   }
@@ -68,11 +73,19 @@ class TransactionStatusNotifier extends Notifier<TransactionStatusState> {
     required TransactionState newState,
   }) {
     String? txId;
+    String? friendlyID;
     num? amt;
     late TransactionStatus status;
 
     if (newState is TransactionStateWithInfo) {
-      txId = newState.transactionID;
+      txId =
+          (newState.transactionID != null && newState.transactionID!.isNotEmpty)
+              ? newState.transactionID
+              : state.transactionID;
+      friendlyID =
+          (newState.friendlyID != null && newState.friendlyID!.isNotEmpty)
+              ? newState.friendlyID
+              : state.friendlyID;
       amt = newState.amount;
     }
 
@@ -89,6 +102,7 @@ class TransactionStatusNotifier extends Notifier<TransactionStatusState> {
     state = state.copyWith(
       transactionStatus: status,
       transactionID: txId,
+      friendlyID: friendlyID,
       amount: amt,
     );
   }

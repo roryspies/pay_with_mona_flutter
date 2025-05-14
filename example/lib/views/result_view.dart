@@ -7,6 +7,7 @@ import 'package:example/views/products_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class ResultView extends ConsumerWidget {
   const ResultView({super.key});
@@ -19,6 +20,7 @@ class ResultView extends ConsumerWidget {
       backgroundColor: MonaColors.bgGrey,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
       ),
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
@@ -117,6 +119,8 @@ class ResultView extends ConsumerWidget {
                   //!
                   CustomButton(
                     onTap: () {
+                      MonaSDKNotifier().resetSDKState();
+
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => ProductsView()),

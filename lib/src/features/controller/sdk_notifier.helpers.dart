@@ -46,7 +46,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     return "$baseUrl"
         "?loginScope=$loginScope"
         "$redirectParam"
-        "&sessionId=${Uri.encodeComponent(sessionID)}";
+        "&sessionId=${Uri.encodeComponent(sessionID)}" /* "&transactionId=${Uri.encodeComponent(_currentTransactionId!)}" */;
   }
 
   /// Launches the payment URL using platform-specific custom tab settings.
@@ -95,27 +95,15 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     };
   }
 
-  /// *** TODO: Fix the below to match card payments.
   Future<Map<String, dynamic>> buildCardPaymentPayload() async {
     final userCheckoutID = await _secureStorage.read(
       key: SecureStorageKeys.monaCheckoutID,
     );
 
     return {
-      "origin": _selectedCardOption?.bankId ?? "",
+      "bankId": _selectedCardOption?.bankId ?? "",
       "hasDeviceKey": userCheckoutID != null,
-      "destination": {
-        "type": "card",
-        "typeDetail": "charge",
-        "params": {
-          "cardNumber": _selectedCardOption?.accountNumber ?? "",
-        },
-      },
-      "amount":
-          (num.parse(_pendingPaymentResponseModel?.amount.toString() ?? "0") *
-                  100)
-              .toInt(),
-      "narration": "Payment via Card",
+      "transactionId": _currentTransactionId,
     };
   }
 
