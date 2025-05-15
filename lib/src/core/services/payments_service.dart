@@ -73,7 +73,7 @@ class PaymentService {
 
   Future<void> makePaymentRequest({
     bool sign = false,
-    TransactionPaymentTypes paymentType = TransactionPaymentTypes.bank,
+    TransactionPaymentTypes? paymentType = TransactionPaymentTypes.bank,
     Function? onPayComplete,
   }) async {
     final paymentNotifier = MonaSDKNotifier();
@@ -111,7 +111,7 @@ class PaymentService {
       }
 
       await submitPaymentRequest(
-        paymentType,
+        paymentType ?? TransactionPaymentTypes.bank,
         payload,
         onPayComplete: onPayComplete,
         monaKeyId: monaKeyID,
@@ -119,18 +119,22 @@ class PaymentService {
         signature: signature,
         nonce: nonce,
         timestamp: timestamp,
-        checkoutType: paymentType.name,
+        checkoutType: paymentType == TransactionPaymentTypes.card
+            ? paymentType?.name
+            : null,
       );
       return;
     }
 
     await submitPaymentRequest(
-      paymentType,
+      paymentType ?? TransactionPaymentTypes.bank,
       payload,
       onPayComplete: onPayComplete,
       monaKeyId: monaKeyID,
       monaCheckoutID: userCheckoutID,
-      checkoutType: paymentType.name,
+      checkoutType: paymentType == TransactionPaymentTypes.card
+          ? paymentType?.name
+          : null,
     );
   }
 
@@ -138,7 +142,7 @@ class PaymentService {
     TransactionPaymentTypes paymentType,
     Map<String, dynamic> payload, {
     required Function? onPayComplete,
-    required String checkoutType,
+    String? checkoutType,
     String? monaKeyId,
     String? monaCheckoutID,
     String? signature,
@@ -248,7 +252,7 @@ class PaymentService {
   /// ***
   FutureOutcome<Map<String, dynamic>> sendPaymentToServer({
     required Map<String, dynamic> payload,
-    required String checkoutType,
+    String? checkoutType,
     String? monaKeyId,
     String? monaCheckoutID,
     String? signature,
