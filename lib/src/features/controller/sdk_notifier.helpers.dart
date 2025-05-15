@@ -47,7 +47,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
         "?loginScope=$loginScope"
         "$redirectParam"
         "&sessionId=${Uri.encodeComponent(sessionID)}"
-        "&transactionId=${Uri.encodeComponent(_currentTransactionId!)}";
+        "&transactionId=${Uri.encodeComponent(_currentTransactionId ?? '')}";
   }
 
   /// Launches the payment URL using platform-specific custom tab settings.

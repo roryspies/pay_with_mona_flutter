@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
@@ -12,9 +13,12 @@ import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
+import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
+import 'package:pay_with_mona/src/models/colllection_response.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -352,7 +356,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// launching the custom tab, and waiting for the auth process to complete.
   ///
   /// Throws [MonaSDKError] if any step fails.
-  Future<void> initKeyExchange() async {
+  Future<void> initKeyExchange({bool withRedirect = true}) async {
     try {
       final sessionID = _generateSessionID();
       final authCompleter = Completer<void>();
@@ -361,6 +365,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       await _listenForAuthEvents(sessionID, authCompleter);
 
       final url = _buildURL(
+        withRedirect: withRedirect,
         sessionID: sessionID,
         method: _selectedPaymentMethod,
         bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
@@ -538,6 +543,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String merchantId,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
+    void Function()? onFailure,
   }) async {
     _updateState(MonaSDKState.loading);
     try {
@@ -555,10 +561,9 @@ class MonaSDKNotifier extends ChangeNotifier {
               merchantId: merchantId,
               scheduleEntries: scheduleEntries);
 
-      //     if (failure != null) {
-      //       _handleError('Collection creation failed.');
-      //       throw (failure.message);
-      //     }
+      if (failure != null) {
+        onFailure?.call();
+      }
 
       if (success != null) {
         success.log();
@@ -567,6 +572,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       _updateState(MonaSDKState.success);
     } catch (e) {
+      onFailure?.call();
       e.toString().log();
       _handleError(e.toString());
     }
@@ -615,6 +621,77 @@ class MonaSDKNotifier extends ChangeNotifier {
     } catch (e) {
       e.toString().log();
       _handleError(e.toString());
+    }
+  }
+
+  Future<void> createCollectionsNavigation({
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+    required String merchantId,
+    required String merchantName,
+    required CollectionsMethod method,
+    required List<Map<String, dynamic>> scheduleEntries,
+    void Function(Map<String, dynamic>?)? onSuccess,
+  }) async {
+    //     if (failure != null) {
+    //       _handleError('Collection creation failed.');
+    //       throw (failure.message);
+    //     }
+    showModalBottomSheet(
+      context: _callingBuildContext!,
+      isScrollControlled: true,
+      builder: (_) => Wrap(
+        children: [
+          CollectionsCheckoutSheet(
+            scheduleEntries: scheduleEntries,
+            method: method,
+            details: Collection(
+              maxAmount: maximumAmount,
+              expiryDate: expiryDate,
+              startDate: startDate,
+              monthlyLimit: monthlyLimit,
+              schedule: Schedule(
+                frequency: frequency,
+                type: type,
+                entries: [],
+              ),
+              reference: reference,
+              status: '',
+              nextCollectionAt: '',
+            ),
+            merchantName: merchantName,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> collectionHandOffToAuth({
+    required Function(bool)? onKeyExchange,
+  }) async {
+    _updateState(MonaSDKState.loading);
+
+    // Initialize SSE listener for real-time events
+    _firebaseSSE.initialize();
+
+    _updateState(MonaSDKState.loading);
+
+    /// *** If the user doesn't have a keyID and they want to use a saved payment method,
+    /// *** Key exchange needs to be done, so handle first.
+    final doKeyExchange = await checkIfUserHasKeyID() == null;
+
+    /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
+    /// *** previously
+    if (doKeyExchange) {
+      await initKeyExchange(withRedirect: false);
+    } else {
+      onKeyExchange?.call(false);
     }
   }
 
