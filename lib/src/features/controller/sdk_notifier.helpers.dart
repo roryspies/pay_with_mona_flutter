@@ -108,7 +108,6 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     };
   }
 
-  /// Emits the state and waits for user input via `completeOtpFlow`
   Future<String?> triggerPinOrOTPFlow({
     required PaymentTaskType pinOrOTP,
     required TransactionTaskModel pinOrOTPTask,
@@ -133,11 +132,12 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
   }
 
   /// Call this from your mobile app side when user enters OTP/PIN
-  void complete({
+  void sendOTPToServer({
     required String pinOrOTP,
   }) {
     if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
       _pinOrOTPCompleter!.complete(pinOrOTP);
+      _sdkStateStream.emit(state: MonaSDKState.loading);
     }
   }
 

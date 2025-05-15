@@ -216,6 +216,8 @@ class PaymentService {
                 ),
               );
 
+              "🥰 PaymentService OTP WAS ENTERED ::: $otp".log();
+
               if (otp != null && otp.isNotEmpty) {
                 monaSDK.setTransactionOTP(receivedOTP: otp);
 

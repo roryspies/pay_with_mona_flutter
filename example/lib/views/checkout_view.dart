@@ -8,6 +8,7 @@ import 'package:example/views/result_view.dart';
 import 'package:example/views/utils/pin_or_otp_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class CheckoutView extends ConsumerStatefulWidget {
@@ -26,142 +27,149 @@ class CheckoutView extends ConsumerStatefulWidget {
 
 class _CheckoutViewState extends ConsumerState<CheckoutView> {
   final sdkNotifier = MonaSDKNotifier();
+  final _otpPinFieldController = GlobalKey<OtpPinFieldState>();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      sdkNotifier
-        ..validatePII()
-        ..txnStateStream.listen(
-          (state) async {
-            ref.read(transactionStatusProvider.notifier).updateState(
-                  newState: state,
-                );
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) {
+        sdkNotifier
+          ..validatePII()
+          ..txnStateStream.listen(
+            (state) async {
+              ref.read(transactionStatusProvider.notifier).updateState(
+                    newState: state,
+                  );
 
-            /// *** Kept Here to ensure that the transaction ID on the confirmation page is not overwritten
-            /// *** This is a patch
-            sdkNotifier.resetSDKState();
+              /* /// *** Kept Here to ensure that the transaction ID on the confirmation page is not overwritten
+              /// *** This is a patch
+              sdkNotifier.resetSDKState(); */
 
-            switch (state) {
-              case TransactionStateFailed(
-                  :final reason,
-                  :final transactionID,
-                  :final amount,
-                ):
-                ("CheckoutView ❌ Failed: $reason (tx=$transactionID, amount=$amount)")
-                    .log();
-                break;
+              switch (state) {
+                case TransactionStateFailed(
+                    :final reason,
+                    :final transactionID,
+                    :final amount,
+                  ):
+                  ("CheckoutView ❌ Failed: $reason (tx=$transactionID, amount=$amount)")
+                      .log();
+                  break;
 
-              case TransactionStateCompleted(
-                  :final transactionID,
-                  :final amount,
-                ):
-                ("CheckoutView ✅ Completed: tx=$transactionID, amount=$amount")
-                    .log();
-                break;
+                case TransactionStateCompleted(
+                    :final transactionID,
+                    :final amount,
+                  ):
+                  ("CheckoutView ✅ Completed: tx=$transactionID, amount=$amount")
+                      .log();
+                  break;
 
-              case TransactionStateInitiated(
-                  :final transactionID,
-                  :final amount,
-                ):
-                ("CheckoutView 🚀 Initiated: tx=$transactionID, amount=$amount")
-                    .log();
-                break;
+                case TransactionStateInitiated(
+                    :final transactionID,
+                    :final amount,
+                  ):
+                  ("CheckoutView 🚀 Initiated: tx=$transactionID, amount=$amount")
+                      .log();
+                  break;
 
-              case TransactionStateRequestOTPTask(:final task):
-                ("CheckoutView 🔑 Need OTP: ${task.fieldName}").log();
-                await AppUtils.requestPin(
-                  // ignore: use_build_context_synchronously
-                  context,
-                  "Enter your PIN",
-                  {},
-                  callback: () {},
-                  config: {
+                case TransactionStateRequestOTPTask(:final task):
+                  ("CheckoutView 🔑 Need OTP: ${task.taskDescription}").log();
+                  await AppUtils.showOTPModal(
+                    context,
+                    (String pinOrOTP) {
+                      "CheckoutView ::: TransactionStateRequestOTPTask ::: returned value ::: $pinOrOTP"
+                          .log();
+
+                      sdkNotifier.sendOTPToServer(pinOrOTP: pinOrOTP);
+                    },
+                    controller: _otpPinFieldController,
+                    task: state,
+                    /* config: {
                     "colour": Colors.white,
                     "subtitle": task.taskDescription,
                     "pinLen": task.fieldLength,
-                  },
-                );
-                break;
+                  }, */
+                  );
+                  break;
 
-              case TransactionStateRequestPINTask(:final task):
-                ("CheckoutView 🔒 Need PIN: ${task.fieldName}").log();
-                break;
+                case TransactionStateRequestPINTask(:final task):
+                  ("CheckoutView 🔒 Need PIN: ${task.fieldName}").log();
+                  break;
 
-              case TransactionStateIdle():
-                ("CheckoutView … waiting …").log();
-                break;
+                case TransactionStateIdle():
+                  ("CheckoutView … waiting …").log();
+                  break;
 
-              default:
-                ("CheckoutView … default ::: $state").log();
+                default:
+                  ("CheckoutView … default ::: $state").log();
 
-                break;
-            }
-          },
-          onError: (err) {
-            ('Error from transactionStateStream: $err').log();
-          },
-        )
-        ..sdkStateStream.listen(
-          (state) async {
-            switch (state) {
-              case MonaSDKState.idle:
-                ('🎉  CheckoutView ==>> SDK is Idle').log();
-                break;
-              case MonaSDKState.loading:
-                ('🔄 CheckoutView ==>>  SDK is Loading').log();
-                break;
-              case MonaSDKState.error:
-                ('⛔  CheckoutView ==>> SDK Has Errors').log();
-                break;
-              case MonaSDKState.success:
-                ('👍  CheckoutView ==>> SDK is in Success state').log();
-                break;
-              case MonaSDKState.transactionInitiated:
-                ('🏫  CheckoutView ==>> SDK is in Success state').log();
-                //07078943673
-                // ignore: use_build_context_synchronously
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return ResultView();
-                    },
-                  ),
-                );
-                break;
-            }
-          },
-          onError: (err) {
-            ('Error from transactionStateStream: $err').log();
-          },
-        )
-        ..authStateStream.listen(
-          (state) {
-            switch (state) {
-              case AuthState.loggedIn:
-                ('🎉  CheckoutView ==>>  Auth State Logged In').log();
-                break;
-              case AuthState.loggedOut:
-                ('👀 CheckoutView ==>>  Auth State Logged Out').log();
-                break;
-              case AuthState.error:
-                ('⛔ CheckoutView ==>> Auth Has Error').log();
-                break;
-              case AuthState.notAMonaUser:
-                ('👤 CheckoutView ==>> Auth is Not A Mona User').log();
-                break;
-              case AuthState.performingLogin:
-                ('🚴‍♀️ CheckoutView ==>> Currently Doing Login with Strong Auth token')
-                    .log();
-                break;
-            }
-          },
-          onError: (err) {
-            ('Error from transactionStateStream: $err').log();
-          },
-        );
-    });
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          )
+          ..sdkStateStream.listen(
+            (state) async {
+              switch (state) {
+                case MonaSDKState.idle:
+                  ('🎉  CheckoutView ==>> SDK is Idle').log();
+                  break;
+                case MonaSDKState.loading:
+                  ('🔄 CheckoutView ==>>  SDK is Loading').log();
+                  break;
+                case MonaSDKState.error:
+                  ('⛔  CheckoutView ==>> SDK Has Errors').log();
+                  break;
+                case MonaSDKState.success:
+                  ('👍  CheckoutView ==>> SDK is in Success state').log();
+                  break;
+                case MonaSDKState.transactionInitiated:
+                  ('🏫  CheckoutView ==>> SDK is in Success state').log();
+                  //07078943673
+                  // ignore: use_build_context_synchronously
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return ResultView();
+                      },
+                    ),
+                  );
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          )
+          ..authStateStream.listen(
+            (state) {
+              switch (state) {
+                case AuthState.loggedIn:
+                  ('🎉  CheckoutView ==>>  Auth State Logged In').log();
+                  break;
+                case AuthState.loggedOut:
+                  ('👀 CheckoutView ==>>  Auth State Logged Out').log();
+                  break;
+                case AuthState.error:
+                  ('⛔ CheckoutView ==>> Auth Has Error').log();
+                  break;
+                case AuthState.notAMonaUser:
+                  ('👤 CheckoutView ==>> Auth is Not A Mona User').log();
+                  break;
+                case AuthState.performingLogin:
+                  ('🚴‍♀️ CheckoutView ==>> Currently Doing Login with Strong Auth token')
+                      .log();
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          );
+      },
+    );
   }
 
   @override
