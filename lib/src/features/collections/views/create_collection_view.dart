@@ -32,8 +32,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _debitLimitController = TextEditingController();
   final _expDateController = TextEditingController();
   final _referenceController = TextEditingController();
-  final collectionMethod = CollectionsMethod.none.notifier;
+  final collectionMethod = CollectionsMethod.scheduled.notifier;
   final subscriptionFrequency = SubscriptionFrequency.none.notifier;
+  final debitType = DebitType.merchant.notifier;
   final sdkNotifier = MonaSDKNotifier();
 
   List<TextEditingController> controllers = [];
@@ -202,7 +203,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                   ],
                 ),
               ),
-              [collectionMethod, subscriptionFrequency].multiSync(
+              [collectionMethod, subscriptionFrequency, debitType].multiSync(
                   builder: (context, child) {
                 return Container(
                   width: double.infinity,
@@ -229,7 +230,15 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                               inputFormatters: [],
                             ),
                             CustomDropDown(
-                              title: 'Type',
+                              title: 'Debit Type',
+                              items: debitTypes,
+                              value: debitType.value,
+                              onChanged: (value) {
+                                debitType.value = value;
+                              },
+                            ),
+                            CustomDropDown(
+                              title: 'Collection Type',
                               items: collectionMethods,
                               value: collectionMethod.value,
                               onChanged: (value) {
@@ -240,7 +249,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                 CollectionsMethod.none) ...[
                               if (collectionMethod.value ==
                                   CollectionsMethod.subscription)
-                                CustomDropDown(
+                                CustomDropDownn(
                                   title: 'Frequency',
                                   items: subscriptionFrequencies,
                                   value: subscriptionFrequency.value,
@@ -255,6 +264,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                     : 'Amount',
                                 controller: _debitLimitController,
                                 onChanged: (value) {},
+                                keyboardType: TextInputType.number,
                                 suffixIcon: IconButton(
                                   icon: Icon(Icons.edit),
                                   onPressed: () {},
