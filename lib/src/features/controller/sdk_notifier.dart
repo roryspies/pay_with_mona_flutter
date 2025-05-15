@@ -580,18 +580,22 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   Future<void> triggerCollection({
     required String merchantId,
+    required int timeFactor,
     void Function(Map<String, dynamic>?)? onSuccess,
+    void Function(String)? onError,
   }) async {
     _updateState(MonaSDKState.loading);
     try {
       final (Map<String, dynamic>? success, failure) =
           await _collectionsService.triggerCollection(
         merchantId: merchantId,
+        timeFactor: timeFactor,
       );
 
       if (failure != null) {
         _handleError('Collection trigger failed.');
-        throw (failure.message);
+        onError?.call('Collection trigger failed.');
+        // throw (failure.message);
       }
 
       if (success != null) {
@@ -621,6 +625,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     } catch (e) {
       e.toString().log();
       _handleError(e.toString());
+      onError?.call('Collection trigger failed.');
     }
   }
 
@@ -689,10 +694,13 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
     /// *** previously
     if (doKeyExchange) {
-      await initKeyExchange(withRedirect: false);
+      // await initKeyExchange(withRedirect: false);
+      onKeyExchange?.call(true);
     } else {
       onKeyExchange?.call(false);
     }
+
+    _updateState(MonaSDKState.idle);
   }
 
   void resetSDKState() {

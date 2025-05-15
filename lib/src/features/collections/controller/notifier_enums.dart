@@ -23,3 +23,11 @@ enum DebitType { none, merchant, mona }
 
 List<DebitType> debitTypes =
     DebitType.values.where((c) => c != DebitType.none).toList();
+
+enum TimeFactor {
+  day,
+  week,
+  month,
+}
+
+List<TimeFactor> timeFactors = TimeFactor.values.toList();

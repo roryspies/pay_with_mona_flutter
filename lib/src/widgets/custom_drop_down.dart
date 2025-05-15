@@ -179,6 +179,10 @@ class _CustomDropDownnState<T> extends State<CustomDropDownn<T>> {
       return item.name.toString().toTitleCase();
     }
 
+    if (item is TimeFactor) {
+      return '1 ${item.name.toString()}';
+    }
+
     if (item is SubscriptionFrequency) {
       if (item == SubscriptionFrequency.none) {
         return 'Please select';
