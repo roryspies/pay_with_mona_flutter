@@ -161,7 +161,7 @@ class PaymentService {
     if (res!["success"] == true) {
       "Payment Successful".log();
       if (onPayComplete != null) {
-        onPayComplete();
+        onPayComplete(res, payload);
       }
 
       return;
@@ -215,6 +215,8 @@ class PaymentService {
                   json: task,
                 ),
               );
+
+              "🥰 PaymentService OTP WAS ENTERED ::: $otp".log();
 
               if (otp != null && otp.isNotEmpty) {
                 monaSDK.setTransactionOTP(receivedOTP: otp);

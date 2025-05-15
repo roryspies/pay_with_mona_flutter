@@ -11,6 +11,8 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       _txnStateStream.emit(
         state: TransactionStateInitiated(
           transactionID: _currentTransactionId,
+          friendlyID: _currentTransactionFriendlyID,
+          amount: _monaCheckOut?.amount,
         ),
       );
     }
@@ -19,7 +21,11 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       "😭 $listenerName ::: transaction_failed".log();
 
       _txnStateStream.emit(
-        state: TransactionStateFailed(),
+        state: TransactionStateFailed(
+          transactionID: _currentTransactionId,
+          friendlyID: _currentTransactionFriendlyID,
+          amount: _monaCheckOut?.amount,
+        ),
       );
     }
 
@@ -29,6 +35,8 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       _txnStateStream.emit(
         state: TransactionStateCompleted(
           transactionID: _currentTransactionId,
+          friendlyID: _currentTransactionFriendlyID,
+          amount: _monaCheckOut?.amount,
         ),
       );
     }
@@ -76,36 +84,6 @@ extension SDKNotifierListeners on MonaSDKNotifier {
             eventName: theEvent,
             listenerName: "_listenForTransactionUpdateEvents()",
           );
-
-          /* if (theEvent == "transaction_initiated") {
-            "🥰 _listenForTransactionUpdateEvents ::: transaction_initiated"
-                .log();
-
-            _txnStateStream.emit(
-              state: TransactionStateInitiated(
-                transactionID: _currentTransactionId,
-              ),
-            );
-          }
-
-          if (theEvent == "transaction_failed") {
-            "😭 _listenForTransactionUpdateEvents ::: transaction_failed".log();
-
-            _txnStateStream.emit(
-              state: TransactionStateFailed(),
-            );
-          }
-
-          if (theEvent == "transaction_completed") {
-            "✅ _listenForTransactionUpdateEvents ::: transaction_completed"
-                .log();
-
-            _txnStateStream.emit(
-              state: TransactionStateCompleted(
-                transactionID: _currentTransactionId,
-              ),
-            );
-          } */
         },
         onError: (error) {
           _handleError("Error during transaction updates.");
@@ -133,8 +111,8 @@ extension SDKNotifierListeners on MonaSDKNotifier {
                   as Map<String, dynamic>)["strongAuthToken"];
               _authStream.emit(state: AuthState.performingLogin);
 
-              await closeCustomTabs();
               await loginWithStrongAuth();
+              await closeCustomTabs();
               authCompleter.complete();
             }
           } catch (error, stackTrace) {
@@ -148,7 +126,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
         },
       );
     } catch (error) {
-      "_listenForTransactionUpdateEvents error: $error".log();
+      "_listenForAuthEvents error: $error".log();
       rethrow;
     }
   }

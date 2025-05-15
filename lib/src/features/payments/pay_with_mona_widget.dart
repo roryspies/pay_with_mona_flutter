@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
-import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
@@ -29,82 +26,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   @override
   void initState() {
     super.initState();
-    sdkNotifier.addListener(_onPaymentStateChange);
-
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) async {
-        //await sdkNotifier.initiatePayment();
-        sdkNotifier
-          ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut)
-          ..txnStateStream.listen(
-            (state) {
-              switch (state) {
-                case TransactionStateInitiated():
-                  ('🎉  PayWithMonaWidget ==>>  Transaction started').log();
-                  break;
-                case TransactionStateCompleted():
-                  ('✅ PayWithMonaWidget ==>>  Transaction completed').log();
-                  break;
-                case TransactionStateFailed():
-                  ('⛔  PayWithMonaWidget ==>> Transaction failed').log();
-                  break;
-                default:
-                  ('🏫  PayWithMonaWidget ==>> $state').log();
-                  break;
-              }
-            },
-            onError: (err) {
-              ('Error from transactionStateStream: $err').log();
-            },
-          )
-          ..sdkStateStream.listen(
-            (state) {
-              switch (state) {
-                case MonaSDKState.idle:
-                  ('🎉  PayWithMonaWidget ==>> SDK is Idle').log();
-                  break;
-                case MonaSDKState.loading:
-                  ('🔄 PayWithMonaWidget ==>>  SDK is Loading').log();
-                  break;
-                case MonaSDKState.error:
-                  ('⛔  PayWithMonaWidget ==>> SDK Has Errors').log();
-                  break;
-                case MonaSDKState.success:
-                  ('👍  PayWithMonaWidget ==>> SDK is in Success state').log();
-                  break;
-              }
-            },
-            onError: (err) {
-              ('Error from transactionStateStream: $err').log();
-            },
-          )
-          ..authStateStream.listen(
-            (state) {
-              switch (state) {
-                case AuthState.loggedIn:
-                  ('🎉  PayWithMonaWidget ==>>  Auth State Logged In').log();
-                  break;
-                case AuthState.loggedOut:
-                  ('👀 PayWithMonaWidget ==>>  Auth State Logged Out').log();
-                  break;
-                case AuthState.error:
-                  ('⛔ PayWithMonaWidget ==>> Auth Has Error').log();
-                  break;
-                case AuthState.notAMonaUser:
-                  ('👤 PayWithMonaWidget ==>> Auth is Not A Mona User').log();
-                  break;
-                case AuthState.performingLogin:
-                  ('🚴‍♀️ PayWithMonaWidget ==>> Currently Doing Login with Strong Auth token')
-                      .log();
-                  break;
-              }
-            },
-            onError: (err) {
-              ('Error from transactionStateStream: $err').log();
-            },
-          );
-      },
-    );
+    sdkNotifier
+      ..addListener(_onPaymentStateChange)
+      ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut);
   }
 
   @override
@@ -120,8 +44,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
   @override
   Widget build(BuildContext context) {
-    "PayWithMonaWidget BUILD CALLED".log();
-
     final savedBanks =
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
@@ -151,12 +73,12 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
             Column(
               children: savedCards.map(
                 (card) {
-                  final selectedCardID = sdkNotifier.selectedCardOption?.cardId;
+                  final selectedCardID = sdkNotifier.selectedCardOption?.bankId;
 
                   return ListTile(
                     onTap: () {
                       sdkNotifier.setSelectedPaymentMethod(
-                        method: PaymentMethod.card,
+                        method: PaymentMethod.savedCard,
                       );
 
                       sdkNotifier.setSelectedCardOption(
@@ -166,15 +88,15 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
 
                     /// ***
                     contentPadding: EdgeInsets.zero,
-                    /* leading: CircleAvatar(
+                    leading: CircleAvatar(
                       backgroundColor: MonaColors.neutralWhite,
                       child: Image.network(
-                        card.cardId  ?? "",
+                        card.logo ?? "",
                       ),
-                    ), */
+                    ),
 
                     title: Text(
-                      card.cardNetwork ?? "",
+                      card.accountName ?? "",
                       style: TextStyle(
                         fontSize: context.sp(14),
                         fontWeight: FontWeight.w500,
@@ -183,7 +105,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     ),
 
                     subtitle: Text(
-                      "Account - ${card.maskedPan}",
+                      "Card - ${card.accountNumber}",
                       style: TextStyle(
                         fontSize: context.sp(12),
                         fontWeight: FontWeight.w400,
@@ -200,8 +122,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         border: Border.all(
                           width: 1.5,
                           color: (sdkNotifier.selectedPaymentMethod ==
-                                      PaymentMethod.savedBank &&
-                                  selectedCardID == card.cardId)
+                                      PaymentMethod.savedCard &&
+                                  selectedCardID == card.bankId)
                               ? MonaColors.primaryBlue
                               : MonaColors.bgGrey,
                         ),
@@ -210,8 +132,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         child: CircleAvatar(
                           radius: context.w(6),
                           backgroundColor: (sdkNotifier.selectedPaymentMethod ==
-                                      PaymentMethod.savedBank &&
-                                  selectedCardID == card.cardId)
+                                      PaymentMethod.savedCard &&
+                                  selectedCardID == card.bankId)
                               ? MonaColors.primaryBlue
                               : Colors.transparent,
                         ),

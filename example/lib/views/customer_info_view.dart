@@ -135,6 +135,7 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
               controllers.multiSync(builder: (context, child) {
                 return InkWell(
                   onTap: () {
+                    context.closeKeyboard();
                     _phoneNumberController.clear();
                     _firstNameController.clear();
                     _lastNameController.clear();
@@ -178,7 +179,11 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                         CustomTextField(
                           title: 'Phone Number',
                           controller: _phoneNumberController,
+                          maxLength: 11,
                           onChanged: (value) {
+                            if (value.length == 11) {
+                              context.closeKeyboard();
+                            }
                             ref
                                 .read(customerDetailsNotifierProvider.notifier)
                                 .updatePhone(

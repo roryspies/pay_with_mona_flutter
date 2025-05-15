@@ -1,4 +1,5 @@
 import 'package:example/firebase_options.dart';
+import 'package:example/utils/mona_colors.dart';
 import 'package:example/views/products_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(ProviderScope(child: const PayWithMona()));
+  runApp(
+    ProviderScope(
+      child: const PayWithMona(),
+    ),
+  );
 }
 
 class PayWithMona extends StatelessWidget {
@@ -18,11 +23,14 @@ class PayWithMona extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'NG Deals',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: MonaColors.primary,
+        ),
         useMaterial3: true,
       ),
-      home: const ProductsView(),
+      home: ProductsView(),
     );
   }
 }

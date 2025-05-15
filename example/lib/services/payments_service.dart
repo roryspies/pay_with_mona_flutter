@@ -5,7 +5,7 @@ import 'package:example/utils/extensions.dart';
 import 'package:example/utils/type_defs.dart';
 
 class PaymentService {
-  final ApiService _apiService = ApiService();
+  final _apiService = ApiService();
 
   FutureOutcome<Map<String, dynamic>> initiatePayment({
     required num tnxAmountInKobo,

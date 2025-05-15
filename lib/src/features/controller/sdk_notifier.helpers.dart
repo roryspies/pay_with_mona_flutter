@@ -46,7 +46,8 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     return "$baseUrl"
         "?loginScope=$loginScope"
         "$redirectParam"
-        "&sessionId=${Uri.encodeComponent(sessionID)}";
+        "&sessionId=${Uri.encodeComponent(sessionID)}"
+        "&transactionId=${Uri.encodeComponent(_currentTransactionId!)}";
   }
 
   /// Launches the payment URL using platform-specific custom tab settings.
@@ -95,33 +96,18 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     };
   }
 
-  /// *** TODO: Fix the below to match card payments.
   Future<Map<String, dynamic>> buildCardPaymentPayload() async {
     final userCheckoutID = await _secureStorage.read(
       key: SecureStorageKeys.monaCheckoutID,
     );
 
     return {
-      "origin": _selectedCardOption?.cardId ?? "",
+      "bankId": _selectedCardOption?.bankId ?? "",
       "hasDeviceKey": userCheckoutID != null,
-      "destination": {
-        "type": "card",
-        "typeDetail": "charge",
-        "params": {
-          "cardNumber": _selectedCardOption?.maskedPan ?? "",
-          "expiry": _selectedCardOption?.expiryDate ?? "",
-          "cvv": _selectedCardOption?.cardNetwork ?? "",
-        },
-      },
-      "amount":
-          (num.parse(_pendingPaymentResponseModel?.amount.toString() ?? "0") *
-                  100)
-              .toInt(),
-      "narration": "Payment via Card",
+      "transactionId": _currentTransactionId,
     };
   }
 
-  /// Emits the state and waits for user input via `completeOtpFlow`
   Future<String?> triggerPinOrOTPFlow({
     required PaymentTaskType pinOrOTP,
     required TransactionTaskModel pinOrOTPTask,
@@ -146,11 +132,12 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
   }
 
   /// Call this from your mobile app side when user enters OTP/PIN
-  void complete({
+  void sendOTPToServer({
     required String pinOrOTP,
   }) {
     if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
       _pinOrOTPCompleter!.complete(pinOrOTP);
+      _sdkStateStream.emit(state: MonaSDKState.loading);
     }
   }
 
