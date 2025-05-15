@@ -61,8 +61,8 @@ class BiometricService {
         ),
       );
       return signature;
-    } on BiometricException catch (e) {
-      'BiometricService ::: createSignature ::: Biometric error: ${e.message}'
+    } on BiometricException catch (e, trace) {
+      'BiometricService ::: createSignature ::: Biometric error: ${e.message} ::: Trace ::: $trace'
           .log();
       return null;
     }
