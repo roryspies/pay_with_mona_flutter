@@ -8,6 +8,8 @@ import 'package:pay_with_mona/src/core/security/biometrics/biometric_platform_in
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_prompt_config.dart';
 import 'dart:async';
 
+import 'package:pay_with_mona/src/utils/extensions.dart';
+
 /// Android-specific implementation of biometric operations.
 ///
 /// This class leverages both a native biometric signature SDK and the
@@ -111,19 +113,33 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
     final androidInfo = await _deviceInfo.androidInfo;
 
     try {
+      "ANDROID CREATING SIGNATURE".log();
       if (!_unsupportedModels.contains(androidInfo.model)) {
-        // Primary path uses the signature SDK
-        final sig = await _biometricSignature.createSignature(
-          options: {
-            'payload': data,
-            'promptMessage': config.title,
-          },
-        );
-        if (sig == null) {
-          throw BiometricException('Failed to sign with signature SDK');
+        try {
+          ("Attempting to create signature with payload length: ${data.length}")
+              .log();
+          final sig = await _biometricSignature.createSignature(
+            options: {
+              'payload': data,
+              'promptMessage': config.title,
+            },
+          );
+
+          if (sig == null) {
+            throw BiometricException(
+              'ANDROID BIO PLATFORM ::: BIO EXCEPTION ::: createSignature error ::: SIG IS NULL',
+            );
+          }
+          ("Signature created successfully").log();
+          return sig;
+        } catch (e, st) {
+          ("SIGNATURE CREATION ERROR: $e").log();
+          ("STACK TRACE: $st").log();
+          throw BiometricException('createSignature error', e, st);
         }
-        return sig;
       }
+
+      "createSignature ::: Using Fall Back Path".log();
 
       // Fallback path uses the local auth plugin
       const fallbackAlias = 'ng.mona.app';

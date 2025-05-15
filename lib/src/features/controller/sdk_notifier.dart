@@ -257,11 +257,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     String? dob,
     void Function(String)? onEffect,
   }) async {
-    if (_pendingPaymentResponseModel != null) {
-      _updateState(MonaSDKState.idle);
-      return;
-    }
-
     _updateState(MonaSDKState.loading);
 
     final userKeyID = await checkIfUserHasKeyID();
