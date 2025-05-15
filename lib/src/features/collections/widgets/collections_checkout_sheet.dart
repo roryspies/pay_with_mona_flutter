@@ -1,14 +1,15 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_bank_sheet.dart';
 import 'package:pay_with_mona/src/models/colllection_response.dart';
-
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
@@ -20,11 +21,13 @@ class CollectionsCheckoutSheet extends StatefulWidget {
     this.details,
     required this.method,
     required this.merchantName,
+    required this.scheduleEntries,
   });
 
   final Collection? details;
   final CollectionsMethod method;
   final String merchantName;
+  final List<Map<String, dynamic>> scheduleEntries;
 
   @override
   State<CollectionsCheckoutSheet> createState() =>
@@ -36,6 +39,13 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   String? _popupMessage;
   bool _showPopup = false;
   Timer? _popupTimer;
+  bool _showSuccessState = false;
+
+  void showSuccess() {
+    setState(() {
+      _showSuccessState = true;
+    });
+  }
 
   String formatDate(String? iso) {
     if (iso == null) return '-';
@@ -132,29 +142,83 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                     ),
                     child: Column(
                       children: [
-                        Row(
-                          spacing: context.w(8),
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset('bank'.svg, height: context.h(48)),
-                            SvgPicture.asset('forback'.svg,
-                                height: context.h(22)),
-                            CircleAvatar(
-                              radius: context.w(24),
-                              child: Text(
-                                getInitials(widget.merchantName).toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: context.sp(10),
-                                  fontWeight: FontWeight.w500,
-                                  color: MonaColors.textHeading,
-                                ),
+                        _showSuccessState
+                            ? SvgPicture.asset('hooray'.svg,
+                                height: context.h(48))
+                            : Row(
+                                spacing: context.w(8),
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SvgPicture.asset('bank'.svg,
+                                      height: context.h(48)),
+                                  SvgPicture.asset('forback'.svg,
+                                      height: context.h(22)),
+                                  CircleAvatar(
+                                    radius: context.w(24),
+                                    child: Text(
+                                      getInitials(widget.merchantName)
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: context.sp(10),
+                                        fontWeight: FontWeight.w500,
+                                        color: MonaColors.textHeading,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        context.sbH(24),
+                        if (_showSuccessState) ...[
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Payment account',
+                              textAlign: TextAlign.start,
+                              style: TextStyle(
+                                fontSize: context.sp(12),
+                                fontWeight: FontWeight.w400,
+                                color: MonaColors.textHeading,
                               ),
                             ),
-                          ],
-                        ),
-                        context.sbH(24),
+                          ),
+                          context.sbH(6),
+                          Row(
+                            spacing: context.w(8),
+                            children: [
+                              CircleAvatar(
+                                radius: context.w(18),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Bank Name',
+                                    textAlign: TextAlign.start,
+                                    style: TextStyle(
+                                      fontSize: context.sp(14),
+                                      fontWeight: FontWeight.w500,
+                                      color: MonaColors.textHeading,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Account number',
+                                    textAlign: TextAlign.start,
+                                    style: TextStyle(
+                                      fontSize: context.sp(12),
+                                      fontWeight: FontWeight.w400,
+                                      color: MonaColors.textBody,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          context.sbH(16),
+                        ],
                         Text(
-                          "${widget.merchantName} wants to automate repayments",
+                          _showSuccessState
+                              ? 'Your automatic payments are confirmed'
+                              : "${widget.merchantName} wants to automate repayments",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: context.sp(16),
@@ -164,7 +228,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                         ),
                         context.sbH(2),
                         Text(
-                          "Please verify the details below",
+                          _showSuccessState
+                              ? "See the details below"
+                              : "Please verify the details below",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: context.sp(14),
@@ -398,15 +464,42 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     onTap: () async {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
-                                      await sdkNotifier.collectionHandOffToAuth(
-                                          onKeyExchange: (value) {
-                                        if (value) {
-                                          showCheckoutSheet();
-                                        } else {
-                                          showPopupMessage('NO KEY ID, ENROL');
-                                          'NO KEY ID, ENROL'.log();
-                                        }
-                                      });
+                                      sdkNotifier.createCollections(
+                                        bankId: '680f5d983bccd31f1312645d',
+                                        scheduleEntries: widget.scheduleEntries,
+                                        maximumAmount: collection.maxAmount,
+                                        expiryDate: collection.expiryDate!,
+                                        startDate: collection.startDate!,
+                                        monthlyLimit: '1',
+                                        reference: collection.reference,
+                                        type: widget.method ==
+                                                CollectionsMethod.scheduled
+                                            ? 'SCHEDULED'
+                                            : 'SUBSCRIPTION',
+                                        frequency:
+                                            collection.schedule.frequency!,
+                                        amount: widget.method ==
+                                                CollectionsMethod.scheduled
+                                            ? null
+                                            : collection.maxAmount,
+                                        merchantId: '67e41f884126830aded0b43c',
+                                        onSuccess: (p0) {
+                                          showSuccess();
+                                        },
+                                        onFailure:() {
+                                          showPopupMessage('An error occurred');
+                                        },
+                                      );
+
+                                      // await sdkNotifier.collectionHandOffToAuth(
+                                      //     onKeyExchange: (value) {
+                                      //   if (value) {
+                                      //     showCheckoutSheet();
+                                      //   } else {
+                                      //     showPopupMessage('NO KEY ID, ENROL');
+                                      //     'NO KEY ID, ENROL'.log();
+                                      //   }
+                                      // });
 
                                       // ..triggerCollection(
                                       //   merchantId:

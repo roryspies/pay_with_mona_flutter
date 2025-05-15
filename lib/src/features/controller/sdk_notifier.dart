@@ -538,6 +538,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String merchantId,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
+    void Function()? onFailure,
   }) async {
     _updateState(MonaSDKState.loading);
     try {
@@ -555,10 +556,9 @@ class MonaSDKNotifier extends ChangeNotifier {
               merchantId: merchantId,
               scheduleEntries: scheduleEntries);
 
-      //     if (failure != null) {
-      //       _handleError('Collection creation failed.');
-      //       throw (failure.message);
-      //     }
+      if (failure != null) {
+        onFailure?.call();
+      }
 
       if (success != null) {
         success.log();
@@ -567,6 +567,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       _updateState(MonaSDKState.success);
     } catch (e) {
+      onFailure?.call();
       e.toString().log();
       _handleError(e.toString());
     }
@@ -643,6 +644,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       builder: (_) => Wrap(
         children: [
           CollectionsCheckoutSheet(
+            scheduleEntries: scheduleEntries,
             method: method,
             details: Collection(
               maxAmount: maximumAmount,
