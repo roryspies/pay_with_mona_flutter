@@ -163,8 +163,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   /// Stores the transaction ID and notifies listeners .
-  void _handleTransactionId(String transactionId) {
+  void _handleTransactionId(String transactionId, {String? friendlyID}) {
     _currentTransactionId = transactionId;
+    _currentTransactionFriendlyID = friendlyID;
     notifyListeners();
   }
 
@@ -338,12 +339,16 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
 
     final txId = success?["transactionId"] as String?;
-    if (txId == null) {
+    final friendlyID = success?["friendlyID"] as String?;
+    if (txId == null || friendlyID == null) {
       _handleError("Invalid response from payment service.");
       return;
     }
 
-    _handleTransactionId(txId);
+    _handleTransactionId(
+      txId,
+      friendlyID: friendlyID,
+    );
     _updateState(MonaSDKState.idle);
   }
 
