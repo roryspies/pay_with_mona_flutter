@@ -464,42 +464,42 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     onTap: () async {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
-                                      sdkNotifier.createCollections(
-                                        bankId: '680f5d983bccd31f1312645d',
-                                        scheduleEntries: widget.scheduleEntries,
-                                        maximumAmount: collection.maxAmount,
-                                        expiryDate: collection.expiryDate!,
-                                        startDate: collection.startDate!,
-                                        monthlyLimit: '1',
-                                        reference: collection.reference,
-                                        type: widget.method ==
-                                                CollectionsMethod.scheduled
-                                            ? 'SCHEDULED'
-                                            : 'SUBSCRIPTION',
-                                        frequency:
-                                            collection.schedule.frequency!,
-                                        amount: widget.method ==
-                                                CollectionsMethod.scheduled
-                                            ? null
-                                            : collection.maxAmount,
-                                        merchantId: '67e41f884126830aded0b43c',
-                                        onSuccess: (p0) {
-                                          showSuccess();
-                                        },
-                                        onFailure:() {
-                                          showPopupMessage('An error occurred');
-                                        },
-                                      );
+                                      // sdkNotifier.createCollections(
+                                      //   bankId: '680f5d983bccd31f1312645d',
+                                      //   scheduleEntries: widget.scheduleEntries,
+                                      //   maximumAmount: collection.maxAmount,
+                                      //   expiryDate: collection.expiryDate!,
+                                      //   startDate: collection.startDate!,
+                                      //   monthlyLimit: '1',
+                                      //   reference: collection.reference,
+                                      //   type: widget.method ==
+                                      //           CollectionsMethod.scheduled
+                                      //       ? 'SCHEDULED'
+                                      //       : 'SUBSCRIPTION',
+                                      //   frequency:
+                                      //       collection.schedule.frequency!,
+                                      //   amount: widget.method ==
+                                      //           CollectionsMethod.scheduled
+                                      //       ? null
+                                      //       : collection.maxAmount,
+                                      //   merchantId: '67e41f884126830aded0b43c',
+                                      //   onSuccess: (p0) {
+                                      //     showSuccess();
+                                      //   },
+                                      //   onFailure:() {
+                                      //     showPopupMessage('An error occurred');
+                                      //   },
+                                      // );
 
-                                      // await sdkNotifier.collectionHandOffToAuth(
-                                      //     onKeyExchange: (value) {
-                                      //   if (value) {
-                                      //     showCheckoutSheet();
-                                      //   } else {
-                                      //     showPopupMessage('NO KEY ID, ENROL');
-                                      //     'NO KEY ID, ENROL'.log();
-                                      //   }
-                                      // });
+                                      await sdkNotifier.collectionHandOffToAuth(
+                                          onKeyExchange: (value) {
+                                        if (value) {
+                                          showCheckoutSheet();
+                                        } else {
+                                          showPopupMessage('NO KEY ID, ENROL');
+                                          'NO KEY ID, ENROL'.log();
+                                        }
+                                      });
 
                                       // ..triggerCollection(
                                       //   merchantId:
