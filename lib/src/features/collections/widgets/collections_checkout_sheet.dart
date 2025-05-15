@@ -11,7 +11,7 @@ import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
-class CollectionsCheckoutSheet extends StatelessWidget {
+class CollectionsCheckoutSheet extends StatefulWidget {
   const CollectionsCheckoutSheet({
     super.key,
     this.details,
@@ -23,6 +23,13 @@ class CollectionsCheckoutSheet extends StatelessWidget {
   final CollectionsMethod method;
   final String merchantName;
 
+  @override
+  State<CollectionsCheckoutSheet> createState() =>
+      _CollectionsCheckoutSheetState();
+}
+
+class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
+  final sdkNotifier = MonaSDKNotifier();
   String formatDate(String? iso) {
     if (iso == null) return '-';
     final parsed = DateTime.tryParse(iso);
@@ -30,9 +37,17 @@ class CollectionsCheckoutSheet extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    sdkNotifier.addListener(_onSdktateChange);
+  }
+
+  void _onSdktateChange() => setState(() {});
+
+  @override
   Widget build(BuildContext context) {
     final collection =
-        CollectionResponse.fromJson(details!).requests.last.collection;
+        CollectionResponse.fromJson(widget.details!).requests.last.collection;
     final schedule = collection.schedule;
     final isScheduled = schedule.type == 'SCHEDULED';
 
@@ -81,7 +96,7 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                             CircleAvatar(
                               radius: context.w(24),
                               child: Text(
-                                getInitials(merchantName).toUpperCase(),
+                                getInitials(widget.merchantName).toUpperCase(),
                                 style: TextStyle(
                                   fontSize: context.sp(10),
                                   fontWeight: FontWeight.w500,
@@ -93,7 +108,7 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                         ),
                         context.sbH(24),
                         Text(
-                          "${collection.reference} wants to automate repayments",
+                          "${widget.merchantName} wants to automate repayments",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: context.sp(16),
@@ -325,7 +340,6 @@ class CollectionsCheckoutSheet extends StatelessWidget {
                         context.sbH(24),
                         Builder(
                           builder: (context) {
-                            final sdkNotifier = MonaSDKNotifier();
                             return sdkNotifier.state == MonaSDKState.loading
                                 ? Align(
                                     alignment: Alignment.center,
