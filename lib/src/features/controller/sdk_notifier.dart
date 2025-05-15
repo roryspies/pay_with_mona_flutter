@@ -436,6 +436,9 @@ class MonaSDKNotifier extends ChangeNotifier {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
           await _paymentsService.makePaymentRequest(
+            paymentType: _selectedPaymentMethod == PaymentMethod.savedBank
+                ? TransactionPaymentTypes.bank
+                : TransactionPaymentTypes.card,
             onPayComplete: (res, payload) {
               "Payment Notifier ::: Make Payment Request Complete".log();
 

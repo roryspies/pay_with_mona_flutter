@@ -119,6 +119,7 @@ class PaymentService {
         signature: signature,
         nonce: nonce,
         timestamp: timestamp,
+        checkoutType: paymentType.name,
       );
       return;
     }
@@ -129,6 +130,7 @@ class PaymentService {
       onPayComplete: onPayComplete,
       monaKeyId: monaKeyID,
       monaCheckoutID: userCheckoutID,
+      checkoutType: paymentType.name,
     );
   }
 
@@ -136,6 +138,7 @@ class PaymentService {
     TransactionPaymentTypes paymentType,
     Map<String, dynamic> payload, {
     required Function? onPayComplete,
+    required String checkoutType,
     String? monaKeyId,
     String? monaCheckoutID,
     String? signature,
@@ -151,6 +154,7 @@ class PaymentService {
       signature: signature,
       nonce: nonce,
       timestamp: timestamp,
+      checkoutType: checkoutType,
     );
 
     if (failure != null) {
@@ -244,6 +248,7 @@ class PaymentService {
   /// ***
   FutureOutcome<Map<String, dynamic>> sendPaymentToServer({
     required Map<String, dynamic> payload,
+    required String checkoutType,
     String? monaKeyId,
     String? monaCheckoutID,
     String? signature,
@@ -259,6 +264,7 @@ class PaymentService {
           signature: signature,
           nonce: nonce,
           timestamp: timestamp,
+          checkoutType: checkoutType,
         ),
         data: payload,
       );
@@ -305,7 +311,8 @@ class PaymentService {
 }
 
 enum TransactionPaymentTypes {
-  bank('bank');
+  bank('bank'),
+  card('card');
 
   const TransactionPaymentTypes(this.jsonString);
   final String jsonString;

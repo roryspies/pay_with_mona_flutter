@@ -10,6 +10,7 @@ abstract class ApiHeaderModel {
   static Map<String, String> paymentHeaders({
     required String? monaKeyID,
     required String? monaCheckoutID,
+    required String? checkoutType,
     required String? signature,
     required String? nonce,
     required String? timestamp,
@@ -21,6 +22,7 @@ abstract class ApiHeaderModel {
       if (signature != null) 'x-mona-pay-auth': signature,
       if (nonce != null) 'x-mona-nonce': nonce,
       if (timestamp != null) 'x-mona-timestamp': timestamp,
+      if (checkoutType != null) "x-mona-checkout-type": checkoutType,
     };
   }
 }
