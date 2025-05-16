@@ -548,28 +548,28 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     _firebaseSSE.initialize();
     try {
-      final (Map<String, dynamic>? success, failure) =
-          await _collectionsService.createCollections(
-              bankId: bankId,
-              maximumAmount: maximumAmount,
-              expiryDate: expiryDate,
-              startDate: startDate,
-              monthlyLimit: monthlyLimit,
-              reference: reference,
-              type: type,
-              frequency: frequency,
-              amount: amount,
-              merchantId: merchantId,
-              scheduleEntries: scheduleEntries);
-
-      if (failure != null) {
-        onFailure?.call();
-      }
-
-      if (success != null) {
-        success.log();
-        onSuccess?.call(success);
-      }
+      await _collectionsService.createCollectionRequest(
+        bankId: bankId,
+        maximumAmount: maximumAmount,
+        expiryDate: expiryDate,
+        startDate: startDate,
+        monthlyLimit: monthlyLimit,
+        reference: reference,
+        type: type,
+        frequency: frequency,
+        amount: amount,
+        merchantId: merchantId,
+        scheduleEntries: scheduleEntries,
+        onComplete: (res, p) {
+          final success = res as Map<String, dynamic>;
+          success.log();
+          onSuccess?.call(success);
+        },
+        onError: () {
+          _updateState(MonaSDKState.error);
+          onFailure?.call();
+        },
+      );
 
       _updateState(MonaSDKState.success);
     } catch (e) {

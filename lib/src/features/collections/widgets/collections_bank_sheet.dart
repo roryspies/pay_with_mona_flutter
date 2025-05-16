@@ -1,4 +1,4 @@
-       import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -51,6 +51,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   void initState() {
     super.initState();
     sdkNotifier.addListener(_onSdktateChange);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      sdkNotifier.validatePII();
+    });
   }
 
   void _onSdktateChange() => setState(() {});
@@ -286,6 +289,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                             builder: (_) => Wrap(
                                               children: [
                                                 CollectionsCheckoutSheet(
+                                                  selectedBank: selectedBank,
                                                   successMap: successMap,
                                                   showSuccess: true,
                                                   scheduleEntries:

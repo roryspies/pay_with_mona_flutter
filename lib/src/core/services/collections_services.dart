@@ -1,6 +1,12 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
+import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
+import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
@@ -12,43 +18,26 @@ class CollectionsService {
   factory CollectionsService() => _instance;
 
   final _apiService =
-      ApiService(baseUrl: 'https://d453-105-113-57-186.ngrok-free.app');
-
-  final token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzMxNTUxNSwiZXhwIjoxNzQ3NDAxOTE1fQ.3f1968umsKYflsX583O5Fh6H4LkVyqyFQg9ChUoqQCg';
+      ApiService(baseUrl: 'https://5130-169-150-196-153.ngrok-free.app');
 
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
-    required String bankId,
-    required String maximumAmount,
-    required String expiryDate,
-    required String startDate,
-    required String monthlyLimit,
-    required String reference,
-    required String type,
-    required String frequency,
-    required String? amount,
+    required Map<String, dynamic> payload,
     required String merchantId,
-    required List<Map<String, dynamic>> scheduleEntries,
+    String? monaKeyId,
+    String? signature,
+    String? nonce,
+    String? timestamp,
   }) async {
     try {
-      final response = await _apiService.post('/collections', data: {
-        "bankId": bankId,
-        "maximumAmount": maximumAmount,
-        "expiryDate": expiryDate,
-        "startDate": startDate,
-        "monthlyLimit": monthlyLimit,
-        "reference": reference,
-        "debitType": "MERCHANT",
-        "schedule": {
-          "type": type,
-          "frequency": frequency,
-          "amount": amount,
-          "entries": type == 'SCHEDULED' ? scheduleEntries : []
-        }
-      }, headers: {
+      final response =
+          await _apiService.post('/collections', data: payload, headers: {
         "x-merchant-Id": merchantId,
-        "Authorization": "Bearer $token"
+        "x-client-type": "bioApp",
+        if (monaKeyId != null) 'x-mona-key-id': monaKeyId,
+        if (signature != null) 'x-mona-pay-auth': signature,
+        if (nonce != null) 'x-mona-nonce': nonce,
+        if (timestamp != null) 'x-mona-timestamp': timestamp,
       });
 
       return right(
@@ -74,7 +63,7 @@ class CollectionsService {
         },
         headers: {
           "x-merchant-Id": merchantId,
-          "Authorization": "Bearer $token"
+          "Authorization": "Bearer"
         },
       );
 
@@ -85,6 +74,149 @@ class CollectionsService {
       final apiEx = APIException.fromHttpError(e);
       '❌ createCollections() Error: ${apiEx.message}'.log();
       return left(Failure(apiEx.message));
+    }
+  }
+
+  Future<String?> _signRequest(
+    Map<String, dynamic> payload,
+    String nonce,
+    String timestamp,
+    String keyId,
+  ) async {
+    "$_repoName _signCreateCollectionRequest".log();
+
+    final encodedPayload = base64Encode(utf8.encode(jsonEncode(payload)));
+
+    Map<String, dynamic> data = {
+      "method": base64Encode(utf8.encode("POST")),
+      "uri": base64Encode(utf8.encode("/collections")),
+      "body": encodedPayload,
+      "params": base64Encode(utf8.encode(jsonEncode({}))),
+      "nonce": base64Encode(utf8.encode(nonce)),
+      "timestamp": base64Encode(utf8.encode(timestamp)),
+      "keyId": base64Encode(utf8.encode(keyId)),
+    };
+
+    final dataString = base64Encode(utf8.encode(json.encode(data)));
+    final hash = sha256.convert(utf8.encode(dataString)).toString();
+
+    final String? signature = await BiometricService().signTransaction(
+      hashedTXNData: hash,
+    );
+
+    return signature;
+  }
+
+  Future<void> createCollectionRequest({
+    bool sign = false,
+    Function? onComplete,
+    void Function()? onError,
+    required String bankId,
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+    required String merchantId,
+    required List<Map<String, dynamic>> scheduleEntries,
+  }) async {
+    try {
+      final secureStorage = SecureStorage();
+      final payload = {
+        "bankId": bankId,
+        "maximumAmount": maximumAmount,
+        "expiryDate": expiryDate,
+        "startDate": startDate,
+        "monthlyLimit": monthlyLimit,
+        "reference": reference,
+        "debitType": "MERCHANT",
+        "schedule": {
+          "type": type,
+          "frequency": frequency,
+          "amount": amount,
+          "entries": type == 'SCHEDULED' ? scheduleEntries : []
+        }
+      };
+      final monaKeyID = await secureStorage.read(
+            key: SecureStorageKeys.keyID,
+          ) ??
+          "";
+      // final userCheckoutID = await secureStorage.read(
+      //       key: SecureStorageKeys.monaCheckoutID,
+      //     ) ??
+      //     "";
+
+      final nonce = UUIDGenerator.v4();
+      final timestamp =
+          DateTime.now().toLocal().millisecondsSinceEpoch.toString();
+
+      "$_repoName createCollectionRequest REQUESTING TO SIGN Create collection ==>> PAY LOAD TO BE SIGNED ==>> $payload"
+          .log();
+
+      String? signature = await _signRequest(
+        payload,
+        nonce,
+        timestamp,
+        monaKeyID,
+      );
+
+      if (signature == null) {
+        "$_repoName createCollectionRequest SIGNATURE IS NULL OR CANCELLED"
+            .log();
+
+        return;
+      }
+
+      await submitCreateCollectionRequest(
+        payload,
+        onComplete: onComplete,
+        monaKeyId: monaKeyID,
+        signature: signature,
+        nonce: nonce,
+        timestamp: timestamp,
+        merchantId: merchantId,
+      );
+    } catch (e) {
+      onError?.call();
+      return;
+    }
+  }
+
+  Future<void> submitCreateCollectionRequest(
+    Map<String, dynamic> payload, {
+    required Function? onComplete,
+    String? monaKeyId,
+    String? signature,
+    String? nonce,
+    String? timestamp,
+    required String merchantId,
+  }) async {
+    "$_repoName submitPaymentRequest REACHED SUBMISSION".log();
+
+    final (res, failure) = await createCollections(
+      payload: payload,
+      monaKeyId: monaKeyId,
+      signature: signature,
+      nonce: nonce,
+      timestamp: timestamp,
+      merchantId: merchantId,
+    );
+
+    if (failure != null) {
+      "$_repoName submitPaymentRequest FAILED ::: ${failure.message}".log();
+      return;
+    }
+
+    if (res!["success"] == true) {
+      "Payment Successful".log();
+      if (onComplete != null) {
+        onComplete(res, payload);
+      }
+
+      return;
     }
   }
 }
