@@ -1,6 +1,6 @@
 enum CollectionsState { idle, loading, success, error }
 
-enum CollectionsMethod { none, subscription, scheduled }
+enum CollectionsMethod { none, scheduled, subscription }
 
 List<CollectionsMethod> collectionMethods =
     CollectionsMethod.values.where((c) => c != CollectionsMethod.none).toList();
@@ -18,3 +18,8 @@ List<SubscriptionFrequency> subscriptionFrequencies = SubscriptionFrequency
     .values
     .where((c) => c != SubscriptionFrequency.none)
     .toList();
+
+enum DebitType { none, merchant, mona }
+
+List<DebitType> debitTypes =
+    DebitType.values.where((c) => c != DebitType.none).toList();
