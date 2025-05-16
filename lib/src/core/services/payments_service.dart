@@ -73,7 +73,7 @@ class PaymentService {
 
   Future<void> makePaymentRequest({
     bool sign = false,
-    TransactionPaymentTypes paymentType = TransactionPaymentTypes.bank,
+    TransactionPaymentTypes? paymentType = TransactionPaymentTypes.bank,
     Function? onPayComplete,
   }) async {
     final paymentNotifier = MonaSDKNotifier();
@@ -111,7 +111,7 @@ class PaymentService {
       }
 
       await submitPaymentRequest(
-        paymentType,
+        paymentType ?? TransactionPaymentTypes.bank,
         payload,
         onPayComplete: onPayComplete,
         monaKeyId: monaKeyID,
@@ -119,16 +119,22 @@ class PaymentService {
         signature: signature,
         nonce: nonce,
         timestamp: timestamp,
+        checkoutType: paymentType == TransactionPaymentTypes.card
+            ? paymentType?.name
+            : null,
       );
       return;
     }
 
     await submitPaymentRequest(
-      paymentType,
+      paymentType ?? TransactionPaymentTypes.bank,
       payload,
       onPayComplete: onPayComplete,
       monaKeyId: monaKeyID,
       monaCheckoutID: userCheckoutID,
+      checkoutType: paymentType == TransactionPaymentTypes.card
+          ? paymentType?.name
+          : null,
     );
   }
 
@@ -136,6 +142,7 @@ class PaymentService {
     TransactionPaymentTypes paymentType,
     Map<String, dynamic> payload, {
     required Function? onPayComplete,
+    String? checkoutType,
     String? monaKeyId,
     String? monaCheckoutID,
     String? signature,
@@ -151,6 +158,7 @@ class PaymentService {
       signature: signature,
       nonce: nonce,
       timestamp: timestamp,
+      checkoutType: checkoutType,
     );
 
     if (failure != null) {
@@ -244,6 +252,7 @@ class PaymentService {
   /// ***
   FutureOutcome<Map<String, dynamic>> sendPaymentToServer({
     required Map<String, dynamic> payload,
+    String? checkoutType,
     String? monaKeyId,
     String? monaCheckoutID,
     String? signature,
@@ -259,6 +268,7 @@ class PaymentService {
           signature: signature,
           nonce: nonce,
           timestamp: timestamp,
+          checkoutType: checkoutType,
         ),
         data: payload,
       );
@@ -305,7 +315,8 @@ class PaymentService {
 }
 
 enum TransactionPaymentTypes {
-  bank('bank');
+  bank('bank'),
+  card('card');
 
   const TransactionPaymentTypes(this.jsonString);
   final String jsonString;

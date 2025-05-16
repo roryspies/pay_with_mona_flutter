@@ -4,7 +4,6 @@ import 'package:pay_with_mona/src/core/security/biometrics/biometric_platform_fa
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_platform_interface.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_prompt_config.dart';
 
-/// Main class for biometric operations that uses the appropriate platform implementation
 class BiometricSignatureManager {
   final BiometricPlatformInterface _platformImpl;
 

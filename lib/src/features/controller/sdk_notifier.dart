@@ -18,7 +18,7 @@ import 'package:pay_with_mona/src/features/collections/widgets/collections_check
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
-import 'package:pay_with_mona/src/models/colllection_response.dart';
+import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -261,11 +261,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     String? dob,
     void Function(String)? onEffect,
   }) async {
-    if (_pendingPaymentResponseModel != null) {
-      _updateState(MonaSDKState.idle);
-      return;
-    }
-
     _updateState(MonaSDKState.loading);
 
     final userKeyID = await checkIfUserHasKeyID();
@@ -445,6 +440,9 @@ class MonaSDKNotifier extends ChangeNotifier {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
           await _paymentsService.makePaymentRequest(
+            paymentType: _selectedPaymentMethod == PaymentMethod.savedBank
+                ? null
+                : TransactionPaymentTypes.card,
             onPayComplete: (res, payload) {
               "Payment Notifier ::: Make Payment Request Complete".log();
 
@@ -520,13 +518,10 @@ class MonaSDKNotifier extends ChangeNotifier {
             return;
           }
 
-          await _paymentsService.getPaymentMethods(
-            transactionId: _currentTransactionId ?? "",
-            userEnrolledCheckoutID: userCheckoutID,
-          );
-
           _updateState(MonaSDKState.success);
           _authStream.emit(state: AuthState.loggedIn);
+          validatePII();
+          resetSDKState(clearMonaCheckout: false);
         },
       );
     } catch (e) {
@@ -712,11 +707,11 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.idle);
   }
 
-  void resetSDKState() {
+  void resetSDKState({bool clearMonaCheckout = true}) {
     _errorMessage = null;
     _currentTransactionId = null;
     _strongAuthToken = null;
-    _monaCheckOut = null;
+    if (clearMonaCheckout) _monaCheckOut = null;
     _callingBuildContext = null;
     _state = MonaSDKState.idle;
     _selectedPaymentMethod = PaymentMethod.none;

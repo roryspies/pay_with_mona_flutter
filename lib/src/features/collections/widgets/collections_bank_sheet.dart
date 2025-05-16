@@ -1,4 +1,4 @@
-import 'dart:async';
+       import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -8,7 +8,7 @@ import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/models/colllection_response.dart';
+import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 
 import 'package:pay_with_mona/src/utils/extensions.dart';

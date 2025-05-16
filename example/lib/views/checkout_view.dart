@@ -42,10 +42,6 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                     newState: state,
                   );
 
-              /* /// *** Kept Here to ensure that the transaction ID on the confirmation page is not overwritten
-              /// *** This is a patch
-              sdkNotifier.resetSDKState(); */
-
               switch (state) {
                 case TransactionStateFailed(
                     :final reason,

@@ -112,7 +112,6 @@ extension SDKNotifierListeners on MonaSDKNotifier {
               _authStream.emit(state: AuthState.performingLogin);
               await closeCustomTabs();
               await loginWithStrongAuth();
-              
               authCompleter.complete();
             }
           } catch (error, stackTrace) {

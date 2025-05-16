@@ -6,7 +6,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
-import 'package:pay_with_mona/src/models/colllection_response.dart';
+import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
