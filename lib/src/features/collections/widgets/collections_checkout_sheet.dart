@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_bank_sheet.dart';
-import 'package:pay_with_mona/src/models/colllection_response.dart';
+import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';

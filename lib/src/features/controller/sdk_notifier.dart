@@ -18,7 +18,7 @@ import 'package:pay_with_mona/src/features/collections/widgets/collections_check
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
-import 'package:pay_with_mona/src/models/colllection_response.dart';
+import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -690,7 +690,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-   void resetSDKState({bool clearMonaCheckout = true}) {
+  void resetSDKState({bool clearMonaCheckout = true}) {
     _errorMessage = null;
     _currentTransactionId = null;
     _strongAuthToken = null;
