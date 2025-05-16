@@ -11,9 +11,11 @@ class PayWithMonaWidget extends StatefulWidget {
   const PayWithMonaWidget({
     super.key,
     required this.monaCheckOut,
+    required this.callingContext,
   });
 
   final MonaCheckOut monaCheckOut;
+  final BuildContext callingContext;
 
   @override
   State<PayWithMonaWidget> createState() => _PayWithMonaWidgetState();

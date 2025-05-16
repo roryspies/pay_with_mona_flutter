@@ -222,6 +222,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
               ),
               context.sbH(8),
               PayWithMona.payWidget(
+                context: context,
                 payload: MonaCheckOut(
                   firstName: '',
                   lastName: '',

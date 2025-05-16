@@ -22,6 +22,7 @@ class AuthService {
     String? phoneNumber,
     String? bvn,
     String? dob,
+    String? name,
     String? userKeyID,
   }) async {
     try {
@@ -29,6 +30,14 @@ class AuthService {
 
       if (userKeyID == null && doNotUseBody) {
         return null;
+      }
+
+      if (dob != null && name == null) {
+        throw ArgumentError('`name` must not be null when `dob` is provided.');
+      }
+
+      if (name != null && dob == null) {
+        throw ArgumentError('`dob` must not be null when `name` is provided.');
       }
 
       final response = await _apiService.post(

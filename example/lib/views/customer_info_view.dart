@@ -75,19 +75,7 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
     super.dispose();
   }
 
-  void setData() {
-    // Replace these with actual values from your backend/local storage
-    // _phoneNumberController.text =
-    //     ref.read(customerDetailsNotifierProvider).phoneNumber;
-    // _firstNameController.text =
-    //     ref.read(customerDetailsNotifierProvider).firstName;
-    // _middleNameController.text =
-    //     ref.read(customerDetailsNotifierProvider).middleName;
-    // _lastNameController.text =
-    //     ref.read(customerDetailsNotifierProvider).lastName;
-    // _dobController.text = ref.read(customerDetailsNotifierProvider).dateOfBirth;
-    // _bvnController.text = ref.read(customerDetailsNotifierProvider).bvn;
-  }
+  void setData() {}
 
   int getFilledFieldCount() {
     final controllers = [
@@ -156,37 +144,6 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                         ),
                       ),
               ),
-              /* controllers.multiSync(builder: (context, child) {
-                return InkWell(
-                  onTap: () {
-                    context.closeKeyboard();
-                    _phoneNumberController.clear();
-                    _firstNameController.clear();
-                    _lastNameController.clear();
-                    _middleNameController.clear();
-                    _dobController.clear();
-                    _bvnController.clear();
-                    ref.read(customerDetailsNotifierProvider.notifier).clear();
-                  },
-                  child: ref
-                              .watch(customerDetailsNotifierProvider.notifier)
-                              .getFilledFieldCount() ==
-                          0
-                      ? SizedBox()
-                      : Align(
-                          alignment: Alignment.center,
-                          child: Text(
-                            "Clear",
-                            style: TextStyle(
-                              fontSize: context.sp(14),
-                              fontWeight: FontWeight.w400,
-                              color: MonaColors.textHeading,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                );
-              }), */
             ],
           ),
           _infoCard(),

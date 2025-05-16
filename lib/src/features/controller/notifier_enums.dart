@@ -88,3 +88,36 @@ enum PaymentMethod {
 }
 
 enum PaymentTaskType { sign, pin, otp }
+
+enum MerchantPaymentSettingsEnum {
+  monaSuccess,
+  debitSuccess,
+  walletReceiveInProgress,
+  walletReceiveComplete;
+
+  String get displayName {
+    switch (this) {
+      case monaSuccess:
+        return "Mona success";
+      case debitSuccess:
+        return "Debit success";
+      case walletReceiveInProgress:
+        return "Wallet receive in progress";
+      case walletReceiveComplete:
+        return "Wallet receive completed";
+    }
+  }
+
+  String get paymentName {
+    switch (this) {
+      case monaSuccess:
+        return "mona_success";
+      case debitSuccess:
+        return "debit_success";
+      case walletReceiveInProgress:
+        return "wallet_received";
+      case walletReceiveComplete:
+        return "wallet_completed";
+    }
+  }
+}
