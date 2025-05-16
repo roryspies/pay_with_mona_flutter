@@ -30,13 +30,13 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
 
   final showInfo = false.notifier;
 
+  final sdkNotifier = MonaSDKNotifier();
   late final StreamSubscription<AuthState> _authStateSub;
 
   @override
   void initState() {
     super.initState();
-    final sdk = MonaSDKNotifier();
-    _authStateSub = sdk.authStateStream.listen((state) {
+    _authStateSub = sdkNotifier.authStateStream.listen((state) {
       if (state == AuthState.loggedOut || state == AuthState.error) {
         setState(() {
           authText = 'Not signed in';
@@ -133,7 +133,30 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                 ),
               ),
               const Spacer(),
-              controllers.multiSync(builder: (context, child) {
+              InkWell(
+                onTap: () {
+                  context.closeKeyboard();
+                  showInfo.value = !showInfo.value;
+                  sdkNotifier
+                    ..resetSDKState()
+                    ..permanentlyClearKeys();
+                },
+                child: authText.toLowerCase().toString() != "signed in"
+                    ? SizedBox()
+                    : Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Clear Exchange Keys",
+                          style: TextStyle(
+                            fontSize: context.sp(14),
+                            fontWeight: FontWeight.w400,
+                            color: MonaColors.textHeading,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+              ),
+              /* controllers.multiSync(builder: (context, child) {
                 return InkWell(
                   onTap: () {
                     context.closeKeyboard();
@@ -163,7 +186,7 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                           ),
                         ),
                 );
-              }),
+              }), */
             ],
           ),
           _infoCard(),
@@ -315,6 +338,36 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                               ),
                             ),
                           ],
+                        ),
+
+                        context.sbH(16),
+
+                        InkWell(
+                          onTap: () {
+                            context.closeKeyboard();
+                            showInfo.value = !showInfo.value;
+                            _phoneNumberController.clear();
+                            _firstNameController.clear();
+                            _lastNameController.clear();
+                            _middleNameController.clear();
+                            _dobController.clear();
+                            _bvnController.clear();
+                            ref
+                                .read(customerDetailsNotifierProvider.notifier)
+                                .clear();
+                          },
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              "Clear",
+                              style: TextStyle(
+                                fontSize: context.sp(14),
+                                fontWeight: FontWeight.w400,
+                                color: MonaColors.textHeading,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

@@ -750,4 +750,9 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  Future<void> permanentlyClearKeys() async {
+    await AuthService.singleInstance.permanentlyClearKeys();
+    _authStream.emit(state: AuthState.loggedOut);
+  }
 }

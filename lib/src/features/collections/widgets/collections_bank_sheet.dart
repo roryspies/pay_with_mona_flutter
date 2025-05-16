@@ -1,13 +1,13 @@
-       import 'dart:async';
+// ignore_for_file: deprecated_member_use
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 
@@ -50,10 +50,10 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   @override
   void initState() {
     super.initState();
-    sdkNotifier.addListener(_onSdktateChange);
+    sdkNotifier.addListener(_onSdkStateChange);
   }
 
-  void _onSdktateChange() => setState(() {});
+  void _onSdkStateChange() => setState(() {});
 
   void selectBank({required BankOption bank}) {
     setState(() {
@@ -89,6 +89,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   Widget build(BuildContext context) {
     final collection = widget.details!;
     final schedule = collection.schedule;
+    // ignore: unused_local_variable
     final isScheduled = schedule.type == 'SCHEDULED';
 
     final savedBanks =
