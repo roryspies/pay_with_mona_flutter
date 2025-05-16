@@ -1,11 +1,15 @@
+       import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
+import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -18,11 +22,13 @@ class CollectionsBankSheet extends StatefulWidget {
     this.details,
     required this.method,
     required this.merchantName,
+    required this.scheduleEntries,
   });
 
-  final Map<String, dynamic>? details;
+  final Collection? details;
   final CollectionsMethod method;
   final String merchantName;
+  final List<Map<String, dynamic>> scheduleEntries;
 
   @override
   State<CollectionsBankSheet> createState() => _CollectionsBankSheetState();
@@ -30,6 +36,11 @@ class CollectionsBankSheet extends StatefulWidget {
 
 class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   final sdkNotifier = MonaSDKNotifier();
+  String? _popupMessage;
+  bool _showPopup = false;
+  Timer? _popupTimer;
+  BankOption? selectedBank;
+
   String formatDate(String? iso) {
     if (iso == null) return '-';
     final parsed = DateTime.tryParse(iso);
@@ -44,10 +55,39 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
 
   void _onSdktateChange() => setState(() {});
 
+  void selectBank({required BankOption bank}) {
+    setState(() {
+      selectedBank = bank;
+    });
+  }
+
+  @override
+  void dispose() {
+    _popupTimer?.cancel();
+    super.dispose();
+  }
+
+  void showPopupMessage(String message,
+      {Duration duration = const Duration(seconds: 2)}) {
+    setState(() {
+      _popupMessage = message;
+      _showPopup = true;
+    });
+
+    // Auto-hide after duration
+    _popupTimer?.cancel();
+    _popupTimer = Timer(duration, () {
+      if (mounted) {
+        setState(() {
+          _showPopup = false;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final collection =
-        CollectionResponse.fromJson(widget.details!).requests.last.collection;
+    final collection = widget.details!;
     final schedule = collection.schedule;
     final isScheduled = schedule.type == 'SCHEDULED';
 
@@ -140,13 +180,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
 
                                 return ListTile(
                                   onTap: () {
-                                    sdkNotifier.setSelectedPaymentMethod(
-                                      method: PaymentMethod.savedBank,
-                                    );
-
-                                    sdkNotifier.setSelectedBankOption(
-                                      bankOption: bank,
-                                    );
+                                    selectBank(bank: bank);
                                   },
 
                                   /// ***
@@ -185,10 +219,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                           BorderRadius.circular(context.h(24)),
                                       border: Border.all(
                                         width: 1.5,
-                                        color: (sdkNotifier
-                                                        .selectedPaymentMethod ==
-                                                    PaymentMethod.savedBank &&
-                                                selectedBankID == bank.bankId)
+                                        color: (selectedBank == bank)
                                             ? MonaColors.primaryBlue
                                             : MonaColors.bgGrey,
                                       ),
@@ -196,10 +227,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                     child: Center(
                                       child: CircleAvatar(
                                         radius: context.w(6),
-                                        backgroundColor: (sdkNotifier
-                                                        .selectedPaymentMethod ==
-                                                    PaymentMethod.savedBank &&
-                                                selectedBankID == bank.bankId)
+                                        backgroundColor: (selectedBank == bank)
                                             ? MonaColors.primaryBlue
                                             : Colors.transparent,
                                       ),
@@ -221,18 +249,89 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                     ),
                                   )
                                 : CustomButton(
-                                    label: 'Continue to Mona',
+                                    label: 'Approve debiting',
                                     onTap: () {
-                                      sdkNotifier
-                                        ..setCallingBuildContext(
-                                            context: context)
-                                        ..triggerCollection(
-                                          merchantId:
-                                              '67e41f884126830aded0b43c',
-                                          onSuccess: (p0) {
-                                            Navigator.of(context).pop();
-                                          },
-                                        );
+                                      if (selectedBank == null) {
+                                        showPopupMessage(
+                                            'Please select a bank');
+                                        return;
+                                      }
+                                      sdkNotifier.setCallingBuildContext(
+                                          context: context);
+                                      sdkNotifier.createCollections(
+                                        bankId: selectedBank?.bankId ??
+                                            '680f5d983bccd31f1312645d',
+                                        scheduleEntries: widget.scheduleEntries,
+                                        maximumAmount: collection.maxAmount,
+                                        expiryDate: collection.expiryDate!,
+                                        startDate: collection.startDate!,
+                                        monthlyLimit: '1',
+                                        reference: collection.reference,
+                                        type: widget.method ==
+                                                CollectionsMethod.scheduled
+                                            ? 'SCHEDULED'
+                                            : 'SUBSCRIPTION',
+                                        frequency:
+                                            collection.schedule.frequency!,
+                                        amount: widget.method ==
+                                                CollectionsMethod.scheduled
+                                            ? null
+                                            : collection.maxAmount,
+                                        merchantId: '67e41f884126830aded0b43c',
+                                        onSuccess: (successMap) {
+                                          Navigator.of(context).pop();
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            builder: (_) => Wrap(
+                                              children: [
+                                                CollectionsCheckoutSheet(
+                                                  successMap: successMap,
+                                                  showSuccess: true,
+                                                  scheduleEntries:
+                                                      widget.scheduleEntries,
+                                                  method: widget.method,
+                                                  details: Collection(
+                                                    maxAmount: widget
+                                                        .details!.maxAmount,
+                                                    expiryDate: widget
+                                                        .details!.expiryDate,
+                                                    startDate: widget
+                                                        .details!.startDate,
+                                                    monthlyLimit: widget
+                                                        .details!.monthlyLimit,
+                                                    schedule: Schedule(
+                                                      frequency:
+                                                          schedule.frequency,
+                                                      type: schedule.type,
+                                                      entries: schedule.entries,
+                                                    ),
+                                                    reference: widget
+                                                        .details!.reference,
+                                                    status: '',
+                                                    nextCollectionAt: '',
+                                                  ),
+                                                  merchantName:
+                                                      widget.merchantName,
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        onFailure: () {
+                                          showPopupMessage('An error occurred');
+                                        },
+                                      );
+                                      // sdkNotifier
+                                      //   ..setCallingBuildContext(
+                                      //       context: context)
+                                      //   ..triggerCollection(
+                                      //     merchantId:
+                                      //         '67e41f884126830aded0b43c',
+                                      //     onSuccess: (p0) {
+                                      //       Navigator.of(context).pop();
+                                      //     },
+                                      //   );
                                     },
                                   );
                           },
@@ -240,6 +339,56 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                       ],
                     ),
                   ),
+                  if (_showPopup && _popupMessage != null)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 400),
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: child,
+                        );
+                      },
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: context.w(20))
+                            .copyWith(top: context.h(24)),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.h(10),
+                          horizontal: context.w(16),
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade700,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.white,
+                              size: context.w(20),
+                            ),
+                            context.sbW(8),
+                            Expanded(
+                              child: Text(
+                                _popupMessage!,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: context.sp(14),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   context.sbH(20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

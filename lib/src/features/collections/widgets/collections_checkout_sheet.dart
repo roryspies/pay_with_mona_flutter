@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_bank_sheet.dart';
+import 'package:pay_with_mona/src/features/collections/widgets/collections_trigger_view.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -22,12 +23,16 @@ class CollectionsCheckoutSheet extends StatefulWidget {
     required this.method,
     required this.merchantName,
     required this.scheduleEntries,
+    this.showSuccess = false,
+    this.successMap,
   });
 
   final Collection? details;
   final CollectionsMethod method;
   final String merchantName;
   final List<Map<String, dynamic>> scheduleEntries;
+  final bool showSuccess;
+  final Map<String, dynamic>? successMap;
 
   @override
   State<CollectionsCheckoutSheet> createState() =>
@@ -47,6 +52,12 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
     });
   }
 
+  void showSuccessFromOutside() {
+    setState(() {
+      _showSuccessState = widget.showSuccess;
+    });
+  }
+
   String formatDate(String? iso) {
     if (iso == null) return '-';
     final parsed = DateTime.tryParse(iso);
@@ -56,6 +67,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   @override
   void initState() {
     super.initState();
+    showSuccessFromOutside();
     sdkNotifier.addListener(_onSdktateChange);
   }
 
@@ -95,6 +107,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
           CollectionsBankSheet(
             method: widget.method,
             merchantName: widget.merchantName,
+            scheduleEntries: widget.scheduleEntries,
+            details: widget.details,
           ),
         ],
       ),
@@ -168,6 +182,30 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                 ],
                               ),
                         context.sbH(24),
+
+                        Text(
+                          _showSuccessState
+                              ? 'Your automatic payments are confirmed'
+                              : "${widget.merchantName} wants to automate repayments",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: context.sp(16),
+                            fontWeight: FontWeight.w600,
+                            color: MonaColors.textHeading,
+                          ),
+                        ),
+                        context.sbH(2),
+                        Text(
+                          _showSuccessState
+                              ? "See the details below"
+                              : "Please verify the details below",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: context.sp(14),
+                            color: MonaColors.textBody,
+                          ),
+                        ),
+                        context.sbH(24),
                         if (_showSuccessState) ...[
                           Align(
                             alignment: Alignment.centerLeft,
@@ -215,29 +253,6 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                           ),
                           context.sbH(16),
                         ],
-                        Text(
-                          _showSuccessState
-                              ? 'Your automatic payments are confirmed'
-                              : "${widget.merchantName} wants to automate repayments",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: context.sp(16),
-                            fontWeight: FontWeight.w600,
-                            color: MonaColors.textHeading,
-                          ),
-                        ),
-                        context.sbH(2),
-                        Text(
-                          _showSuccessState
-                              ? "See the details below"
-                              : "Please verify the details below",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: context.sp(14),
-                            color: MonaColors.textBody,
-                          ),
-                        ),
-                        context.sbH(24),
 
                         // Debitor & Duration/Frequency
                         Padding(
@@ -266,7 +281,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                           ),
                                           context.sbH(2),
                                           Text(
-                                            collection.reference,
+                                            widget.merchantName,
                                             style: TextStyle(
                                               fontSize: context.sp(14),
                                               fontWeight: FontWeight.w500,
@@ -462,34 +477,21 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                 : CustomButton(
                                     label: 'Continue to Mona',
                                     onTap: () async {
-                                      sdkNotifier.setCallingBuildContext(
-                                          context: context);
-                                      // sdkNotifier.createCollections(
-                                      //   bankId: '680f5d983bccd31f1312645d',
-                                      //   scheduleEntries: widget.scheduleEntries,
-                                      //   maximumAmount: collection.maxAmount,
-                                      //   expiryDate: collection.expiryDate!,
-                                      //   startDate: collection.startDate!,
-                                      //   monthlyLimit: '1',
-                                      //   reference: collection.reference,
-                                      //   type: widget.method ==
-                                      //           CollectionsMethod.scheduled
-                                      //       ? 'SCHEDULED'
-                                      //       : 'SUBSCRIPTION',
-                                      //   frequency:
-                                      //       collection.schedule.frequency!,
-                                      //   amount: widget.method ==
-                                      //           CollectionsMethod.scheduled
-                                      //       ? null
-                                      //       : collection.maxAmount,
-                                      //   merchantId: '67e41f884126830aded0b43c',
-                                      //   onSuccess: (p0) {
-                                      //     showSuccess();
-                                      //   },
-                                      //   onFailure:() {
-                                      //     showPopupMessage('An error occurred');
-                                      //   },
-                                      // );
+                                      if (_showSuccessState) {
+                                        Navigator.of(context).pop();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                CollectionsTriggerView(
+                                                    successMap:
+                                                        widget.successMap,
+                                                    merchantName:
+                                                        widget.merchantName),
+                                          ),
+                                        );
+                                        return;
+                                      }
 
                                       await sdkNotifier.collectionHandOffToAuth(
                                           onKeyExchange: (value) {
@@ -500,14 +502,6 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                           'NO KEY ID, ENROL'.log();
                                         }
                                       });
-
-                                      // ..triggerCollection(
-                                      //   merchantId:
-                                      //       '67e41f884126830aded0b43c',
-                                      //   onSuccess: (p0) {
-                                      //     Navigator.of(context).pop();
-                                      //   },
-                                      // );
                                     },
                                   );
                           },

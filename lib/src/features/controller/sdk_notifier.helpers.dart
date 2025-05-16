@@ -13,7 +13,17 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     PaymentMethod? method,
     String? bankOrCardId,
     bool withRedirect = true,
+    bool isFromCollections = false,
   }) {
+    if (isFromCollections == true) {
+      final collectionsbaseUrl = "https://pay.development.mona.ng/collections";
+      final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
+
+      return "$collectionsbaseUrl"
+          "?loginScope=$loginScope"
+          "&sessionId=${Uri.encodeComponent(sessionID)}";
+    }
+
     if (withRedirect && (method == null || method == PaymentMethod.none)) {
       throw MonaSDKError(
         message: "Payment method must be provided when withRedirect is true.",
