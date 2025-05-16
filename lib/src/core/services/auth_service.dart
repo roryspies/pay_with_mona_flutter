@@ -102,7 +102,7 @@ class AuthService {
     try {
       if (Platform.isIOS) {
         //! to give face ID time to cook
-        await Future.delayed(Duration(milliseconds: 1500));
+        await Future.delayed(Duration(milliseconds: 300));
       }
 
       final publicKey = await signatureService.generatePublicKey();

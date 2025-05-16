@@ -7,7 +7,6 @@ import 'package:pay_with_mona/src/core/security/biometrics/biometric_exception.d
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_platform_interface.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_prompt_config.dart';
 import 'dart:async';
-
 import 'package:pay_with_mona/src/utils/extensions.dart';
 
 /// Android-specific implementation of biometric operations.
@@ -68,10 +67,8 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
 
     try {
       if (!_unsupportedModels.contains(androidInfo.model)) {
-        // Primary SDK path for modern devices
         final key = await _biometricSignature.createKeys(
           androidConfig: AndroidConfig(useDeviceCredentials: true),
-          //iosConfig: IosConfig(useDeviceCredentials: true),
         );
         if (key == null) {
           throw BiometricException('Failed to generate key via signature SDK');
@@ -79,8 +76,7 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
         return key;
       }
 
-      // Fallback path for unsupported device models
-      const fallbackAlias = 'pay_with_mona';
+      const fallbackAlias = 'ng.mona.app';
       final key = await _localAuthSignature.createKeyPair(
         fallbackAlias,
         AndroidPromptInfo(
@@ -95,7 +91,6 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
       }
       return key;
     } catch (e, st) {
-      // Wrap any errors in a unified BiometricException
       throw BiometricException('generatePublicKey error', e, st);
     }
   }
@@ -113,11 +108,8 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
     final androidInfo = await _deviceInfo.androidInfo;
 
     try {
-      "ANDROID CREATING SIGNATURE".log();
       if (!_unsupportedModels.contains(androidInfo.model)) {
         try {
-          ("Attempting to create signature with payload length: ${data.length}")
-              .log();
           final sig = await _biometricSignature.createSignature(
             options: {
               'payload': data,
@@ -130,7 +122,7 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
               'ANDROID BIO PLATFORM ::: BIO EXCEPTION ::: createSignature error ::: SIG IS NULL',
             );
           }
-          ("Signature created successfully").log();
+
           return sig;
         } catch (e, st) {
           ("SIGNATURE CREATION ERROR: $e").log();
@@ -139,9 +131,6 @@ class AndroidBiometricPlatform implements BiometricPlatformInterface {
         }
       }
 
-      "createSignature ::: Using Fall Back Path".log();
-
-      // Fallback path uses the local auth plugin
       const fallbackAlias = 'ng.mona.app';
       final sig = await _localAuthSignature.sign(
         fallbackAlias,

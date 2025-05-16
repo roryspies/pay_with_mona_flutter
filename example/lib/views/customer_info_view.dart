@@ -46,8 +46,8 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
           authText = 'Signed in';
         });
       }
-      // Trigger UI update, show snackbar, etc.
     });
+
     controllers = [
       _phoneNumberController,
       _bvnController,
@@ -56,6 +56,7 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
       _dobController,
       _lastNameController,
     ];
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setData();
     });
