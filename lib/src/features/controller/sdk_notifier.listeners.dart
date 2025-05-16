@@ -110,9 +110,9 @@ extension SDKNotifierListeners on MonaSDKNotifier {
               _strongAuthToken = (jsonDecode(event)
                   as Map<String, dynamic>)["strongAuthToken"];
               _authStream.emit(state: AuthState.performingLogin);
-
-              await loginWithStrongAuth();
               await closeCustomTabs();
+              await loginWithStrongAuth();
+              
               authCompleter.complete();
             }
           } catch (error, stackTrace) {

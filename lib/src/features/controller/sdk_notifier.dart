@@ -356,7 +356,10 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// launching the custom tab, and waiting for the auth process to complete.
   ///
   /// Throws [MonaSDKError] if any step fails.
-  Future<void> initKeyExchange({bool withRedirect = true}) async {
+  Future<void> initKeyExchange({
+    bool withRedirect = true,
+    bool isFromCollections = false,
+  }) async {
     try {
       final sessionID = _generateSessionID();
       final authCompleter = Completer<void>();
@@ -365,6 +368,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       await _listenForAuthEvents(sessionID, authCompleter);
 
       final url = _buildURL(
+        isFromCollections: isFromCollections,
         withRedirect: withRedirect,
         sessionID: sessionID,
         method: _selectedPaymentMethod,
@@ -546,6 +550,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     void Function()? onFailure,
   }) async {
     _updateState(MonaSDKState.loading);
+
+    _firebaseSSE.initialize();
     try {
       final (Map<String, dynamic>? success, failure) =
           await _collectionsService.createCollections(
@@ -694,7 +700,10 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
     /// *** previously
     if (doKeyExchange) {
-      // await initKeyExchange(withRedirect: false);
+      await initKeyExchange(
+        withRedirect: false,
+        isFromCollections: true,
+      );
       onKeyExchange?.call(true);
     } else {
       onKeyExchange?.call(false);
