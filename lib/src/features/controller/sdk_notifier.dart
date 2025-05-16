@@ -509,13 +509,10 @@ class MonaSDKNotifier extends ChangeNotifier {
             return;
           }
 
-          await _paymentsService.getPaymentMethods(
-            transactionId: _currentTransactionId ?? "",
-            userEnrolledCheckoutID: userCheckoutID,
-          );
-
           _updateState(MonaSDKState.success);
           _authStream.emit(state: AuthState.loggedIn);
+          validatePII();
+          resetSDKState(clearMonaCheckout: false);
         },
       );
     } catch (e) {
@@ -616,11 +613,11 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-  void resetSDKState() {
+  void resetSDKState({bool clearMonaCheckout = true}) {
     _errorMessage = null;
     _currentTransactionId = null;
     _strongAuthToken = null;
-    _monaCheckOut = null;
+    if (clearMonaCheckout) _monaCheckOut = null;
     _callingBuildContext = null;
     _state = MonaSDKState.idle;
     _selectedPaymentMethod = PaymentMethod.none;

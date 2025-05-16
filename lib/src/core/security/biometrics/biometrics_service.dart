@@ -38,7 +38,6 @@ class BiometricService {
       );
       return signature;
     } on BiometricException catch (e) {
-      // Log the error internally; return null so the caller can handle fallback
       'BiometricService ::: signTransaction ::: Biometric error: ${e.message}'
           .log();
       return null;
