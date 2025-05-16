@@ -540,6 +540,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String frequency,
     required String? amount,
     required String merchantId,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
     void Function()? onFailure,
@@ -549,6 +550,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     _firebaseSSE.initialize();
     try {
       await _collectionsService.createCollectionRequest(
+        debitType: debitType,
         bankId: bankId,
         maximumAmount: maximumAmount,
         expiryDate: expiryDate,
@@ -642,6 +644,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String merchantId,
     required String merchantName,
     required CollectionsMethod method,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
   }) async {
@@ -655,6 +658,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       builder: (_) => Wrap(
         children: [
           CollectionsCheckoutSheet(
+            debitType: debitType,
             scheduleEntries: scheduleEntries,
             method: method,
             details: Collection(

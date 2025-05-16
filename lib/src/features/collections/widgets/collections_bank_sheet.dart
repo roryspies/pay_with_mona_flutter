@@ -23,11 +23,13 @@ class CollectionsBankSheet extends StatefulWidget {
     required this.method,
     required this.merchantName,
     required this.scheduleEntries,
+    required this.debitType,
   });
 
   final Collection? details;
   final CollectionsMethod method;
   final String merchantName;
+  final String debitType;
   final List<Map<String, dynamic>> scheduleEntries;
 
   @override
@@ -262,6 +264,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
                                       sdkNotifier.createCollections(
+                                        debitType: widget.debitType,
                                         bankId: selectedBank?.bankId ??
                                             '680f5d983bccd31f1312645d',
                                         scheduleEntries: widget.scheduleEntries,
@@ -289,6 +292,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                             builder: (_) => Wrap(
                                               children: [
                                                 CollectionsCheckoutSheet(
+                                                  debitType: widget.debitType,
                                                   selectedBank: selectedBank,
                                                   successMap: successMap,
                                                   showSuccess: true,

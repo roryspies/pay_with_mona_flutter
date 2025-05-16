@@ -27,6 +27,7 @@ class CollectionsCheckoutSheet extends StatefulWidget {
     this.showSuccess = false,
     this.successMap,
     this.selectedBank,
+    required this.debitType,
   });
 
   final Collection? details;
@@ -36,6 +37,7 @@ class CollectionsCheckoutSheet extends StatefulWidget {
   final bool showSuccess;
   final Map<String, dynamic>? successMap;
   final BankOption? selectedBank;
+  final String debitType;
 
   @override
   State<CollectionsCheckoutSheet> createState() =>
@@ -108,6 +110,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
       builder: (_) => Wrap(
         children: [
           CollectionsBankSheet(
+            debitType: widget.debitType,
             method: widget.method,
             merchantName: widget.merchantName,
             scheduleEntries: widget.scheduleEntries,

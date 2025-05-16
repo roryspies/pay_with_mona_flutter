@@ -512,6 +512,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                     merchantId: '67e41f884126830aded0b43c',
                                     merchantName: widget.merchantName,
                                     method: collectionMethod.value,
+                                    debitType:
+                                        debitType.value.name.toUpperCase(),
                                   );
                               },
                               label: 'Continue',

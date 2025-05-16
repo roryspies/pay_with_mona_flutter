@@ -121,6 +121,7 @@ class CollectionsService {
     required String frequency,
     required String? amount,
     required String merchantId,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
   }) async {
     try {
@@ -132,7 +133,7 @@ class CollectionsService {
         "startDate": startDate,
         "monthlyLimit": monthlyLimit,
         "reference": reference,
-        "debitType": "MERCHANT",
+        "debitType": debitType,
         "schedule": {
           "type": type,
           "frequency": frequency,
