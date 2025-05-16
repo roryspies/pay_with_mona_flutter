@@ -12,7 +12,10 @@ class CollectionsService {
   factory CollectionsService() => _instance;
 
   final _apiService =
-      ApiService(baseUrl: 'https://1214-102-89-46-165.ngrok-free.app');
+      ApiService(baseUrl: 'https://d453-105-113-57-186.ngrok-free.app');
+
+  final token =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDhhOTRlZjgzMmQzMTkzMjBiYjgzMiIsImlhdCI6MTc0NzMxNTUxNSwiZXhwIjoxNzQ3NDAxOTE1fQ.3f1968umsKYflsX583O5Fh6H4LkVyqyFQg9ChUoqQCg';
 
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
@@ -45,8 +48,7 @@ class CollectionsService {
         }
       }, headers: {
         "x-merchant-Id": merchantId,
-        "Authorization":
-            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZGFmNThkYzE0YTBlYzg2MTRlOGZhNiIsImlhdCI6MTc0NzI0MjQ2MCwiZXhwIjoxNzQ3MzI4ODYwfQ.gPkMl7ScdrVnmtrZOWBuUyY_I0ezvHi8bsG_gYaAu1g"
+        "Authorization": "Bearer $token"
       });
 
       return right(
@@ -61,17 +63,18 @@ class CollectionsService {
 
   FutureOutcome<Map<String, dynamic>> triggerCollection({
     required String merchantId,
+    required int timeFactor,
   }) async {
     try {
       final response = await _apiService.put(
         '/collections/trigger',
         data: {
           "userId": "67d8a94ef832d319320bb832",
+          "timeFactor": timeFactor,
         },
         headers: {
           "x-merchant-Id": merchantId,
-          "Authorization":
-              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZGFmNThkYzE0YTBlYzg2MTRlOGZhNiIsImlhdCI6MTc0NzI0MjQ2MCwiZXhwIjoxNzQ3MzI4ODYwfQ.gPkMl7ScdrVnmtrZOWBuUyY_I0ezvHi8bsG_gYaAu1g"
+          "Authorization": "Bearer $token"
         },
       );
 
