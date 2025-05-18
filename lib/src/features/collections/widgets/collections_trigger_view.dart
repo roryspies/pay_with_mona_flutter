@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
-
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/trigger_result_view.dart';
-import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
-import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/custom_drop_down.dart';
-import 'package:pay_with_mona/src/widgets/custom_text_field.dart';
 
 class CollectionsTriggerView extends StatefulWidget {
   const CollectionsTriggerView({
@@ -39,7 +32,7 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
   @override
   void initState() {
     super.initState();
-    sdkNotifier.addListener(_onSdktateChange);
+    sdkNotifier.addListener(_onSdkStateChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       sdkNotifier.sdkStateStream.listen(
@@ -75,7 +68,7 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
     super.dispose();
   }
 
-  void _onSdktateChange() => setState(() {});
+  void _onSdkStateChange() => setState(() {});
 
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -312,25 +305,25 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
 
 class PaymentScheduleTextController {
   final int index;
-  final TextEditingController paymentTextcontroller;
-  final TextEditingController dateTextcontroller;
+  final TextEditingController paymentTextController;
+  final TextEditingController dateTextController;
 
   PaymentScheduleTextController({
     required this.index,
-    required this.paymentTextcontroller,
-    required this.dateTextcontroller,
+    required this.paymentTextController,
+    required this.dateTextController,
   });
 
   PaymentScheduleTextController copyWith({
     int? index,
-    TextEditingController? paymentTextcontroller,
-    TextEditingController? dateTextcontroller,
+    TextEditingController? paymentTextController,
+    TextEditingController? dateTextController,
   }) {
     return PaymentScheduleTextController(
       index: index ?? this.index,
-      paymentTextcontroller:
-          paymentTextcontroller ?? this.paymentTextcontroller,
-      dateTextcontroller: dateTextcontroller ?? this.dateTextcontroller,
+      paymentTextController:
+          paymentTextController ?? this.paymentTextController,
+      dateTextController: dateTextController ?? this.dateTextController,
     );
   }
 }
@@ -354,7 +347,7 @@ String? convertToIsoDate(dynamic input) {
       throw FormatException('Unsupported type');
     }
   } catch (e) {
-    print('Error converting date: $e');
+    ('Error converting date: $e').log();
     return null;
   }
 }

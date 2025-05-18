@@ -7,14 +7,21 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/features/data_share/widgets/data_share_sheet.dart';
 import 'package:pay_with_mona/src/features/payments/pay_with_mona_widget.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
+import 'package:pay_with_mona/src/widgets/merchant_payment_settings_widget.dart';
 
 class PayWithMona {
   static Widget payWidget({
+    required BuildContext context,
     required MonaCheckOut payload,
   }) {
     return PayWithMonaWidget(
       monaCheckOut: payload,
+      callingContext: context,
     );
+  }
+
+  static Widget paymentSettingsWidget() {
+    return MerchantPaymentSettingsWidget();
   }
 
   /// Opens the data share widget in a bottom sheet

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
@@ -38,11 +37,12 @@ class MonaSDKNotifier extends ChangeNotifier {
   static final MonaSDKNotifier _instance = MonaSDKNotifier._internal();
 
   /// Factory constructor returning the singleton instance.
-  factory MonaSDKNotifier(
-      {PaymentService? paymentsService,
-      AuthService? authService,
-      SecureStorage? secureStorage,
-      CollectionsService? collectionsService}) {
+  factory MonaSDKNotifier({
+    PaymentService? paymentsService,
+    AuthService? authService,
+    SecureStorage? secureStorage,
+    CollectionsService? collectionsService,
+  }) {
     // Allow dependency injection for testing or customization
     _instance._paymentsService = paymentsService ?? _instance._paymentsService;
     _instance._authService = authService ?? _instance._authService;
@@ -80,6 +80,8 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _strongAuthToken;
   String? _transactionOTP;
   String? _transactionPIN;
+  MerchantPaymentSettingsEnum _merchantPaymentSettingsEnum =
+      MerchantPaymentSettingsEnum.walletReceiveComplete;
   MonaCheckOut? _monaCheckOut;
   BuildContext? _callingBuildContext;
 
@@ -110,6 +112,8 @@ class MonaSDKNotifier extends ChangeNotifier {
   BankOption? get selectedBankOption => _selectedBankOption;
 
   CardOption? get selectedCardOption => _selectedCardOption;
+  MerchantPaymentSettingsEnum? get currentMerchantPaymentSettingsEnum =>
+      _merchantPaymentSettingsEnum;
 
   // Streams
   final _txnStateStream = TransactionStateStream();
@@ -247,6 +251,46 @@ class MonaSDKNotifier extends ChangeNotifier {
       return receivedPIN;
     }();
     notifyListeners();
+  }
+
+  Future<void> updateMerchantPaymentSettingsWidget({
+    required MerchantPaymentSettingsEnum currentSetting,
+    required String merchantID,
+    required Function(bool isSuccessful) onEvent,
+  }) async {
+    try {
+      _sdkStateStream.emit(state: MonaSDKState.loading);
+      final oldValue = _merchantPaymentSettingsEnum;
+      _merchantPaymentSettingsEnum = currentSetting;
+      notifyListeners();
+
+      final (success, failure) = await _paymentsService.updateMerchantSettings(
+        /// *** TODO: @Serticode - Update this to use the value passed in the params
+        merchantID: "67e41f884126830aded0b43c",
+        successRateType: _merchantPaymentSettingsEnum.paymentName,
+      );
+
+      if (failure != null) {
+        _handleError(failure.message);
+        _merchantPaymentSettingsEnum = oldValue;
+        onEvent(false);
+        notifyListeners();
+        return;
+      }
+
+      onEvent(true);
+
+      if (success != null) {
+        _handleTransactionId(success["transactionId"]);
+      }
+
+      _sdkStateStream.emit(state: MonaSDKState.idle);
+    } catch (error, trace) {
+      "updateMerchantPaymentSettingsWidget ::: ERROR ::: $error ::: TRACE ::: $trace"
+          .log();
+
+      _handleError(error.toString());
+    }
   }
 
   Future<String?> checkIfUserHasKeyID() async => await _secureStorage.read(
@@ -749,5 +793,10 @@ class MonaSDKNotifier extends ChangeNotifier {
     _transactionOTP = null;
 
     notifyListeners();
+  }
+
+  Future<void> permanentlyClearKeys() async {
+    await AuthService.singleInstance.permanentlyClearKeys();
+    _authStream.emit(state: AuthState.loggedOut);
   }
 }

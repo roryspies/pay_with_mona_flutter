@@ -209,6 +209,11 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                         ],
                       ),
                     ),
+
+                    context.sbH(16),
+
+                    /// ***
+                    PayWithMona.paymentSettingsWidget(),
                   ],
                 ),
               ),
