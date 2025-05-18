@@ -1,5 +1,4 @@
 // ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
@@ -21,10 +20,14 @@ class _MerchantPaymentSettingsBottomSheetContentState
   @override
   void initState() {
     super.initState();
-    _sdkNotifier.addListener(_onSDKStateChange);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sdkNotifier.addListener(_onSDKStateChange);
+    });
   }
 
-  void _onSDKStateChange() => setState(() {});
+  void _onSDKStateChange() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {

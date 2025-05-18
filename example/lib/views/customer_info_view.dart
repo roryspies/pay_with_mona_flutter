@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/utils/custom_text_field.dart';
 import 'package:example/utils/extensions.dart';
@@ -37,6 +36,7 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
   void initState() {
     super.initState();
     _authStateSub = sdkNotifier.authStateStream.listen((state) {
+      "CustomerInfoView :::AUTH STATE ::: $state".log();
       if (state == AuthState.loggedOut || state == AuthState.error) {
         setState(() {
           authText = 'Not signed in';
@@ -124,7 +124,10 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
               InkWell(
                 onTap: () {
                   context.closeKeyboard();
-                  showInfo.value = !showInfo.value;
+                  if (showInfo.value == true) {
+                    showInfo.value = !showInfo.value;
+                  }
+
                   sdkNotifier
                     ..resetSDKState()
                     ..permanentlyClearKeys();
@@ -219,33 +222,6 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                           ),
                           inputFormatters: [CapitalizeWordsTextFormatter()],
                         ),
-                        // CustomTextField(
-                        //   title: 'Date of Birth',
-                        //   controller: _dobController,
-                        //   suffixIcon: IconButton(
-                        //     icon: Icon(Icons.edit),
-                        //     onPressed: () {},
-                        //   ),
-                        //   keyboardType: TextInputType.number,
-                        //   inputFormatters: [
-                        //     LengthLimitingTextInputFormatter(10),
-                        //     FilteringTextInputFormatter.singleLineFormatter,
-                        //     DOBTextInputFormatter(),
-                        //   ],
-                        // ),
-                        // CustomTextField(
-                        //   title: 'BVN',
-                        //   controller: _bvnController,
-                        //   suffixIcon: IconButton(
-                        //     icon: Icon(Icons.edit),
-                        //     onPressed: () {},
-                        //   ),
-                        //   inputFormatters: [
-                        //     FilteringTextInputFormatter.digitsOnly,
-                        //     LengthLimitingTextInputFormatter(11),
-                        //   ],
-                        //   keyboardType: TextInputType.number,
-                        // ),
                         Row(
                           children: [
                             Expanded(
@@ -296,9 +272,7 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
                             ),
                           ],
                         ),
-
                         context.sbH(16),
-
                         InkWell(
                           onTap: () {
                             context.closeKeyboard();
