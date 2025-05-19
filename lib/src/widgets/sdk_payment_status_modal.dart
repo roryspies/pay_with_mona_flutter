@@ -37,15 +37,14 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   bool showPaymentSuccessfulOrFailed = false;
   bool isPaymentSuccessful = false;
 
-  // Track current payment stage
-  int _currentStage = 0; // 0: not started, 1: sent, 2: received
+  // Track current payment stage 0: not started, 1: sent, 2: received
+  int _currentStage = 0;
   num _transactionAmount = 0;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controllers
     _firstProgressController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -61,7 +60,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       vsync: this,
     );
 
-    // Flow animation for the middle bar (repeating shader effect)
     _flowAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -69,10 +67,9 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
     _flowAnimation = Tween<double>(
       begin: -1,
-      end: 2,
+      end: 1.5,
     ).animate(_flowAnimationController);
 
-    // Color transitions from light green to dark green
     _firstProgressColorAnimation = ColorTween(
       begin: MonaColors.successColour.withOpacity(0.1),
       end: MonaColors.successColour,
@@ -88,7 +85,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       end: MonaColors.successColour,
     ).animate(_thirdProgressController);
 
-    // Set up listeners to update UI when animations run
     _firstProgressController.addListener(() {
       setState(() {});
     });
@@ -107,34 +103,28 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       }
     });
 
-    // When first animation completes, update stage and start flow animation
     _firstProgressController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         setState(() {
           _currentStage = 1; // Sent stage
         });
-        // Start the flow animation for the middle bar
         _flowAnimationController.forward();
       }
     });
 
-    // When second animation completes, update stage and stop flow animation
     _secondProgressController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         setState(() {
           _currentStage = 2;
         });
-        // Stop flowing animation
         _flowAnimationController.stop();
       }
     });
 
-    // Start initial animation sequence automatically
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         _firstProgressController.forward();
 
-        // Listen for transaction state changes
         sdkNotifier.txnStateStream.listen(
           (state) async {
             switch (state) {
@@ -172,8 +162,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                     .log();
 
                 _transactionAmount = amount != null ? (amount / 100) : 0;
-                // Start first animation
-                //_startFirstAnimation();
                 break;
 
               default:
@@ -222,22 +210,14 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
               from: _thirdProgressController.value,
             );
 
-            await Future.delayed(Duration(milliseconds: 1500));
+            await Future.delayed(Duration(milliseconds: 500));
 
             showPaymentSuccessfulOrFailed = true;
 
-            await Future.delayed(Duration(milliseconds: 1500));
+            await Future.delayed(Duration(seconds: 1));
 
             if (isCompletedTransaction) {
               sdkNotifier.handleNavToConfirmationScreen();
-              /* await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return ResultView();
-                  },
-                ),
-              ); */
-
               return;
             }
           },
