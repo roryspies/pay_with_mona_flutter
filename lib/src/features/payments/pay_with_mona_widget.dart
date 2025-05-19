@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
-import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
@@ -12,9 +11,11 @@ class PayWithMonaWidget extends StatefulWidget {
   const PayWithMonaWidget({
     super.key,
     required this.monaCheckOut,
+    required this.callingContext,
   });
 
   final MonaCheckOut monaCheckOut;
+  final BuildContext callingContext;
 
   @override
   State<PayWithMonaWidget> createState() => _PayWithMonaWidgetState();
@@ -362,8 +363,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   onPressed: () async {
                     final navigator = Navigator.of(context);
 
-                    sdkNotifier.invalidate();
-                    await AuthService.singleInstance.permanentlyClearKeys();
+                    sdkNotifier
+                      ..invalidate()
+                      ..permanentlyClearKeys();
 
                     navigator.pop();
                   },

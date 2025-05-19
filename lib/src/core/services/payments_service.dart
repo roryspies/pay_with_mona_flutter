@@ -45,6 +45,31 @@ class PaymentService {
     }
   }
 
+  FutureOutcome<Map<String, dynamic>> updateMerchantSettings({
+    required String merchantID,
+    required String successRateType,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/demo/checkout',
+        headers: {
+          "merchant-owner": merchantID,
+        },
+        data: {
+          'successRateType': successRateType,
+        },
+      );
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } catch (e) {
+      final apiEx = APIException.fromHttpError(e);
+      '❌ initiatePayment() Error: ${apiEx.message}'.log();
+      return left(Failure(apiEx.message));
+    }
+  }
+
   /// Retrieves available payment methods for a transaction.
   FutureOutcome<PendingPaymentResponseModel> getPaymentMethods({
     required String transactionId,
