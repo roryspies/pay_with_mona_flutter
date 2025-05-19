@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
@@ -342,13 +344,28 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     return;
                   }
 
-                  await SDKUtils.showSDKModalBottomSheet(
-                    callingContext: context,
-                    child: ConfirmTransactionModal(
-                      selectedPaymentMethod: sdkNotifier.selectedPaymentMethod,
-                      transactionAmountInKobo: widget.monaCheckOut.amount,
-                    ),
-                  );
+                  final isSavedMethods = [
+                    PaymentMethod.savedBank,
+                    PaymentMethod.savedCard,
+                  ].contains(sdkNotifier.selectedPaymentMethod);
+
+                  if (await sdkNotifier.checkIfUserHasKeyID() != null &&
+                      isSavedMethods) {
+                    await SDKUtils.showSDKModalBottomSheet(
+                      callingContext: context,
+                      child: ConfirmTransactionModal(
+                        selectedPaymentMethod:
+                            sdkNotifier.selectedPaymentMethod,
+                        transactionAmountInKobo: widget.monaCheckOut.amount,
+                      ),
+                    );
+
+                    return;
+                  }
+
+                  sdkNotifier
+                    ..setCallingBuildContext(context: context)
+                    ..makePayment();
                 },
               ),
 
