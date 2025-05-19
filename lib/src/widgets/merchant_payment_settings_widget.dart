@@ -3,6 +3,7 @@ import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/src/widgets/merchant_payment_settings_bottom_sheet_content.dart';
 
 class MerchantPaymentSettingsWidget extends StatefulWidget {
   const MerchantPaymentSettingsWidget({super.key});
@@ -113,6 +114,8 @@ class _MerchantPaymentSettingsWidgetState
                           onTap: () async {
                             await SDKUtils.showMerchantSettingsModal(
                               callingContext: context,
+                              child:
+                                  MerchantPaymentSettingsBottomSheetContent(),
                             );
                           },
                           child: Container(
