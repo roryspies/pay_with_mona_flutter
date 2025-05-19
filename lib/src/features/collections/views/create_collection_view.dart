@@ -31,6 +31,7 @@ class CreateCollectionView extends StatefulWidget {
 class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _merchantNameController = TextEditingController();
   final _debitLimitController = TextEditingController();
+  final _monthlyLimitController = TextEditingController();
   final _expDateController = TextEditingController();
   final _referenceController = TextEditingController();
   final collectionMethod = CollectionsMethod.scheduled.notifier;
@@ -96,6 +97,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     _merchantNameController.dispose();
     _expDateController.dispose();
     _referenceController.dispose();
+    _monthlyLimitController.dispose();
     showMore.dispose();
     super.dispose();
   }
@@ -264,6 +266,16 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                     ? 'Total debit limit'
                                     : 'Amount',
                                 controller: _debitLimitController,
+                                onChanged: (value) {},
+                                keyboardType: TextInputType.number,
+                                suffixIcon: IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {},
+                                ),
+                              ),
+                              CustomTextField(
+                                title: 'Monthly Limit',
+                                controller: _monthlyLimitController,
                                 onChanged: (value) {},
                                 keyboardType: TextInputType.number,
                                 suffixIcon: IconButton(
@@ -498,7 +510,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                 .trim())!
                                         : convertToIsoDate(
                                             _expDateController.text.trim())!,
-                                    monthlyLimit: '200',
+                                    monthlyLimit:
+                                        _monthlyLimitController.text.trim(),
                                     reference: _referenceController.text.trim(),
                                     type: collectionMethod.value ==
                                             CollectionsMethod.scheduled

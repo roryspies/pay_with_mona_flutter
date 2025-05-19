@@ -15,6 +15,7 @@ import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
 class CollectionsCheckoutSheet extends StatefulWidget {
@@ -138,17 +139,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: context.h(36),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: MonaColors.primaryBlue,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-              ),
-            ),
+            BottomSheetTopHeader(),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: context.w(16))
                   .copyWith(top: context.h(20), bottom: context.h(21)),

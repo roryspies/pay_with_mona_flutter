@@ -210,7 +210,9 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(child: Text('₦${_formatAmount(divideBy100(amount))}')),
+                            Expanded(
+                                child: Text(
+                                    '₦${_formatAmount(divideBy100(amount))}')),
                             Expanded(child: Text(reference ?? '')),
                             Expanded(
                               child: Column(
@@ -274,9 +276,9 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                                   ..triggerCollection(
                                       merchantId: '67e41f884126830aded0b43c',
                                       timeFactor: switch (timeFactor.value) {
-                                        TimeFactor.day => 1,
-                                        TimeFactor.week => 7,
-                                        TimeFactor.month => 30,
+                                        TimeFactor.day => 24 * 60,
+                                        TimeFactor.week => 7 * 24 * 60,
+                                        TimeFactor.month => 30 * 24 * 60,
                                       },
                                       onSuccess: (p0) async {
                                         showSnackBar(
