@@ -40,10 +40,10 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
               switch (state) {
                 case MonaSDKState.loading:
                   ('🔄 CheckoutView ==>>  SDK is Loading').log();
-                  setState(() => isLoading = true);
+                  if (mounted) setState(() => isLoading = true);
                   break;
                 default:
-                  setState(() => isLoading = false);
+                  if (mounted) setState(() => isLoading = false);
                   break;
               }
             },
