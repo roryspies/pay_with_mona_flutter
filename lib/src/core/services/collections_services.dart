@@ -54,6 +54,11 @@ class CollectionsService {
     required String merchantId,
     required int timeFactor,
   }) async {
+    final secureStorage = SecureStorage();
+    final monaKeyID = await secureStorage.read(
+          key: SecureStorageKeys.keyID,
+        ) ??
+        "";
     try {
       final response = await _apiService.put(
         '/collections/trigger',
@@ -63,7 +68,7 @@ class CollectionsService {
         },
         headers: {
           "x-merchant-Id": merchantId,
-          "Authorization": "Bearer"
+          'x-mona-key-id': monaKeyID,
         },
       );
 
@@ -128,16 +133,16 @@ class CollectionsService {
       final secureStorage = SecureStorage();
       final payload = {
         "bankId": bankId,
-        "maximumAmount": maximumAmount,
+        "maximumAmount": multiplyBy100(maximumAmount),
         "expiryDate": expiryDate,
         "startDate": startDate,
-        "monthlyLimit": monthlyLimit,
+        "monthlyLimit": multiplyBy100(monthlyLimit),
         "reference": reference,
         "debitType": debitType,
         "schedule": {
           "type": type,
           "frequency": frequency,
-          "amount": amount,
+          "amount": amount != null ? multiplyBy100(amount) : null,
           "entries": type == 'SCHEDULED' ? scheduleEntries : []
         }
       };
@@ -220,4 +225,16 @@ class CollectionsService {
       return;
     }
   }
+}
+
+String multiplyBy100(String value) {
+  final number = double.tryParse(value) ?? 0;
+  final result = number * 100;
+  return result.toStringAsFixed(0);
+}
+
+String divideBy100(String value) {
+  final number = double.tryParse(value) ?? 0;
+  final result = number / 100;
+  return result.toStringAsFixed(2);
 }

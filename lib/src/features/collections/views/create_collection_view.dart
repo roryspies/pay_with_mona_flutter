@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
@@ -143,7 +144,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
         // Create the map entry in the exact format the server expects
         entries.add({
           'date': dateTime.toIso8601String(), // Server expects "date" key
-          'amount': controller.paymentTextcontroller.text.trim(),
+          'amount': multiplyBy100(controller.paymentTextcontroller.text.trim()),
         });
       }
     }
@@ -497,7 +498,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                 .trim())!
                                         : convertToIsoDate(
                                             _expDateController.text.trim())!,
-                                    monthlyLimit: '1',
+                                    monthlyLimit: '200',
                                     reference: _referenceController.text.trim(),
                                     type: collectionMethod.value ==
                                             CollectionsMethod.scheduled

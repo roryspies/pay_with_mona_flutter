@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
@@ -215,7 +216,7 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(child: Text('₦${_formatAmount(amount)}')),
+                            Expanded(child: Text('₦${_formatAmount(divideBy100(amount))}')),
                             Expanded(child: Text(reference ?? '')),
                             Expanded(
                               child: Column(
