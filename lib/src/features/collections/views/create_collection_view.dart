@@ -34,6 +34,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _amountController = TextEditingController();
   final _monthlyLimitController = TextEditingController();
   final _expDateController = TextEditingController();
+  final _startDateController = TextEditingController();
   final _referenceController = TextEditingController();
   final collectionMethod = CollectionsMethod.scheduled.notifier;
   final subscriptionFrequency = SubscriptionFrequency.none.notifier;
@@ -63,6 +64,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
       _referenceController,
       _amountController,
       _monthlyLimitController,
+      _startDateController,
     ];
     paymentScheduleTextControllers = [firstPayment];
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -293,11 +295,56 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   onPressed: () {},
                                 ),
                               ),
+                              if (collectionMethod.value ==
+                                  CollectionsMethod.subscription)
+                                CustomTextField(
+                                  title: 'Start date',
+                                  controller: _startDateController,
+                                  onChanged: (value) {},
+                                  suffixIcon: IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () async {
+                                      final now = DateTime.now();
+
+                                      final pickedDate = await showDatePicker(
+                                        context: context,
+                                        initialDate: now,
+                                        firstDate: DateTime(1900),
+                                        lastDate: DateTime(2100),
+                                      );
+
+                                      if (pickedDate != null) {
+                                        final pickedTime = await showTimePicker(
+                                          context: context,
+                                          initialTime:
+                                              TimeOfDay.fromDateTime(now),
+                                        );
+
+                                        if (pickedTime != null) {
+                                          final fullDateTime = DateTime(
+                                            pickedDate.year,
+                                            pickedDate.month,
+                                            pickedDate.day,
+                                            pickedTime.hour,
+                                            pickedTime.minute,
+                                          );
+
+                                          _startDateController.text =
+                                              DateFormat('HH:mm dd/MM/yy')
+                                                  .format(fullDateTime);
+                                        }
+                                      }
+                                    },
+                                  ),
+                                  inputFormatters: [
+                                    LengthLimitingTextInputFormatter(10),
+                                    FilteringTextInputFormatter
+                                        .singleLineFormatter,
+                                    DOBTextInputFormatter(),
+                                  ],
+                                ),
                               CustomTextField(
-                                title: collectionMethod.value ==
-                                        CollectionsMethod.scheduled
-                                    ? 'Expiration date'
-                                    : 'Start date',
+                                title: 'Expiration date',
                                 controller: _expDateController,
                                 onChanged: (value) {},
                                 suffixIcon: IconButton(
@@ -537,7 +584,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                 .text
                                                 .trim())!
                                         : convertToIsoDate(
-                                            _expDateController.text.trim())!,
+                                            _startDateController.text.trim())!,
                                     monthlyLimit:
                                         _monthlyLimitController.text.trim(),
                                     reference: _referenceController.text.trim(),
