@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'package:pay_with_mona/src/widgets/merchant_payment_settings_bottom_sheet_content.dart';
 
 class SDKUtils {
-  static Future<void> showMerchantSettingsModal({
+  static Future<bool> showSDKModalBottomSheet({
     required BuildContext callingContext,
+    required Widget child,
+    bool isDismissible = true,
+    bool enableDrag = true,
   }) async {
-    await showModalBottomSheet(
-      isDismissible: false,
-      isScrollControlled: true,
+    final result = await showModalBottomSheet<bool>(
       context: callingContext,
+      isDismissible: isDismissible,
+      isScrollControlled: true,
+      enableDrag: enableDrag,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(8),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
       ),
-
-      //!
       builder: (context) {
         return AnimatedPadding(
           duration: const Duration(milliseconds: 200),
@@ -25,20 +23,18 @@ class SDKUtils {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: SizedBox(
-            height: context.screenHeight * 0.4,
-            width: double.infinity,
-            child: MerchantPaymentSettingsBottomSheetContent(),
-          ),
+          child: Wrap(children: [child]),
         );
       },
     );
+
+    return result == true;
   }
-}
 
-void popMultiple(BuildContext context, int count) {
-  if (count <= 0) return;
+  static void popMultiple(BuildContext context, int count) {
+    if (count <= 0) return;
 
-  int popped = 0;
-  Navigator.of(context).popUntil((_) => popped++ >= count);
+    int popped = 0;
+    Navigator.of(context).popUntil((_) => popped++ >= count);
+  }
 }

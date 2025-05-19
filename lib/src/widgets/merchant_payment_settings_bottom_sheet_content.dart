@@ -6,7 +6,12 @@ import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 
 class MerchantPaymentSettingsBottomSheetContent extends StatefulWidget {
-  const MerchantPaymentSettingsBottomSheetContent({super.key});
+  const MerchantPaymentSettingsBottomSheetContent({
+    super.key,
+    this.transactionAmountInKobo,
+  });
+
+  final num? transactionAmountInKobo;
 
   @override
   State<MerchantPaymentSettingsBottomSheetContent> createState() =>
@@ -33,83 +38,86 @@ class _MerchantPaymentSettingsBottomSheetContentState
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  "Merchant Settings",
-                  style: TextStyle(
-                    fontSize: 21.0,
-                    fontWeight: FontWeight.w500,
-                    color: MonaColors.textHeading,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Merchant Settings",
+                    style: TextStyle(
+                      fontSize: 21.0,
+                      fontWeight: FontWeight.w500,
+                      color: MonaColors.textHeading,
+                    ),
                   ),
                 ),
-              ),
-              CircleAvatar(
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  icon: Icon(
-                    Icons.close,
-                  ),
-                ),
-              )
-            ],
-          ),
-
-          context.sbH(8.0),
-
-          ///
-          ...MerchantPaymentSettingsEnum.values.map(
-            (currentSetting) {
-              final isCurrentOption = currentSetting ==
-                  _sdkNotifier.currentMerchantPaymentSettingsEnum;
-
-              return ListTile(
-                onTap: () async {
-                  await _sdkNotifier.updateMerchantPaymentSettingsWidget(
-                    currentSetting: currentSetting,
-                    merchantID: "",
-                    onEvent: (bool isSuccessful) {
+                CircleAvatar(
+                  child: IconButton(
+                    onPressed: () {
                       Navigator.of(context).pop();
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isSuccessful
-                                ? 'Setting updated successfully.'
-                                : "Could not update settings",
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
                     },
-                  );
-                },
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  "${currentSetting.displayName} ",
-                  style: TextStyle(
-                    fontSize: 14.0,
+                    icon: Icon(
+                      Icons.close,
+                    ),
                   ),
-                ),
-                trailing: isCurrentOption
-                    ? CircleAvatar(
-                        backgroundColor:
-                            MonaColors.primaryBlue.withOpacity(0.1),
-                        child: Icon(
-                          Icons.check,
-                        ),
-                      )
-                    : null,
-              );
-            },
-          )
-        ],
+                )
+              ],
+            ),
+
+            context.sbH(8.0),
+
+            ///
+            ...MerchantPaymentSettingsEnum.values.map(
+              (currentSetting) {
+                final isCurrentOption = currentSetting ==
+                    _sdkNotifier.currentMerchantPaymentSettingsEnum;
+
+                return ListTile(
+                  onTap: () async {
+                    await _sdkNotifier.updateMerchantPaymentSettingsWidget(
+                      currentSetting: currentSetting,
+                      merchantID: "",
+                      transactionAmountInKobo: widget.transactionAmountInKobo,
+                      onEvent: (bool isSuccessful) {
+                        Navigator.of(context).pop();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isSuccessful
+                                  ? 'Setting updated successfully.'
+                                  : "Could not update settings",
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    "${currentSetting.displayName} ",
+                    style: TextStyle(
+                      fontSize: 14.0,
+                    ),
+                  ),
+                  trailing: isCurrentOption
+                      ? CircleAvatar(
+                          backgroundColor:
+                              MonaColors.primaryBlue.withOpacity(0.1),
+                          child: Icon(
+                            Icons.check,
+                          ),
+                        )
+                      : null,
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
   }

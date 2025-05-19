@@ -28,6 +28,8 @@ class ResultView extends ConsumerWidget {
         child: Column(
           children: [
             context.sbH(20),
+
+            //
             Container(
               width: double.infinity,
               color: MonaColors.neutralWhite,
@@ -49,7 +51,9 @@ class ResultView extends ConsumerWidget {
                 ],
               ),
             ),
+
             context.sbH(37),
+
             Container(
               width: double.infinity,
               color: MonaColors.neutralWhite,
