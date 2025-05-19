@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
@@ -263,12 +264,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 300),
                 child: switch (sdkNotifier.state == MonaSDKState.loading) {
-                  true => Align(
-                      alignment: Alignment.center,
-                      child: CircularProgressIndicator(
-                        color: MonaColors.primaryBlue,
-                      ),
-                    ),
+                  true => SizedBox.shrink(),
 
                   ///
                   false => SizedBox(

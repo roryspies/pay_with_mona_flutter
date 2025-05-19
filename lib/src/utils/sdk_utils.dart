@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'package:pay_with_mona/src/widgets/merchant_payment_settings_bottom_sheet_content.dart';
 
 class SDKUtils {
-  static Future<void> showMerchantSettingsModal({
+  static Future<void> showSDKModalBottomSheet({
     required BuildContext callingContext,
+    required Widget child,
+    bool isDismissible = true,
   }) async {
     await showModalBottomSheet(
-      isDismissible: false,
+      isDismissible: isDismissible,
       isScrollControlled: true,
       context: callingContext,
       backgroundColor: Colors.white,
@@ -25,10 +25,10 @@ class SDKUtils {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: SizedBox(
-            height: context.screenHeight * 0.4,
-            width: double.infinity,
-            child: MerchantPaymentSettingsBottomSheetContent(),
+          child: Wrap(
+            children: [
+              child,
+            ],
           ),
         );
       },

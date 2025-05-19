@@ -1,5 +1,7 @@
+// ignore_for_file: deprecated_member_use
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/size_config.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomButton extends StatelessWidget {
@@ -10,12 +12,14 @@ class CustomButton extends StatelessWidget {
     this.color,
     required this.label,
     this.onTap,
+    this.isLoading = false,
   });
 
   final double height;
   final double? width;
   final Color? color;
   final String label;
+  final bool isLoading;
   final Function()? onTap;
 
   @override
@@ -34,14 +38,19 @@ class CustomButton extends StatelessWidget {
         onPressed: () {
           onTap?.call();
         },
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: context.sp(14),
-            color: Color(0xFFF4FCF5),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        child: isLoading
+            ? CupertinoActivityIndicator(
+                radius: 12,
+                color: MonaColors.neutralWhite,
+              )
+            : Text(
+                label,
+                style: TextStyle(
+                  fontSize: context.sp(14),
+                  color: Color(0xFFF4FCF5),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
       ),
     );
   }

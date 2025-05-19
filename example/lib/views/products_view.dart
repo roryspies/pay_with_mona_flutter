@@ -22,13 +22,37 @@ class ProductsView extends ConsumerStatefulWidget {
 
 class _ProductsViewState extends ConsumerState<ProductsView> {
   final paymentNotifier = PaymentNotifier();
+  final sdkNotifier = MonaSDKNotifier();
   final _amountController = TextEditingController();
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
     paymentNotifier.addListener(_onPaymentStateChange);
     _amountController.text = '20';
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) {
+        sdkNotifier
+          ..confirmLoggedInUser()
+          ..sdkStateStream.listen(
+            (state) async {
+              switch (state) {
+                case MonaSDKState.loading:
+                  ('🔄 CheckoutView ==>>  SDK is Loading').log();
+                  setState(() => isLoading = true);
+                  break;
+                default:
+                  setState(() => isLoading = false);
+                  break;
+              }
+            },
+            onError: (err) {
+              ('Error from transactionStateStream: $err').log();
+            },
+          );
+      },
+    );
   }
 
   @override
@@ -139,6 +163,9 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                               return Row(
                                 children: [
                                   CustomButton(
+                                    isLoading: product == Products.checkout
+                                        ? isLoading
+                                        : false,
                                     width: product == Products.checkout
                                         ? context.w(190)
                                         : context.w(335),
@@ -146,6 +173,20 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                       context.closeKeyboard();
                                       switch (product) {
                                         case Products.checkout:
+                                          await Future.wait(
+                                            [
+                                              sdkNotifier.initiatePayment(
+                                                tnxAmountInKobo: num.parse(
+                                                      _amountController
+                                                          .value.text
+                                                          .trim(),
+                                                    ) *
+                                                    100,
+                                              ),
+                                              sdkNotifier.validatePII()
+                                            ],
+                                          );
+
                                           nav('');
                                           break;
 
@@ -213,7 +254,12 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                     context.sbH(16),
 
                     /// ***
-                    PayWithMona.paymentSettingsWidget(),
+                    PayWithMona.paymentSettingsWidget(
+                      transactionAmountInKobo: num.parse(
+                            _amountController.value.text.trim(),
+                          ) *
+                          100,
+                    ),
                   ],
                 ),
               ),
