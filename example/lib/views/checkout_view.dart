@@ -219,7 +219,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                           ),
                         ),
                         Text(
-                          "₦${widget.amount / 100}",
+                          "₦${AppUtils.formatMoney(double.parse(widget.amount.toString()))}",
                           style: TextStyle(
                             fontSize: context.sp(16),
                             fontWeight: FontWeight.w500,
