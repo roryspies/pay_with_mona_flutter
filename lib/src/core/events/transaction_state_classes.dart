@@ -56,3 +56,11 @@ class TransactionStateRequestPINTask extends TransactionState {
   final TransactionTaskModel task;
   const TransactionStateRequestPINTask({required this.task});
 }
+
+class TransactionStateNavToResult extends TransactionStateWithInfo {
+  const TransactionStateNavToResult({
+    super.transactionID,
+    super.friendlyID,
+    super.amount,
+  });
+}

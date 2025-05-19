@@ -20,20 +20,7 @@ class MerchantPaymentSettingsWidget extends StatefulWidget {
 
 class _MerchantPaymentSettingsWidgetState
     extends State<MerchantPaymentSettingsWidget> {
-  final _sdkNotifier = MonaSDKNotifier();
   final isMerchantSettingsStatusOpen = ValueNotifier<bool>(false);
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _sdkNotifier.addListener(_onSDKStateChange);
-    });
-  }
-
-  void _onSDKStateChange() {
-    if (mounted) setState(() {});
-  }
 
   @override
   Widget build(BuildContext context) {

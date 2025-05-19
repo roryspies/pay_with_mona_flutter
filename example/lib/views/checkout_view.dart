@@ -5,6 +5,7 @@ import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
+import 'package:example/views/result_view.dart';
 import 'package:example/views/utils/app_utils.dart';
 import 'package:example/views/widgets/payment_status_modal.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +36,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
-        bool isPaymentStatusModalOpen = false;
+        // bool isPaymentStatusModalOpen = false;
         sdkNotifier
           ..txnStateStream.listen(
             (state) async {
@@ -68,15 +69,16 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                   ("CheckoutView 🚀 Initiated: tx=$transactionID, amount=$amount")
                       .log();
 
-                  if (isPaymentStatusModalOpen == false) {
+                  /* if (isPaymentStatusModalOpen == false) {
                     isPaymentStatusModalOpen = true;
 
                     AppUtils.showAppModalBottomSheet(
                       isDismissible: false,
+                      enableDrag: false,
                       callingContext: context,
                       child: PaymentStatusModal(),
                     );
-                  }
+                  } */
 
                   break;
 
@@ -97,6 +99,17 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
 
                 case TransactionStateRequestPINTask(:final task):
                   ("CheckoutView 🔒 Need PIN: ${task.fieldName}").log();
+                  break;
+
+                case TransactionStateNavToResult():
+                  ("TransactionStateNavToResult … waiting …").log();
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return ResultView();
+                      },
+                    ),
+                  );
                   break;
 
                 case TransactionStateIdle():

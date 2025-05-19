@@ -47,23 +47,21 @@ class AppUtils {
     );
   }
 
-  static Future<void> showAppModalBottomSheet({
+  static Future<bool> showAppModalBottomSheet({
     required BuildContext callingContext,
     required Widget child,
     bool isDismissible = true,
+    bool enableDrag = true,
   }) async {
-    await showModalBottomSheet(
+    final result = await showModalBottomSheet<bool>(
+      context: callingContext,
       isDismissible: isDismissible,
       isScrollControlled: true,
-      context: callingContext,
+      enableDrag: enableDrag,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(8),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
       ),
-
-      //!
       builder: (context) {
         return AnimatedPadding(
           duration: const Duration(milliseconds: 200),
@@ -71,14 +69,12 @@ class AppUtils {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: Wrap(
-            children: [
-              child,
-            ],
-          ),
+          child: Wrap(children: [child]),
         );
       },
     );
+
+    return result == true;
   }
 
   static void popMultiple(BuildContext context, int count) {
