@@ -129,23 +129,21 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     final entries = <Map<String, dynamic>>[];
 
     for (final controller in paymentScheduleTextControllers) {
-      // Only add if both payment amount and date are filled
       if (controller.paymentTextcontroller.text.isNotEmpty &&
           controller.dateTextcontroller.text.isNotEmpty) {
-        // Parse the date and time from the format "HH:mm dd/MM/yy"
         final dateTimeStr = controller.dateTextcontroller.text;
         DateTime? dateTime;
 
         try {
-          dateTime = DateFormat('HH:mm dd/MM/yy').parse(dateTimeStr);
+          final parsed = DateFormat('HH:mm dd/MM/yy').parseStrict(dateTimeStr);
+          dateTime = parsed.toUtc(); // Convert to UTC like convertToIsoDate
         } catch (e) {
           print('Error parsing date: $e');
-          continue; // Skip this entry if date parsing fails
+          continue;
         }
 
-        // Create the map entry in the exact format the server expects
         entries.add({
-          'date': dateTime.toIso8601String(), // Server expects "date" key
+          'date': dateTime.toIso8601String(), // UTC ISO format
           'amount': multiplyBy100(controller.paymentTextcontroller.text.trim()),
         });
       }
@@ -575,15 +573,14 @@ String? convertToIsoDate(dynamic input) {
       // Try to parse as "HH:mm dd/MM/yy" format first
       try {
         final parsedDateTime = DateFormat('HH:mm dd/MM/yy').parseStrict(input);
-        return parsedDateTime
-            .toIso8601String(); // Return full ISO string with time
+        return parsedDateTime.toUtc().toIso8601String(); // Convert to UTC
       } catch (_) {
         // Fall back to original format "dd/MM/yyyy" if first format fails
         final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(input);
-        return parsedDate.toIso8601String().split('T').first;
+        return parsedDate.toUtc().toIso8601String().split('T').first;
       }
     } else if (input is DateTime) {
-      return input.toIso8601String();
+      return input.toUtc().toIso8601String(); // Convert to UTC
     } else {
       throw FormatException('Unsupported type');
     }

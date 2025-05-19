@@ -263,7 +263,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                         maximumAmount: collection.maxAmount,
                                         expiryDate: collection.expiryDate!,
                                         startDate: collection.startDate!,
-                                        monthlyLimit: '2',
+                                        monthlyLimit: collection.monthlyLimit!,
                                         reference: collection.reference,
                                         type: widget.method ==
                                                 CollectionsMethod.scheduled
