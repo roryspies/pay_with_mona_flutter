@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class SDKUtils {
+  static String formatMoney(double price) {
+    final lastValue = (price / 100).toString().split(".").last.toLowerCase();
+
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '',
+      decimalDigits: (lastValue == "0" || lastValue == "00") ? 0 : 2,
+    );
+
+    return currencyFormatter.format(price / 100);
+  }
+
   static Future<bool> showSDKModalBottomSheet({
     required BuildContext callingContext,
     required Widget child,
