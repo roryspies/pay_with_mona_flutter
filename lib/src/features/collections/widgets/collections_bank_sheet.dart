@@ -14,6 +14,7 @@ import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
 class CollectionsBankSheet extends StatefulWidget {
@@ -23,11 +24,13 @@ class CollectionsBankSheet extends StatefulWidget {
     required this.method,
     required this.merchantName,
     required this.scheduleEntries,
+    required this.debitType,
   });
 
   final Collection? details;
   final CollectionsMethod method;
   final String merchantName;
+  final String debitType;
   final List<Map<String, dynamic>> scheduleEntries;
 
   @override
@@ -51,6 +54,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   void initState() {
     super.initState();
     sdkNotifier.addListener(_onSdkStateChange);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      sdkNotifier.validatePII();
+    });
   }
 
   void _onSdkStateChange() => setState(() {});
@@ -106,17 +112,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: context.h(36),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: MonaColors.primaryBlue,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-              ),
-            ),
+            BottomSheetTopHeader(),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: context.w(16))
                   .copyWith(top: context.h(20), bottom: context.h(21)),
@@ -260,13 +256,14 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
                                       sdkNotifier.createCollections(
+                                        debitType: widget.debitType,
                                         bankId: selectedBank?.bankId ??
                                             '680f5d983bccd31f1312645d',
                                         scheduleEntries: widget.scheduleEntries,
                                         maximumAmount: collection.maxAmount,
                                         expiryDate: collection.expiryDate!,
                                         startDate: collection.startDate!,
-                                        monthlyLimit: '1',
+                                        monthlyLimit: collection.monthlyLimit!,
                                         reference: collection.reference,
                                         type: widget.method ==
                                                 CollectionsMethod.scheduled
@@ -277,7 +274,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                         amount: widget.method ==
                                                 CollectionsMethod.scheduled
                                             ? null
-                                            : collection.maxAmount,
+                                            : schedule.amount,
                                         merchantId: '67e41f884126830aded0b43c',
                                         onSuccess: (successMap) {
                                           Navigator.of(context).pop();
@@ -287,6 +284,8 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                             builder: (_) => Wrap(
                                               children: [
                                                 CollectionsCheckoutSheet(
+                                                  debitType: widget.debitType,
+                                                  selectedBank: selectedBank,
                                                   successMap: successMap,
                                                   showSuccess: true,
                                                   scheduleEntries:
@@ -306,6 +305,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                                           schedule.frequency,
                                                       type: schedule.type,
                                                       entries: schedule.entries,
+                                                      amount: schedule.amount,
                                                     ),
                                                     reference: widget
                                                         .details!.reference,

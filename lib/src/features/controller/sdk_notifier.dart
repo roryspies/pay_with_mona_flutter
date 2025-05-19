@@ -663,6 +663,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String frequency,
     required String? amount,
     required String merchantId,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
     void Function()? onFailure,
@@ -671,28 +672,29 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     _firebaseSSE.initialize();
     try {
-      final (Map<String, dynamic>? success, failure) =
-          await _collectionsService.createCollections(
-              bankId: bankId,
-              maximumAmount: maximumAmount,
-              expiryDate: expiryDate,
-              startDate: startDate,
-              monthlyLimit: monthlyLimit,
-              reference: reference,
-              type: type,
-              frequency: frequency,
-              amount: amount,
-              merchantId: merchantId,
-              scheduleEntries: scheduleEntries);
-
-      if (failure != null) {
-        onFailure?.call();
-      }
-
-      if (success != null) {
-        success.log();
-        onSuccess?.call(success);
-      }
+      await _collectionsService.createCollectionRequest(
+        debitType: debitType,
+        bankId: bankId,
+        maximumAmount: maximumAmount,
+        expiryDate: expiryDate,
+        startDate: startDate,
+        monthlyLimit: monthlyLimit,
+        reference: reference,
+        type: type,
+        frequency: frequency,
+        amount: amount,
+        merchantId: merchantId,
+        scheduleEntries: scheduleEntries,
+        onComplete: (res, p) {
+          final success = res as Map<String, dynamic>;
+          success.log();
+          onSuccess?.call(success);
+        },
+        onError: () {
+          _updateState(MonaSDKState.error);
+          onFailure?.call();
+        },
+      );
 
       _updateState(MonaSDKState.success);
     } catch (e) {
@@ -765,6 +767,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String merchantId,
     required String merchantName,
     required CollectionsMethod method,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
   }) async {
@@ -778,6 +781,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       builder: (_) => Wrap(
         children: [
           CollectionsCheckoutSheet(
+            debitType: debitType,
             scheduleEntries: scheduleEntries,
             method: method,
             details: Collection(
@@ -788,6 +792,7 @@ class MonaSDKNotifier extends ChangeNotifier {
               schedule: Schedule(
                 frequency: frequency,
                 type: type,
+                amount: amount,
                 entries: [],
               ),
               reference: reference,
@@ -802,7 +807,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<void> collectionHandOffToAuth({
-    required Function(bool)? onKeyExchange,
+    required Function()? onKeyExchange,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -822,10 +827,9 @@ class MonaSDKNotifier extends ChangeNotifier {
         withRedirect: false,
         isFromCollections: true,
       );
-      onKeyExchange?.call(true);
-    } else {
-      onKeyExchange?.call(false);
     }
+
+    onKeyExchange?.call();
 
     _updateState(MonaSDKState.idle);
   }

@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
+
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/trigger_result_view.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
@@ -28,6 +32,10 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
   final sdkNotifier = MonaSDKNotifier();
 
   final showMore = false.notifier;
+  String? _popupMessage;
+  bool _showPopup = false;
+  bool isError = false;
+  Timer? _popupTimer;
 
   @override
   void initState() {
@@ -86,6 +94,24 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
         builder: (context) => TriggerResultView(successMap: widget.successMap),
       ),
     );
+  }
+
+  void showPopupMessage(String message,
+      {Duration duration = const Duration(seconds: 2)}) {
+    setState(() {
+      _popupMessage = message;
+      _showPopup = true;
+    });
+
+    // Auto-hide after duration
+    _popupTimer?.cancel();
+    _popupTimer = Timer(duration, () {
+      if (mounted) {
+        setState(() {
+          _showPopup = false;
+        });
+      }
+    });
   }
 
   @override
@@ -208,7 +234,9 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(child: Text('₦${_formatAmount(amount)}')),
+                            Expanded(
+                                child: Text(
+                                    '₦${_formatAmount(divideBy100(amount))}')),
                             Expanded(child: Text(reference ?? '')),
                             Expanded(
                               child: Column(
@@ -272,12 +300,15 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                                   ..triggerCollection(
                                       merchantId: '67e41f884126830aded0b43c',
                                       timeFactor: switch (timeFactor.value) {
-                                        TimeFactor.day => 1,
-                                        TimeFactor.week => 7,
-                                        TimeFactor.month => 30,
+                                        TimeFactor.day => 24 * 60,
+                                        TimeFactor.week => 7 * 24 * 60,
+                                        TimeFactor.month => 30 * 24 * 60,
                                       },
                                       onSuccess: (p0) async {
-                                        showSnackBar(
+                                        setState(() {
+                                          isError = false;
+                                        });
+                                        showPopupMessage(
                                             'Collection triggered successfully');
 
                                         await Future.delayed(
@@ -286,7 +317,8 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                                         nav();
                                       },
                                       onError: (message) {
-                                        showSnackBar(message);
+                                        isError = true;
+                                        showPopupMessage(message);
                                       });
                               },
                               label: 'Continue',
@@ -295,6 +327,61 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                   ),
                 );
               }),
+
+              if (_showPopup && _popupMessage != null) ...[
+                context.sbH(40),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 400),
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: context.w(20))
+                        .copyWith(top: context.h(24)),
+                    padding: EdgeInsets.symmetric(
+                      vertical: context.h(10),
+                      horizontal: context.w(16),
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isError ? Colors.red.shade700 : Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: context.w(20),
+                        ),
+                        context.sbW(8),
+                        Expanded(
+                          child: Text(
+                            _popupMessage!,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: context.sp(14),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                context.sbH(20),
+              ],
             ],
           ),
         ),

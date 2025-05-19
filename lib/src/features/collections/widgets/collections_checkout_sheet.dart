@@ -11,9 +11,11 @@ import 'package:pay_with_mona/src/features/collections/controller/notifier_enums
 import 'package:pay_with_mona/src/features/collections/widgets/collections_bank_sheet.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_trigger_view.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
+import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
 class CollectionsCheckoutSheet extends StatefulWidget {
@@ -25,6 +27,8 @@ class CollectionsCheckoutSheet extends StatefulWidget {
     required this.scheduleEntries,
     this.showSuccess = false,
     this.successMap,
+    this.selectedBank,
+    required this.debitType,
   });
 
   final Collection? details;
@@ -33,6 +37,8 @@ class CollectionsCheckoutSheet extends StatefulWidget {
   final List<Map<String, dynamic>> scheduleEntries;
   final bool showSuccess;
   final Map<String, dynamic>? successMap;
+  final BankOption? selectedBank;
+  final String debitType;
 
   @override
   State<CollectionsCheckoutSheet> createState() =>
@@ -97,7 +103,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
     });
   }
 
-  void showCheckoutSheet() {
+  void showBankSheet() {
     Navigator.of(context).pop();
     showModalBottomSheet(
       context: context,
@@ -105,6 +111,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
       builder: (_) => Wrap(
         children: [
           CollectionsBankSheet(
+            debitType: widget.debitType,
             method: widget.method,
             merchantName: widget.merchantName,
             scheduleEntries: widget.scheduleEntries,
@@ -132,17 +139,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: context.h(36),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: MonaColors.primaryBlue,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-              ),
-            ),
+            BottomSheetTopHeader(),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: context.w(16))
                   .copyWith(top: context.h(20), bottom: context.h(21)),
@@ -206,7 +203,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                           ),
                         ),
                         context.sbH(24),
-                        if (_showSuccessState) ...[
+                        if (_showSuccessState &&
+                            widget.selectedBank != null) ...[
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
@@ -224,13 +222,16 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                             spacing: context.w(8),
                             children: [
                               CircleAvatar(
-                                radius: context.w(18),
-                              ),
+                                  radius: context.w(18),
+                                  child: Image.network(
+                                    widget.selectedBank?.logo ?? "",
+                                  )),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Bank Name',
+                                    widget.selectedBank?.bankName ??
+                                        'Bank name',
                                     textAlign: TextAlign.start,
                                     style: TextStyle(
                                       fontSize: context.sp(14),
@@ -239,7 +240,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     ),
                                   ),
                                   Text(
-                                    'Account number',
+                                    widget.selectedBank?.accountNumber ??
+                                        'Account number',
                                     textAlign: TextAlign.start,
                                     style: TextStyle(
                                       fontSize: context.sp(12),
@@ -475,7 +477,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     ),
                                   )
                                 : CustomButton(
-                                    label: 'Continue to Mona',
+                                    label: _showSuccessState
+                                        ? 'Continue'
+                                        : 'Continue to Mona',
                                     onTap: () async {
                                       if (_showSuccessState) {
                                         Navigator.of(context).pop();
@@ -494,13 +498,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                       }
 
                                       await sdkNotifier.collectionHandOffToAuth(
-                                          onKeyExchange: (value) {
-                                        if (value) {
-                                          showCheckoutSheet();
-                                        } else {
-                                          showPopupMessage('NO KEY ID, ENROL');
-                                          'NO KEY ID, ENROL'.log();
-                                        }
+                                          onKeyExchange: () {
+                                        showBankSheet();
                                       });
                                     },
                                   );
