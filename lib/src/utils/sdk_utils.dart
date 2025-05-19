@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class SDKUtils {
-  //TransferStatusModal()
-  static Future<void> showMerchantSettingsModal({
+  static Future<void> showSDKModalBottomSheet({
     required BuildContext callingContext,
     required Widget child,
+    bool isDismissible = true,
   }) async {
     await showModalBottomSheet(
-      isDismissible: false,
+      isDismissible: isDismissible,
       isScrollControlled: true,
       context: callingContext,
       backgroundColor: Colors.white,

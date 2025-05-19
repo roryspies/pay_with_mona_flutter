@@ -6,7 +6,12 @@ import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 
 class MerchantPaymentSettingsBottomSheetContent extends StatefulWidget {
-  const MerchantPaymentSettingsBottomSheetContent({super.key});
+  const MerchantPaymentSettingsBottomSheetContent({
+    super.key,
+    this.transactionAmountInKobo,
+  });
+
+  final num? transactionAmountInKobo;
 
   @override
   State<MerchantPaymentSettingsBottomSheetContent> createState() =>
@@ -74,6 +79,7 @@ class _MerchantPaymentSettingsBottomSheetContentState
                     await _sdkNotifier.updateMerchantPaymentSettingsWidget(
                       currentSetting: currentSetting,
                       merchantID: "",
+                      transactionAmountInKobo: widget.transactionAmountInKobo,
                       onEvent: (bool isSuccessful) {
                         Navigator.of(context).pop();
 

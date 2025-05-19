@@ -257,6 +257,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required MerchantPaymentSettingsEnum currentSetting,
     required String merchantID,
     required Function(bool isSuccessful) onEvent,
+    num? transactionAmountInKobo,
   }) async {
     try {
       _sdkStateStream.emit(state: MonaSDKState.loading);
@@ -264,7 +265,14 @@ class MonaSDKNotifier extends ChangeNotifier {
       _merchantPaymentSettingsEnum = currentSetting;
       notifyListeners();
 
-      final (success, failure) = await _paymentsService.updateMerchantSettings(
+      if (transactionAmountInKobo == null && _monaCheckOut?.amount == null) {
+        _handleError("Transaction Amount cannot be null or empty");
+        return;
+      }
+
+      final (success, failure) = await _paymentsService.initiatePayment(
+        tnxAmountInKobo: transactionAmountInKobo ?? _monaCheckOut!.amount,
+
         /// *** TODO: @Serticode - Update this to use the value passed in the params
         merchantID: "67e41f884126830aded0b43c",
         successRateType: _merchantPaymentSettingsEnum.paymentName,
@@ -281,7 +289,10 @@ class MonaSDKNotifier extends ChangeNotifier {
       onEvent(true);
 
       if (success != null) {
-        _handleTransactionId(success["transactionId"]);
+        _handleTransactionId(
+          success["transactionId"],
+          friendlyID: success["friendlyID"],
+        );
       }
 
       _sdkStateStream.emit(state: MonaSDKState.idle);
@@ -297,15 +308,32 @@ class MonaSDKNotifier extends ChangeNotifier {
         key: SecureStorageKeys.keyID,
       );
 
+  Future<void> confirmLoggedInUser() async {
+    final isLoggedIn = await _secureStorage.read(
+      key: SecureStorageKeys.keyID,
+    );
+
+    if (isLoggedIn != null) {
+      _authStream.emit(state: AuthState.loggedIn);
+      await validatePII(isFromConfirmLoggedInUser: true);
+      return;
+    } else {
+      _authStream.emit(state: AuthState.loggedOut);
+    }
+  }
+
   ///
   /// *** MARK: -  Major Methods
   Future<void> validatePII({
     String? phoneNumber,
     String? bvn,
     String? dob,
+    bool isFromConfirmLoggedInUser = false,
     void Function(String)? onEffect,
   }) async {
-    _updateState(MonaSDKState.loading);
+    if (isFromConfirmLoggedInUser == false) {
+      _updateState(MonaSDKState.loading);
+    }
 
     final userKeyID = await checkIfUserHasKeyID();
 
@@ -362,14 +390,24 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 3. Handles failure or missing transaction ID.
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
-  Future<void> _initiatePayment({
+  Future<void> initiatePayment({
     required num tnxAmountInKobo,
   }) async {
     _updateState(MonaSDKState.loading);
 
+    if (_currentTransactionId != null) {
+      "initiatePayment ::: Active transaction ID found: $_currentTransactionId"
+          .log();
+      return;
+    }
+
     final (Map<String, dynamic>? success, failure) =
         await _paymentsService.initiatePayment(
       tnxAmountInKobo: tnxAmountInKobo,
+
+      /// *** TODO: @Serticode - Update this to use the value passed in the params
+      merchantID: "67e41f884126830aded0b43c",
+      successRateType: _merchantPaymentSettingsEnum.paymentName,
     );
 
     if (failure != null) {
@@ -444,7 +482,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
     if (_currentTransactionId == null) {
-      await _initiatePayment(
+      await initiatePayment(
         tnxAmountInKobo: _monaCheckOut!.amount,
       );
     }
@@ -492,11 +530,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
               _currentTransactionFriendlyID = res["friendlyID"];
               _sdkStateStream.emit(state: MonaSDKState.transactionInitiated);
-
-              /* clearSelectedPaymentMethod();
-              _currentTransactionId = null;
-              _transactionOTP = null;
-              _transactionPIN = null; */
             },
           );
 
