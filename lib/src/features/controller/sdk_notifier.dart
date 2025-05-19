@@ -253,6 +253,17 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void handleNavToConfirmationScreen() {
+    _txnStateStream.emit(
+      state: TransactionStateNavToResult(
+        transactionID: _currentTransactionId,
+        friendlyID: _currentTransactionFriendlyID,
+        amount: _monaCheckOut?.amount,
+      ),
+    );
+    notifyListeners();
+  }
+
   Future<void> updateMerchantPaymentSettingsWidget({
     required MerchantPaymentSettingsEnum currentSetting,
     required String merchantID,
@@ -394,13 +405,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     required num tnxAmountInKobo,
   }) async {
     _updateState(MonaSDKState.loading);
-
-    if (_currentTransactionId != null) {
-      "initiatePayment ::: Active transaction ID found: $_currentTransactionId"
-          .log();
-      return;
-    }
-
     final (Map<String, dynamic>? success, failure) =
         await _paymentsService.initiatePayment(
       tnxAmountInKobo: tnxAmountInKobo,
@@ -460,6 +464,17 @@ class MonaSDKNotifier extends ChangeNotifier {
       "initKeyExchange ERROR ::: $error ::: TRACE ::: $trace".log();
       _handleError("Error Initiating Key Exchange");
       rethrow;
+    }
+  }
+
+  Future<void> confirmMakePayment({
+    required bool shouldMakePayment,
+  }) async {
+    if (shouldMakePayment) {
+      _updateState(MonaSDKState.loading);
+      await makePayment();
+    } else {
+      _updateState(MonaSDKState.idle);
     }
   }
 

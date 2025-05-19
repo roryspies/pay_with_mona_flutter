@@ -234,6 +234,14 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                           icon: Icon(Icons.edit),
                                           onPressed: () {},
                                         ),
+                                        onEditingComplete: () {
+                                          context.closeKeyboard();
+                                          "EDITING COMPLETE".log();
+                                        },
+                                        onFieldSubmitted: (p0) {
+                                          context.closeKeyboard();
+                                          "FIELD SUBMITTED COMPLETE".log();
+                                        },
                                         keyboardType: TextInputType.number,
                                         inputFormatters: [
                                           // ThousandsFormatter(),

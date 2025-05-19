@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+/* // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 import 'package:example/utils/custom_button.dart';
 import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
@@ -227,9 +227,44 @@ class _PaymentStatusModalState extends State<PaymentStatusModal>
                   ),
                   color: MonaColors.primary,
                 ),
-                child: Image.asset(
-                  "lagos_city".png,
-                  fit: BoxFit.fitWidth,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset(
+                        "lagos_city".png,
+                        fit: BoxFit.fitWidth,
+                      ),
+                    ),
+
+                    ///
+                    Positioned(
+                      right: 16,
+                      top: 0,
+                      bottom: 0,
+                      child: InkWell(
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return ResultView();
+                              },
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          backgroundColor:
+                              MonaColors.neutralWhite.withOpacity(0.2),
+                          radius: 12,
+                          child: Icon(
+                            Icons.close,
+                            color: MonaColors.textHeading,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -505,3 +540,4 @@ class PaymentStageWidget extends StatelessWidget {
     );
   }
 }
+ */

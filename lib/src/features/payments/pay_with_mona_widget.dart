@@ -1,11 +1,13 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
+import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
+import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
 
 class PayWithMonaWidget extends StatefulWidget {
@@ -261,94 +263,92 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
               context.sbH(16.0),
 
               ///
-              AnimatedSwitcher(
-                duration: Duration(milliseconds: 300),
-                child: switch (sdkNotifier.state == MonaSDKState.loading) {
-                  true => SizedBox.shrink(),
-
-                  ///
-                  false => SizedBox(
-                      width: double.infinity,
-                      height: context.h(50),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor: sdkNotifier.selectedPaymentMethod ==
-                                  PaymentMethod.none
-                              ? MonaColors.primaryBlue.withAlpha(100)
-                              : MonaColors.primaryBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+              CustomButton(
+                label: "",
+                isLoading: sdkNotifier.state == MonaSDKState.loading,
+                color: (sdkNotifier.selectedPaymentMethod == PaymentMethod.none)
+                    ? MonaColors.primaryBlue.withAlpha(100)
+                    : MonaColors.primaryBlue,
+                child: switch ([
+                  PaymentMethod.none,
+                  PaymentMethod.card,
+                  PaymentMethod.transfer
+                ].contains(sdkNotifier.selectedPaymentMethod)) {
+                  true => Text(
+                      "Proceed to Pay",
+                      style: TextStyle(
+                        fontSize: context.sp(14),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  false => Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "OneTap   |   ",
+                          style: TextStyle(
+                            fontSize: context.sp(14),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        onPressed: () async {
-                          sdkNotifier
-                            ..setCallingBuildContext(context: context)
-                            ..makePayment();
-                        },
-                        child: switch ([
-                          PaymentMethod.none,
-                          PaymentMethod.card,
-                          PaymentMethod.transfer
-                        ].contains(sdkNotifier.selectedPaymentMethod)) {
-                          true => Text(
-                              "Proceed to Pay",
-                              style: TextStyle(
-                                fontSize: context.sp(14),
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
+
+                        //!
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: MonaColors.primaryBlue,
+                          backgroundImage: switch (
+                              sdkNotifier.selectedPaymentMethod ==
+                                  PaymentMethod.savedBank) {
+                            true => NetworkImage(
+                                sdkNotifier.selectedBankOption?.logo ?? "",
                               ),
-                            ),
-                          false => Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "OneTap   |   ",
-                                  style: TextStyle(
-                                    fontSize: context.sp(14),
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                            false => NetworkImage(
+                                sdkNotifier.selectedCardOption?.logo ?? "",
+                              ),
+                          },
+                        ),
 
-                                //!
-                                CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor: MonaColors.primaryBlue,
-                                  backgroundImage: switch (
-                                      sdkNotifier.selectedPaymentMethod ==
-                                          PaymentMethod.savedBank) {
-                                    true => NetworkImage(
-                                        sdkNotifier.selectedBankOption?.logo ??
-                                            "",
-                                      ),
-                                    false => NetworkImage(
-                                        sdkNotifier.selectedCardOption?.logo ??
-                                            "",
-                                      ),
-                                  },
-                                ),
-
-                                //!
-                                Text(
-                                  switch (sdkNotifier.selectedPaymentMethod ==
-                                      PaymentMethod.savedBank) {
-                                    true =>
-                                      "  ${sdkNotifier.selectedBankOption?.accountNumber}",
-                                    false =>
-                                      "  ${sdkNotifier.selectedCardOption?.accountNumber}",
-                                  },
-                                  style: TextStyle(
-                                    fontSize: context.sp(14),
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                )
-                              ],
-                            ),
-                        },
+                        //!
+                        Text(
+                          switch (sdkNotifier.selectedPaymentMethod ==
+                              PaymentMethod.savedBank) {
+                            true =>
+                              "  ${sdkNotifier.selectedBankOption?.accountNumber}",
+                            false =>
+                              "  ${sdkNotifier.selectedCardOption?.accountNumber}",
+                          },
+                          style: TextStyle(
+                            fontSize: context.sp(14),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )
+                      ],
+                    ),
+                },
+                onTap: () async {
+                  if (sdkNotifier.selectedPaymentMethod == PaymentMethod.none) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Please select a payment method",
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        duration: Duration(seconds: 2),
                       ),
-                    )
+                    );
+                    return;
+                  }
+
+                  await SDKUtils.showSDKModalBottomSheet(
+                    callingContext: context,
+                    child: ConfirmTransactionModal(
+                      selectedPaymentMethod: sdkNotifier.selectedPaymentMethod,
+                      transactionAmountInKobo: widget.monaCheckOut.amount,
+                    ),
+                  );
                 },
               ),
 

@@ -5,7 +5,12 @@ import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 
 class SecuredByMona extends StatelessWidget {
-  const SecuredByMona({super.key});
+  const SecuredByMona({
+    super.key,
+    this.title,
+  });
+
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +19,7 @@ class SecuredByMona extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          "Secured by",
+          title ?? "Secured by",
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -22,7 +27,7 @@ class SecuredByMona extends StatelessWidget {
           ),
         ),
 
-        context.sbW(8.0),
+        context.sbW(4.0),
 
         ///
         SvgPicture.asset(
