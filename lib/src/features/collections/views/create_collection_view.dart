@@ -292,16 +292,34 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   icon: Icon(Icons.edit),
                                   onPressed: () async {
                                     final now = DateTime.now();
+
                                     final pickedDate = await showDatePicker(
                                       context: context,
                                       initialDate: now,
-                                      firstDate: DateTime(2000),
+                                      firstDate: DateTime(1900),
                                       lastDate: DateTime(2100),
                                     );
+
                                     if (pickedDate != null) {
-                                      _expDateController.text =
-                                          DateFormat('dd/MM/yyyy')
-                                              .format(pickedDate);
+                                      final pickedTime = await showTimePicker(
+                                        context: context,
+                                        initialTime:
+                                            TimeOfDay.fromDateTime(now),
+                                      );
+
+                                      if (pickedTime != null) {
+                                        final fullDateTime = DateTime(
+                                          pickedDate.year,
+                                          pickedDate.month,
+                                          pickedDate.day,
+                                          pickedTime.hour,
+                                          pickedTime.minute,
+                                        );
+
+                                        _expDateController.text =
+                                            DateFormat('HH:mm dd/MM/yy')
+                                                .format(fullDateTime);
+                                      }
                                     }
                                   },
                                 ),

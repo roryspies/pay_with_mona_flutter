@@ -284,10 +284,10 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                                         showSnackBar(
                                             'Collection triggered successfully');
 
-                                        await Future.delayed(
-                                            Duration(seconds: 2));
+                                        // await Future.delayed(
+                                        //     Duration(seconds: 2));
 
-                                        nav();
+                                        // nav();
                                       },
                                       onError: (message) {
                                         showSnackBar(message);
