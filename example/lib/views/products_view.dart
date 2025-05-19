@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/services/payment_notifier.dart';
 import 'package:example/utils/custom_button.dart';
@@ -40,10 +42,10 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
               switch (state) {
                 case MonaSDKState.loading:
                   ('🔄 CheckoutView ==>>  SDK is Loading').log();
-                  setState(() => isLoading = true);
+                  if (mounted) setState(() => isLoading = true);
                   break;
                 default:
-                  setState(() => isLoading = false);
+                  if (mounted) setState(() => isLoading = false);
                   break;
               }
             },
@@ -135,7 +137,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                 ),
                               ),
                               Text(
-                                "NGdeals",
+                                "NGDeals",
                                 style: TextStyle(
                                   fontSize: context.sp(36),
                                   fontWeight: FontWeight.w500,
@@ -173,7 +175,12 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                       context.closeKeyboard();
                                       switch (product) {
                                         case Products.checkout:
-                                          await Future.wait(
+                                          sdkNotifier.setCallingBuildContext(
+                                            context: context,
+                                          );
+
+                                          final result =
+                                              await Future.wait<Object?>(
                                             [
                                               sdkNotifier.initiatePayment(
                                                 tnxAmountInKobo: num.parse(
@@ -187,7 +194,23 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                             ],
                                           );
 
-                                          nav('');
+                                          final bool initiateSuccessful =
+                                              result[0] as bool;
+
+                                          if (initiateSuccessful) {
+                                            nav('');
+                                            return;
+                                          }
+
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Payment initiation failed. Please try again.'),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+
                                           break;
 
                                         case Products.collections:

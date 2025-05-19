@@ -6,7 +6,6 @@ import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/sdk_strings.dart';
-import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/sdk_payment_status_modal.dart';
@@ -141,11 +140,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                       bottom: 0,
                       child: InkWell(
                         onTap: () {
-                          if (showTransactionStatusIndicator) {
-                            _sdkNotifier.resetSDKState();
-                            SDKUtils.popMultiple(context, 2);
-                            return;
-                          }
                           Navigator.of(context).pop();
                         },
                         child: CircleAvatar(

@@ -1,10 +1,23 @@
 import 'package:example/utils/size_config.dart';
 import 'package:example/views/widgets/otp_or_pin_modal_content.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class AppUtils {
+  static String formatMoney(double price) {
+    final lastValue = (price / 100).toString().split(".").last.toLowerCase();
+
+    // Use NumberFormat to format the number as currency
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '',
+      decimalDigits: (lastValue == "0" || lastValue == "00") ? 0 : 2,
+    );
+
+    return currencyFormatter.format(price / 100);
+  }
+
   static Future<void> showOTPModal(
     BuildContext ctx,
     Function(String) onOtp, {

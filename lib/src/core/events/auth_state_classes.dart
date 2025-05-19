@@ -33,6 +33,10 @@ class AuthStateGeneratingPublicKey extends AuthState {
   const AuthStateGeneratingPublicKey();
 }
 
+class AuthStateConfirmKeyEnrollment extends AuthState {
+  const AuthStateConfirmKeyEnrollment();
+}
+
 /// Currently generating a signature
 class AuthStateGeneratingSignature extends AuthState {
   final String rawData;

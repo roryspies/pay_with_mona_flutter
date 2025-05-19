@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
@@ -118,7 +119,7 @@ class TriggerResultView extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(child: Text('₦${_formatAmount(amount)}')),
+                            Expanded(child: Text('₦${_formatAmount(divideBy100(amount))}')),
                             Expanded(child: Text(reference ?? '')),
                             Expanded(
                               child: Column(

@@ -21,8 +21,11 @@ import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
+
+import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
@@ -93,6 +96,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   Completer<String>? _pinOrOTPCompleter;
+  Completer<bool>? _confirmKeyEnrolmentCompleter;
 
   /// Current payment process state.
   MonaSDKState get state => _state;
@@ -356,7 +360,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     );
 
     if (response == null) {
-      _handleError("Failed to validate user PII - Experienced an Error");
+      //_handleError("Failed to validate user PII - Experienced an Error");
       onEffect?.call("Failed to validate user PII - Experienced an Error");
       return;
     }
@@ -401,36 +405,44 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 3. Handles failure or missing transaction ID.
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
-  Future<void> initiatePayment({
+  Future<bool> initiatePayment({
     required num tnxAmountInKobo,
   }) async {
     _updateState(MonaSDKState.loading);
-    final (Map<String, dynamic>? success, failure) =
-        await _paymentsService.initiatePayment(
-      tnxAmountInKobo: tnxAmountInKobo,
 
-      /// *** TODO: @Serticode - Update this to use the value passed in the params
-      merchantID: "67e41f884126830aded0b43c",
-      successRateType: _merchantPaymentSettingsEnum.paymentName,
-    );
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _paymentsService.initiatePayment(
+        tnxAmountInKobo: tnxAmountInKobo,
 
-    if (failure != null) {
-      _handleError("Payment initiation failed. Please try again.");
-      throw (failure.message);
+        /// *** TODO: @Serticode - Update this to use the value passed in the params
+        merchantID: "67e41f884126830aded0b43c",
+        successRateType: _merchantPaymentSettingsEnum.paymentName,
+      );
+
+      if (failure != null) {
+        _handleError("Payment initiation failed. Please try again.");
+        throw (failure.message);
+      }
+
+      final txId = success?["transactionId"] as String?;
+      final friendlyID = success?["friendlyID"] as String?;
+      if (txId == null || friendlyID == null) {
+        _handleError("Invalid response from payment service.");
+        return false;
+      }
+
+      _handleTransactionId(
+        txId,
+        friendlyID: friendlyID,
+      );
+      _updateState(MonaSDKState.idle);
+      return true;
+    } catch (error) {
+      _updateState(MonaSDKState.idle);
+      "MonaSDKNotifier ::: initiatePayment ::: ERROR ::: $error".log();
+      return false;
     }
-
-    final txId = success?["transactionId"] as String?;
-    final friendlyID = success?["friendlyID"] as String?;
-    if (txId == null || friendlyID == null) {
-      _handleError("Invalid response from payment service.");
-      return;
-    }
-
-    _handleTransactionId(
-      txId,
-      friendlyID: friendlyID,
-    );
-    _updateState(MonaSDKState.idle);
   }
 
   /// Initializes key exchange process by generating a session ID, listening for auth events,
@@ -598,23 +610,42 @@ class MonaSDKNotifier extends ChangeNotifier {
         return;
       }
 
-      await _authService.signAndCommitAuthKeys(
-        deviceAuth: response["deviceAuth"],
-        onSuccess: () async {
-          final userCheckoutID = await _secureStorage.read(
-            key: SecureStorageKeys.monaCheckoutID,
-          );
+      final canEnrollKeys = await SDKUtils.showSDKModalBottomSheet(
+        callingContext: _callingBuildContext!,
+        child: ConfirmKeyExchangeModal(),
+      );
 
-          if (userCheckoutID == null) {
-            _handleError("User identifier missing.");
-            return;
-          }
+      if (canEnrollKeys) {
+        "USER ALLOWED TO ENROLL KEYS".log();
+        return await _authService.signAndCommitAuthKeys(
+          deviceAuth: response["deviceAuth"],
+          onSuccess: () async {
+            final userCheckoutID = await _secureStorage.read(
+              key: SecureStorageKeys.monaCheckoutID,
+            );
 
-          _updateState(MonaSDKState.success);
-          _authStream.emit(state: AuthState.loggedIn);
-          validatePII();
-          resetSDKState(clearMonaCheckout: false);
-        },
+            if (userCheckoutID == null) {
+              _handleError("User identifier missing.");
+              return;
+            }
+
+            _updateState(MonaSDKState.success);
+            _authStream.emit(state: AuthState.loggedIn);
+            validatePII();
+            resetSDKState(clearMonaCheckout: false);
+          },
+        );
+      }
+
+      "USER DECLINED TO ENROLL KEYS".log();
+
+      _updateState(MonaSDKState.idle);
+      _authStream.emit(state: AuthState.loggedOut);
+      ScaffoldMessenger.of(_callingBuildContext!).showSnackBar(
+        const SnackBar(
+          content: Text('Enrollment Declined'),
+          duration: Duration(seconds: 2),
+        ),
       );
     } catch (e) {
       _handleError("Unexpected error during authentication.");
@@ -632,6 +663,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String frequency,
     required String? amount,
     required String merchantId,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
     void Function()? onFailure,
@@ -640,28 +672,29 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     _firebaseSSE.initialize();
     try {
-      final (Map<String, dynamic>? success, failure) =
-          await _collectionsService.createCollections(
-              bankId: bankId,
-              maximumAmount: maximumAmount,
-              expiryDate: expiryDate,
-              startDate: startDate,
-              monthlyLimit: monthlyLimit,
-              reference: reference,
-              type: type,
-              frequency: frequency,
-              amount: amount,
-              merchantId: merchantId,
-              scheduleEntries: scheduleEntries);
-
-      if (failure != null) {
-        onFailure?.call();
-      }
-
-      if (success != null) {
-        success.log();
-        onSuccess?.call(success);
-      }
+      await _collectionsService.createCollectionRequest(
+        debitType: debitType,
+        bankId: bankId,
+        maximumAmount: maximumAmount,
+        expiryDate: expiryDate,
+        startDate: startDate,
+        monthlyLimit: monthlyLimit,
+        reference: reference,
+        type: type,
+        frequency: frequency,
+        amount: amount,
+        merchantId: merchantId,
+        scheduleEntries: scheduleEntries,
+        onComplete: (res, p) {
+          final success = res as Map<String, dynamic>;
+          success.log();
+          onSuccess?.call(success);
+        },
+        onError: () {
+          _updateState(MonaSDKState.error);
+          onFailure?.call();
+        },
+      );
 
       _updateState(MonaSDKState.success);
     } catch (e) {
@@ -734,6 +767,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String merchantId,
     required String merchantName,
     required CollectionsMethod method,
+    required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(Map<String, dynamic>?)? onSuccess,
   }) async {
@@ -747,6 +781,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       builder: (_) => Wrap(
         children: [
           CollectionsCheckoutSheet(
+            debitType: debitType,
             scheduleEntries: scheduleEntries,
             method: method,
             details: Collection(
@@ -757,6 +792,7 @@ class MonaSDKNotifier extends ChangeNotifier {
               schedule: Schedule(
                 frequency: frequency,
                 type: type,
+                amount: amount,
                 entries: [],
               ),
               reference: reference,
@@ -771,7 +807,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<void> collectionHandOffToAuth({
-    required Function(bool)? onKeyExchange,
+    required Function()? onKeyExchange,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -791,15 +827,17 @@ class MonaSDKNotifier extends ChangeNotifier {
         withRedirect: false,
         isFromCollections: true,
       );
-      onKeyExchange?.call(true);
-    } else {
-      onKeyExchange?.call(false);
     }
+
+    onKeyExchange?.call();
 
     _updateState(MonaSDKState.idle);
   }
 
-  void resetSDKState({bool clearMonaCheckout = true}) {
+  void resetSDKState({
+    bool clearMonaCheckout = true,
+    bool clearPendingPaymentResponseModel = true,
+  }) {
     _errorMessage = null;
     _currentTransactionId = null;
     _strongAuthToken = null;
@@ -807,7 +845,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     _callingBuildContext = null;
     _state = MonaSDKState.idle;
     _selectedPaymentMethod = PaymentMethod.none;
-    _pendingPaymentResponseModel = null;
+    if (clearPendingPaymentResponseModel) _pendingPaymentResponseModel = null;
     _selectedBankOption = null;
     _selectedCardOption = null;
     _transactionPIN = null;

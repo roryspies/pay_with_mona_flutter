@@ -16,10 +16,10 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     bool isFromCollections = false,
   }) {
     if (isFromCollections == true) {
-      final collectionsbaseUrl = "https://pay.development.mona.ng/collections";
+      final collectionsBaseURL = "https://pay.development.mona.ng/collections";
       final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
 
-      return "$collectionsbaseUrl"
+      return "$collectionsBaseURL"
           "?loginScope=$loginScope"
           "&sessionId=${Uri.encodeComponent(sessionID)}";
     }
@@ -157,5 +157,12 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
       // ignore: null_argument_to_non_null_type
       _pinOrOTPCompleter!.complete(null);
     }
+  }
+
+  void performKeyEnrollment({required bool performEnrollment}) {
+    _confirmKeyEnrolmentCompleter = Completer<bool>();
+    if (performEnrollment) {
+      _confirmKeyEnrolmentCompleter!.complete(true);
+    } else {}
   }
 }

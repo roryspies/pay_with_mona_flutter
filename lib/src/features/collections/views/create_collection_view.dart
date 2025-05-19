@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
+import 'package:pay_with_mona/src/core/services/collections_services.dart';
 
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
@@ -30,7 +31,10 @@ class CreateCollectionView extends StatefulWidget {
 class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _merchantNameController = TextEditingController();
   final _debitLimitController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _monthlyLimitController = TextEditingController();
   final _expDateController = TextEditingController();
+  final _startDateController = TextEditingController();
   final _referenceController = TextEditingController();
   final collectionMethod = CollectionsMethod.scheduled.notifier;
   final subscriptionFrequency = SubscriptionFrequency.none.notifier;
@@ -58,6 +62,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
       _merchantNameController,
       _expDateController,
       _referenceController,
+      _amountController,
+      _monthlyLimitController,
+      _startDateController,
     ];
     paymentScheduleTextControllers = [firstPayment];
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -95,6 +102,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     _merchantNameController.dispose();
     _expDateController.dispose();
     _referenceController.dispose();
+    _monthlyLimitController.dispose();
     showMore.dispose();
     super.dispose();
   }
@@ -126,24 +134,22 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     final entries = <Map<String, dynamic>>[];
 
     for (final controller in paymentScheduleTextControllers) {
-      // Only add if both payment amount and date are filled
       if (controller.paymentTextcontroller.text.isNotEmpty &&
           controller.dateTextcontroller.text.isNotEmpty) {
-        // Parse the date and time from the format "HH:mm dd/MM/yy"
         final dateTimeStr = controller.dateTextcontroller.text;
         DateTime? dateTime;
 
         try {
-          dateTime = DateFormat('HH:mm dd/MM/yy').parse(dateTimeStr);
+          final parsed = DateFormat('HH:mm dd/MM/yy').parseStrict(dateTimeStr);
+          dateTime = parsed.toUtc(); // Convert to UTC like convertToIsoDate
         } catch (e) {
           print('Error parsing date: $e');
-          continue; // Skip this entry if date parsing fails
+          continue;
         }
 
-        // Create the map entry in the exact format the server expects
         entries.add({
-          'date': dateTime.toIso8601String(), // Server expects "date" key
-          'amount': controller.paymentTextcontroller.text.trim(),
+          'date': dateTime.toIso8601String(), // UTC ISO format
+          'amount': multiplyBy100(controller.paymentTextcontroller.text.trim()),
         });
       }
     }
@@ -258,10 +264,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   },
                                 ),
                               CustomTextField(
-                                title: collectionMethod.value ==
-                                        CollectionsMethod.scheduled
-                                    ? 'Total debit limit'
-                                    : 'Amount',
+                                title: 'Total debit limit',
                                 controller: _debitLimitController,
                                 onChanged: (value) {},
                                 keyboardType: TextInputType.number,
@@ -270,27 +273,112 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   onPressed: () {},
                                 ),
                               ),
+                              if (collectionMethod.value ==
+                                  CollectionsMethod.subscription)
+                                CustomTextField(
+                                  title: 'Amount',
+                                  controller: _amountController,
+                                  onChanged: (value) {},
+                                  keyboardType: TextInputType.number,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () {},
+                                  ),
+                                ),
                               CustomTextField(
-                                title: collectionMethod.value ==
-                                        CollectionsMethod.scheduled
-                                    ? 'Expiration date'
-                                    : 'Start date',
+                                title: 'Monthly Limit',
+                                controller: _monthlyLimitController,
+                                onChanged: (value) {},
+                                keyboardType: TextInputType.number,
+                                suffixIcon: IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () {},
+                                ),
+                              ),
+                              if (collectionMethod.value ==
+                                  CollectionsMethod.subscription)
+                                CustomTextField(
+                                  title: 'Start date',
+                                  controller: _startDateController,
+                                  onChanged: (value) {},
+                                  suffixIcon: IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () async {
+                                      final now = DateTime.now();
+
+                                      final pickedDate = await showDatePicker(
+                                        context: context,
+                                        initialDate: now,
+                                        firstDate: DateTime(1900),
+                                        lastDate: DateTime(2100),
+                                      );
+
+                                      if (pickedDate != null) {
+                                        final pickedTime = await showTimePicker(
+                                          context: context,
+                                          initialTime:
+                                              TimeOfDay.fromDateTime(now),
+                                        );
+
+                                        if (pickedTime != null) {
+                                          final fullDateTime = DateTime(
+                                            pickedDate.year,
+                                            pickedDate.month,
+                                            pickedDate.day,
+                                            pickedTime.hour,
+                                            pickedTime.minute,
+                                          );
+
+                                          _startDateController.text =
+                                              DateFormat('HH:mm dd/MM/yy')
+                                                  .format(fullDateTime);
+                                        }
+                                      }
+                                    },
+                                  ),
+                                  inputFormatters: [
+                                    LengthLimitingTextInputFormatter(10),
+                                    FilteringTextInputFormatter
+                                        .singleLineFormatter,
+                                    DOBTextInputFormatter(),
+                                  ],
+                                ),
+                              CustomTextField(
+                                title: 'Expiration date',
                                 controller: _expDateController,
                                 onChanged: (value) {},
                                 suffixIcon: IconButton(
                                   icon: Icon(Icons.edit),
                                   onPressed: () async {
                                     final now = DateTime.now();
+
                                     final pickedDate = await showDatePicker(
                                       context: context,
                                       initialDate: now,
-                                      firstDate: DateTime(2000),
+                                      firstDate: DateTime(1900),
                                       lastDate: DateTime(2100),
                                     );
+
                                     if (pickedDate != null) {
-                                      _expDateController.text =
-                                          DateFormat('dd/MM/yyyy')
-                                              .format(pickedDate);
+                                      final pickedTime = await showTimePicker(
+                                        context: context,
+                                        initialTime:
+                                            TimeOfDay.fromDateTime(now),
+                                      );
+
+                                      if (pickedTime != null) {
+                                        final fullDateTime = DateTime(
+                                          pickedDate.year,
+                                          pickedDate.month,
+                                          pickedDate.day,
+                                          pickedTime.hour,
+                                          pickedTime.minute,
+                                        );
+
+                                        _expDateController.text =
+                                            DateFormat('HH:mm dd/MM/yy')
+                                                .format(fullDateTime);
+                                      }
                                     }
                                   },
                                 ),
@@ -496,8 +584,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                 .text
                                                 .trim())!
                                         : convertToIsoDate(
-                                            _expDateController.text.trim())!,
-                                    monthlyLimit: '1',
+                                            _startDateController.text.trim())!,
+                                    monthlyLimit:
+                                        _monthlyLimitController.text.trim(),
                                     reference: _referenceController.text.trim(),
                                     type: collectionMethod.value ==
                                             CollectionsMethod.scheduled
@@ -505,13 +594,12 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                         : 'SUBSCRIPTION',
                                     frequency: subscriptionFrequency.value.name
                                         .toUpperCase(),
-                                    amount: collectionMethod.value ==
-                                            CollectionsMethod.scheduled
-                                        ? null
-                                        : _debitLimitController.text.trim(),
+                                    amount: _amountController.text.trim(),
                                     merchantId: '67e41f884126830aded0b43c',
                                     merchantName: widget.merchantName,
                                     method: collectionMethod.value,
+                                    debitType:
+                                        debitType.value.name.toUpperCase(),
                                   );
                               },
                               label: 'Continue',
@@ -559,15 +647,14 @@ String? convertToIsoDate(dynamic input) {
       // Try to parse as "HH:mm dd/MM/yy" format first
       try {
         final parsedDateTime = DateFormat('HH:mm dd/MM/yy').parseStrict(input);
-        return parsedDateTime
-            .toIso8601String(); // Return full ISO string with time
+        return parsedDateTime.toUtc().toIso8601String(); // Convert to UTC
       } catch (_) {
         // Fall back to original format "dd/MM/yyyy" if first format fails
         final parsedDate = DateFormat('dd/MM/yyyy').parseStrict(input);
-        return parsedDate.toIso8601String().split('T').first;
+        return parsedDate.toUtc().toIso8601String().split('T').first;
       }
     } else if (input is DateTime) {
-      return input.toIso8601String();
+      return input.toUtc().toIso8601String(); // Convert to UTC
     } else {
       throw FormatException('Unsupported type');
     }
