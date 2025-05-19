@@ -507,13 +507,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                       }
 
                                       await sdkNotifier.collectionHandOffToAuth(
-                                          onKeyExchange: (value) {
-                                        if (value) {
-                                          showPopupMessage('NO KEY ID, ENROL');
-                                          'NO KEY ID, ENROL'.log();
-                                        } else {
-                                          showBankSheet();
-                                        }
+                                          onKeyExchange: () {
+                                        showBankSheet();
                                       });
                                     },
                                   );

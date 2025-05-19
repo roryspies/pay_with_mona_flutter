@@ -727,7 +727,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<void> collectionHandOffToAuth({
-    required Function(bool)? onKeyExchange,
+    required Function()? onKeyExchange,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -747,10 +747,9 @@ class MonaSDKNotifier extends ChangeNotifier {
         withRedirect: false,
         isFromCollections: true,
       );
-      onKeyExchange?.call(true);
-    } else {
-      onKeyExchange?.call(false);
     }
+
+    onKeyExchange?.call();
 
     _updateState(MonaSDKState.idle);
   }

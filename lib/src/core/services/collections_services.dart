@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
@@ -17,8 +16,7 @@ class CollectionsService {
   static final CollectionsService _instance = CollectionsService._internal();
   factory CollectionsService() => _instance;
 
-  final _apiService =
-      ApiService(baseUrl: 'https://5130-169-150-196-153.ngrok-free.app');
+  final _apiService = ApiService();
 
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
