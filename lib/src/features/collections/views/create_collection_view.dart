@@ -31,6 +31,7 @@ class CreateCollectionView extends StatefulWidget {
 class _CreateCollectionViewState extends State<CreateCollectionView> {
   final _merchantNameController = TextEditingController();
   final _debitLimitController = TextEditingController();
+  final _amountController = TextEditingController();
   final _monthlyLimitController = TextEditingController();
   final _expDateController = TextEditingController();
   final _referenceController = TextEditingController();
@@ -60,6 +61,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
       _merchantNameController,
       _expDateController,
       _referenceController,
+      _amountController,
+      _monthlyLimitController,
     ];
     paymentScheduleTextControllers = [firstPayment];
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -259,10 +262,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   },
                                 ),
                               CustomTextField(
-                                title: collectionMethod.value ==
-                                        CollectionsMethod.scheduled
-                                    ? 'Total debit limit'
-                                    : 'Amount',
+                                title: 'Total debit limit',
                                 controller: _debitLimitController,
                                 onChanged: (value) {},
                                 keyboardType: TextInputType.number,
@@ -271,6 +271,18 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   onPressed: () {},
                                 ),
                               ),
+                              if (collectionMethod.value ==
+                                  CollectionsMethod.subscription)
+                                CustomTextField(
+                                  title: 'Amount',
+                                  controller: _amountController,
+                                  onChanged: (value) {},
+                                  keyboardType: TextInputType.number,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () {},
+                                  ),
+                                ),
                               CustomTextField(
                                 title: 'Monthly Limit',
                                 controller: _monthlyLimitController,
@@ -535,10 +547,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                         : 'SUBSCRIPTION',
                                     frequency: subscriptionFrequency.value.name
                                         .toUpperCase(),
-                                    amount: collectionMethod.value ==
-                                            CollectionsMethod.scheduled
-                                        ? null
-                                        : _debitLimitController.text.trim(),
+                                    amount: _amountController.text.trim(),
                                     merchantId: '67e41f884126830aded0b43c',
                                     merchantName: widget.merchantName,
                                     method: collectionMethod.value,

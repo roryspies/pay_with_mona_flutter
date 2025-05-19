@@ -274,7 +274,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                         amount: widget.method ==
                                                 CollectionsMethod.scheduled
                                             ? null
-                                            : collection.maxAmount,
+                                            : schedule.amount,
                                         merchantId: '67e41f884126830aded0b43c',
                                         onSuccess: (successMap) {
                                           Navigator.of(context).pop();
@@ -305,6 +305,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                                           schedule.frequency,
                                                       type: schedule.type,
                                                       entries: schedule.entries,
+                                                      amount: schedule.amount,
                                                     ),
                                                     reference: widget
                                                         .details!.reference,
