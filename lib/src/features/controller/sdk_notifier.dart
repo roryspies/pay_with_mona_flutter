@@ -26,6 +26,7 @@ import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
+import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
@@ -648,7 +649,16 @@ class MonaSDKNotifier extends ChangeNotifier {
             if (_callingBuildContext != null) {
               Navigator.of(_callingBuildContext!).pop();
             }
-            resetSDKState(clearMonaCheckout: false);
+            await SDKUtils.showSDKModalBottomSheet(
+              isDismissible: false,
+              enableDrag: false,
+              callingContext: _callingBuildContext!,
+              child: ConfirmTransactionModal(
+                selectedPaymentMethod: selectedPaymentMethod,
+                transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
+              ),
+            );
+            //resetSDKState(clearMonaCheckout: false);
           },
         );
       }

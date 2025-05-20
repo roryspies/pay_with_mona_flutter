@@ -137,26 +137,28 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                     ),
 
                     ///
-                    /* Positioned(
-                      right: 16,
-                      top: 0,
-                      bottom: 0,
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: CircleAvatar(
-                          backgroundColor:
-                              MonaColors.neutralWhite.withOpacity(0.2),
-                          radius: 12,
-                          child: Icon(
-                            Icons.close,
-                            color: MonaColors.textHeading,
-                            size: 18,
+                    if (showTransactionStatusIndicator == false) ...[
+                      Positioned(
+                        right: 16,
+                        top: 0,
+                        bottom: 0,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: CircleAvatar(
+                            backgroundColor:
+                                MonaColors.neutralWhite.withOpacity(0.2),
+                            radius: 12,
+                            child: Icon(
+                              Icons.close,
+                              color: MonaColors.textHeading,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
-                    ), */
+                    ],
                   ],
                 ),
               ),
