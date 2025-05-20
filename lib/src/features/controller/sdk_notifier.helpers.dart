@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 part of "sdk_notifier.dart";
 
 extension SDKNotifierHelpers on MonaSDKNotifier {
@@ -78,22 +80,33 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     );
 
     final screenHeight = _callingBuildContext!.screenHeight;
+    final screenWidth = _callingBuildContext!.screenWidth;
 
     await launchUrl(
       uri,
       customTabsOptions: CustomTabsOptions.partial(
         configuration: PartialCustomTabsConfiguration(
-          activityHeightResizeBehavior:
-              CustomTabsActivityHeightResizeBehavior.fixed,
-          initialHeight: screenHeight * 0.8,
+          initialHeight: screenHeight * 0.85,
+          initialWidth: screenWidth,
+          activitySideSheetMaximizationEnabled: true,
+          activitySideSheetDecorationType:
+              CustomTabsActivitySideSheetDecorationType.shadow,
+          activitySideSheetRoundedCornersPosition:
+              CustomTabsActivitySideSheetRoundedCornersPosition.top,
+          cornerRadius: 16,
         ),
       ),
       safariVCOptions: SafariViewControllerOptions.pageSheet(
         configuration: const SheetPresentationControllerConfiguration(
-          detents: {SheetPresentationControllerDetent.large},
+          detents: {
+            SheetPresentationControllerDetent.large,
+          },
           prefersEdgeAttachedInCompactHeight: true,
           preferredCornerRadius: 16.0,
+          prefersScrollingExpandsWhenScrolledToEdge: true,
+          prefersGrabberVisible: true,
         ),
+        dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
       ),
     );
   }
