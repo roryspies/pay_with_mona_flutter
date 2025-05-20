@@ -63,7 +63,7 @@ enum PaymentMethod {
       case PaymentMethod.card:
         return "Visa, Verve and Mastercard accepted";
       case PaymentMethod.transfer:
-        return "Pay for your order with cash on delivery";
+        return "Pay By Bank Transfer";
       case PaymentMethod.none:
         return "No payment method selected";
       default:
