@@ -85,8 +85,8 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     await launchUrl(
       uri,
       customTabsOptions: CustomTabsOptions.partial(
-        configuration: PartialCustomTabsConfiguration.adaptiveSheet(
-          initialHeight: screenHeight * 0.9,
+        configuration: PartialCustomTabsConfiguration(
+          initialHeight: screenHeight * 0.85,
           initialWidth: screenWidth,
           activitySideSheetMaximizationEnabled: true,
           activitySideSheetDecorationType:
