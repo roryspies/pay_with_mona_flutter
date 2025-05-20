@@ -96,7 +96,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   Completer<String>? _pinOrOTPCompleter;
-  Completer<bool>? _confirmKeyEnrolmentCompleter;
 
   /// Current payment process state.
   MonaSDKState get state => _state;
@@ -611,10 +610,21 @@ class MonaSDKNotifier extends ChangeNotifier {
         return;
       }
 
-      final canEnrollKeys = await SDKUtils.showSDKModalBottomSheet(
+      final canEnrollKeysCompleter = Completer<bool>();
+
+      SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
-        child: ConfirmKeyExchangeModal(),
+        child: ConfirmKeyExchangeModal(
+          onUserDecision: (bool canEnrolKeys) {
+            if (canEnrollKeysCompleter.isCompleted == false) {
+              "ConfirmKeyExchangeModal ::: User Decision: $canEnrolKeys".log();
+              canEnrollKeysCompleter.complete(canEnrolKeys);
+            }
+          },
+        ),
       );
+
+      final canEnrollKeys = await canEnrollKeysCompleter.future;
 
       if (canEnrollKeys) {
         "USER ALLOWED TO ENROLL KEYS".log();
@@ -633,6 +643,11 @@ class MonaSDKNotifier extends ChangeNotifier {
             _updateState(MonaSDKState.success);
             _authStream.emit(state: AuthState.loggedIn);
             validatePII();
+
+            /// *** Close Modal
+            if (_callingBuildContext != null) {
+              Navigator.of(_callingBuildContext!).pop();
+            }
             resetSDKState(clearMonaCheckout: false);
           },
         );
@@ -640,6 +655,10 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       "USER DECLINED TO ENROLL KEYS".log();
 
+      /// *** Close Modal
+      if (_callingBuildContext != null) {
+        Navigator.of(_callingBuildContext!).pop();
+      }
       _updateState(MonaSDKState.idle);
       _authStream.emit(state: AuthState.loggedOut);
       ScaffoldMessenger.of(_callingBuildContext!).showSnackBar(

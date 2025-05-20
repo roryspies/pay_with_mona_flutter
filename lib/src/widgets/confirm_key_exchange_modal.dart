@@ -10,10 +10,12 @@ import 'package:pay_with_mona/src/widgets/custom_button.dart';
 class ConfirmKeyExchangeModal extends StatefulWidget {
   const ConfirmKeyExchangeModal({
     super.key,
+    required this.onUserDecision,
     //required this.userImageURL,
   });
 
   //final String userImageURL;
+  final void Function(bool) onUserDecision;
 
   @override
   State<ConfirmKeyExchangeModal> createState() =>
@@ -113,7 +115,7 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                       bottom: 0,
                       child: InkWell(
                         onTap: () {
-                          Navigator.of(context).pop(false);
+                          widget.onUserDecision(false);
                         },
                         child: CircleAvatar(
                           backgroundColor:
@@ -234,7 +236,9 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                   CustomButton(
                     label: "Set Up",
                     onTap: () {
-                      Navigator.of(context).pop(true);
+                      "ON USER DECISION".log();
+                      widget.onUserDecision(true);
+                      //Navigator.of(context).pop(true);
                     },
                   ),
                 ],
