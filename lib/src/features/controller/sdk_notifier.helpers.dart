@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 part of "sdk_notifier.dart";
 
 extension SDKNotifierHelpers on MonaSDKNotifier {
@@ -14,14 +16,23 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     String? bankOrCardId,
     bool withRedirect = true,
     bool isFromCollections = false,
+    bool doDirectPayment = false,
   }) {
-    if (isFromCollections == true) {
-      final collectionsBaseURL = "https://pay.development.mona.ng/collections";
-      final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
+    final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
+    final encodedSessionID = Uri.encodeComponent(sessionID);
+    final transactionID = _currentTransactionId ?? '';
+    final encodedTransactionID = Uri.encodeComponent(transactionID);
 
-      return "$collectionsBaseURL"
+    if (doDirectPayment) {
+      final methodType = Uri.encodeComponent(method?.type ?? '');
+      return "https://pay.development.mona.ng/$transactionID"
+          "?embedding=true&sdk=true&method=$methodType";
+    }
+
+    if (isFromCollections) {
+      return "https://pay.development.mona.ng/collections"
           "?loginScope=$loginScope"
-          "&sessionId=${Uri.encodeComponent(sessionID)}";
+          "&sessionId=$encodedSessionID";
     }
 
     if (withRedirect && (method == null || method == PaymentMethod.none)) {
@@ -30,13 +41,9 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
       );
     }
 
-    final baseUrl = "https://pay.development.mona.ng/login";
-    final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
-
-    final String? methodType = method?.type;
-
-    // Build extra params for saved methods
+    final methodType = method?.type;
     String extraParam = '';
+
     if (method == PaymentMethod.savedBank ||
         method == PaymentMethod.savedCard) {
       if (bankOrCardId == null || bankOrCardId.isEmpty) {
@@ -45,19 +52,20 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
               "bankOrCardId must be provided when using savedBank or savedCard.",
         );
       }
-
-      extraParam = "&bankId=$bankOrCardId";
+      extraParam = "&bankId=${Uri.encodeComponent(bankOrCardId)}";
     }
 
-    final redirectParam = withRedirect
-        ? "&redirect=${Uri.encodeComponent("https://pay.development.mona.ng/$_currentTransactionId?embedding=true&sdk=true&method=$methodType$extraParam")}"
-        : "";
+    final redirectURL = "https://pay.development.mona.ng/$transactionID"
+        "?embedding=true&sdk=true&method=${Uri.encodeComponent(methodType ?? '')}$extraParam";
 
-    return "$baseUrl"
+    final redirectParam =
+        withRedirect ? "&redirect=${Uri.encodeComponent(redirectURL)}" : "";
+
+    return "https://pay.development.mona.ng/login"
         "?loginScope=$loginScope"
         "$redirectParam"
-        "&sessionId=${Uri.encodeComponent(sessionID)}"
-        "&transactionId=${Uri.encodeComponent(_currentTransactionId ?? '')}";
+        "&sessionId=$encodedSessionID"
+        "&transactionId=$encodedTransactionID";
   }
 
   /// Launches the payment URL using platform-specific custom tab settings.
@@ -72,22 +80,33 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     );
 
     final screenHeight = _callingBuildContext!.screenHeight;
+    final screenWidth = _callingBuildContext!.screenWidth;
 
     await launchUrl(
       uri,
       customTabsOptions: CustomTabsOptions.partial(
         configuration: PartialCustomTabsConfiguration(
-          activityHeightResizeBehavior:
-              CustomTabsActivityHeightResizeBehavior.fixed,
-          initialHeight: screenHeight,
+          initialHeight: screenHeight * 0.85,
+          initialWidth: screenWidth,
+          activitySideSheetMaximizationEnabled: true,
+          activitySideSheetDecorationType:
+              CustomTabsActivitySideSheetDecorationType.shadow,
+          activitySideSheetRoundedCornersPosition:
+              CustomTabsActivitySideSheetRoundedCornersPosition.top,
+          cornerRadius: 16,
         ),
       ),
       safariVCOptions: SafariViewControllerOptions.pageSheet(
         configuration: const SheetPresentationControllerConfiguration(
-          detents: {SheetPresentationControllerDetent.large},
+          detents: {
+            SheetPresentationControllerDetent.large,
+          },
           prefersEdgeAttachedInCompactHeight: true,
           preferredCornerRadius: 16.0,
+          prefersScrollingExpandsWhenScrolledToEdge: true,
+          prefersGrabberVisible: true,
         ),
+        dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
       ),
     );
   }

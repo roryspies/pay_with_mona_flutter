@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/services/payment_notifier.dart';
@@ -127,13 +127,10 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                             children: [
                               CircleAvatar(
                                 radius: context.w(24),
-                                backgroundColor: MonaColors.primary,
-                                child: Text(
-                                  'ND',
-                                  style: TextStyle(
-                                    fontSize: context.sp(12),
-                                    color: MonaColors.neutralWhite,
-                                  ),
+                                backgroundColor:
+                                    MonaColors.primary.withOpacity(0.1),
+                                backgroundImage: AssetImage(
+                                  "ng_deals_logo".png,
                                 ),
                               ),
                               Text(
