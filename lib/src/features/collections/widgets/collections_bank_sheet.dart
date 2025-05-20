@@ -236,6 +236,32 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                           ),
                         ],
                         context.sbH(24),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Icon(
+                                Icons.add,
+                                color: Colors.black,
+                                size:20,
+                              ),
+                              Text(
+                                "Add an account",
+                                style: TextStyle(
+                                  fontSize: context.sp(15),
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Icon(
+                                Icons.add,
+                                color: Colors.transparent,
+                              ),
+                            ],
+                          ),
+                        ),
+                        context.sbH(24),
                         Builder(
                           builder: (context) {
                             return sdkNotifier.state == MonaSDKState.loading

@@ -887,4 +887,39 @@ class MonaSDKNotifier extends ChangeNotifier {
     await AuthService.singleInstance.permanentlyClearKeys();
     _authStream.emit(state: AuthState.loggedOut);
   }
+
+  Future<Map<String, dynamic>> fetchCollectionsForBank({
+    required String bankId,
+    void Function(String)? onError,
+  }) async {
+    _updateState(MonaSDKState.loading);
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _collectionsService.fetchCollections(bankId: bankId);
+
+      if (failure != null) {
+        final errorMsg = failure.message ?? 'Failed to fetch collections.';
+        _handleError(errorMsg);
+        onError?.call(errorMsg);
+        return {};
+      }
+
+      if (success != null) {
+        success.log();
+        _updateState(MonaSDKState.success);
+        return success;
+      }
+
+      // Just in case both success and failure are null
+      _handleError('Unknown error occurred.');
+      onError?.call('Unknown error occurred.');
+      return {};
+    } catch (e) {
+      final err = e.toString();
+      err.log();
+      _handleError(err);
+      onError?.call('Something went wrong');
+      return {};
+    }
+  }
 }
