@@ -21,12 +21,12 @@ import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/extensions.dart';
-import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
+import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
@@ -97,7 +97,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   Completer<String>? _pinOrOTPCompleter;
-  Completer<bool>? _confirmKeyEnrolmentCompleter;
 
   /// Current payment process state.
   MonaSDKState get state => _state;
@@ -612,10 +611,21 @@ class MonaSDKNotifier extends ChangeNotifier {
         return;
       }
 
-      final canEnrollKeys = await SDKUtils.showSDKModalBottomSheet(
+      final canEnrollKeysCompleter = Completer<bool>();
+
+      SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
-        child: ConfirmKeyExchangeModal(),
+        child: ConfirmKeyExchangeModal(
+          onUserDecision: (bool canEnrolKeys) {
+            if (canEnrollKeysCompleter.isCompleted == false) {
+              "ConfirmKeyExchangeModal ::: User Decision: $canEnrolKeys".log();
+              canEnrollKeysCompleter.complete(canEnrolKeys);
+            }
+          },
+        ),
       );
+
+      final canEnrollKeys = await canEnrollKeysCompleter.future;
 
       if (canEnrollKeys) {
         "USER ALLOWED TO ENROLL KEYS".log();
@@ -634,13 +644,31 @@ class MonaSDKNotifier extends ChangeNotifier {
             _updateState(MonaSDKState.success);
             _authStream.emit(state: AuthState.loggedIn);
             validatePII();
-            resetSDKState(clearMonaCheckout: false);
+
+            /// *** Close Modal
+            if (_callingBuildContext != null) {
+              Navigator.of(_callingBuildContext!).pop();
+            }
+            await SDKUtils.showSDKModalBottomSheet(
+              isDismissible: false,
+              enableDrag: false,
+              callingContext: _callingBuildContext!,
+              child: ConfirmTransactionModal(
+                selectedPaymentMethod: selectedPaymentMethod,
+                transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
+              ),
+            );
+            //resetSDKState(clearMonaCheckout: false);
           },
         );
       }
 
       "USER DECLINED TO ENROLL KEYS".log();
 
+      /// *** Close Modal
+      if (_callingBuildContext != null) {
+        Navigator.of(_callingBuildContext!).pop();
+      }
       _updateState(MonaSDKState.idle);
       _authStream.emit(state: AuthState.loggedOut);
       ScaffoldMessenger.of(_callingBuildContext!).showSnackBar(

@@ -177,11 +177,4 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
       _pinOrOTPCompleter!.complete(null);
     }
   }
-
-  void performKeyEnrollment({required bool performEnrollment}) {
-    _confirmKeyEnrolmentCompleter = Completer<bool>();
-    if (performEnrollment) {
-      _confirmKeyEnrolmentCompleter!.complete(true);
-    } else {}
-  }
 }

@@ -352,6 +352,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   if (await sdkNotifier.checkIfUserHasKeyID() != null &&
                       isSavedMethods) {
                     await SDKUtils.showSDKModalBottomSheet(
+                      isDismissible: false,
+                      enableDrag: false,
                       callingContext: context,
                       child: ConfirmTransactionModal(
                         selectedPaymentMethod:
