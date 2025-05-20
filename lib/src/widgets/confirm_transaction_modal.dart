@@ -110,7 +110,9 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(8),
         ),
-        color: MonaColors.neutralWhite,
+        color: showTransactionStatusIndicator
+            ? MonaColors.bgGrey
+            : MonaColors.neutralWhite,
       ),
       child: SafeArea(
         child: Column(
@@ -141,11 +143,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                       bottom: 0,
                       child: InkWell(
                         onTap: () {
-                          if (showTransactionStatusIndicator) {
-                            _sdkNotifier.resetSDKState();
-                            SDKUtils.popMultiple(context, 2);
-                            return;
-                          }
                           Navigator.of(context).pop();
                         },
                         child: CircleAvatar(
@@ -166,7 +163,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
             ),
 
             ///
-            context.sbH(8.0),
+            //context.sbH(8.0),
 
             AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
@@ -199,7 +196,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
 
                             ///
                             Text(
-                              "${SDKStrings.nairaSymbol}${widget.transactionAmountInKobo / 100} ",
+                              "${SDKStrings.nairaSymbol}${SDKUtils.formatMoney(double.parse(widget.transactionAmountInKobo.toString()))}",
                               style: TextStyle(
                                 fontSize: 24.0,
                                 fontWeight: FontWeight.w700,

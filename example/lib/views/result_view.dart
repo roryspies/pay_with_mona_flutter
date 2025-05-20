@@ -4,6 +4,7 @@ import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
 import 'package:example/utils/size_config.dart';
 import 'package:example/views/products_view.dart';
+import 'package:example/views/utils/app_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -92,7 +93,8 @@ class ResultView extends ConsumerWidget {
                               children: [
                                 Text(
                                   (switch (index) {
-                                    0 => "₦${state.amount / 100}",
+                                    0 =>
+                                      "₦${AppUtils.formatMoney(double.parse(state.amount.toString()))}",
                                     1 => state.friendlyID,
                                     _ => state.transactionStatus.status,
                                   }),

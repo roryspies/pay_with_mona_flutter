@@ -1,5 +1,4 @@
 // ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
@@ -7,7 +6,9 @@ import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
+import 'package:pay_with_mona/src/widgets/flowing_progress_bar.dart';
 
 class SdkPaymentStatusModal extends StatefulWidget {
   const SdkPaymentStatusModal({super.key});
@@ -30,6 +31,10 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   late Animation<Color?> _secondProgressColorAnimation;
   late Animation<Color?> _thirdProgressColorAnimation;
 
+  // Flow animation for the middle bar
+  late AnimationController _flowAnimationController;
+  late Animation<double> _flowAnimation;
+
   bool showPaymentSuccessfulOrFailed = false;
   bool isPaymentSuccessful = false;
 
@@ -41,54 +46,81 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   void initState() {
     super.initState();
 
-    // Initialize animation controllers
     _firstProgressController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+
     _secondProgressController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+
     _thirdProgressController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
+    _flowAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _flowAnimation = Tween<double>(
+      begin: -1,
+      end: 1.5,
+    ).animate(_flowAnimationController);
+
     _firstProgressColorAnimation = ColorTween(
-      begin: MonaColors.successColour.withOpacity(0.2),
+      begin: MonaColors.successColour.withOpacity(0.1),
       end: MonaColors.successColour,
     ).animate(_firstProgressController);
 
     _secondProgressColorAnimation = ColorTween(
-      begin: MonaColors.successColour.withOpacity(0.2),
+      begin: MonaColors.successColour.withOpacity(0.1),
       end: MonaColors.successColour,
     ).animate(_secondProgressController);
 
     _thirdProgressColorAnimation = ColorTween(
-      begin: MonaColors.successColour.withOpacity(0.2),
+      begin: MonaColors.successColour.withOpacity(0.1),
       end: MonaColors.successColour,
     ).animate(_thirdProgressController);
 
-    _firstProgressController.addListener(() => setState(() {}));
-    _secondProgressController.addListener(() => setState(() {}));
-    _thirdProgressController.addListener(() => setState(() {}));
+    _firstProgressController.addListener(() {
+      setState(() {});
+    });
 
-    _firstProgressController.addStatusListener(
-      (status) {
-        if (status == AnimationStatus.completed) {
-          setState(() => _currentStage = 1);
-        }
-      },
-    );
+    _secondProgressController.addListener(() {
+      setState(() {});
+    });
 
-    _secondProgressController.addStatusListener(
-      (status) {
-        if (status == AnimationStatus.completed) {
-          setState(() => _currentStage = 2);
-        }
-      },
-    );
+    _thirdProgressController.addListener(() {
+      setState(() {});
+    });
+
+    _flowAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _flowAnimationController.repeat();
+      }
+    });
+
+    _firstProgressController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _currentStage = 1; // Sent stage
+        });
+        _flowAnimationController.forward();
+      }
+    });
+
+    _secondProgressController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _currentStage = 2;
+        });
+        _flowAnimationController.stop();
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
@@ -104,8 +136,8 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                 ):
                 ("SdkPaymentStatusModal ❌ Failed: $reason (tx=$transactionID, amount=$amount)")
                     .log();
-                _transactionAmount = amount != null ? (amount / 100) : 0;
 
+                _transactionAmount = amount ?? 0;
                 _completeAllAnimations(
                   isCompletedTransaction: false,
                 );
@@ -118,7 +150,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                 ("SdkPaymentStatusModal ✅ Completed: tx=$transactionID, amount=$amount)")
                     .log();
 
-                _transactionAmount = amount != null ? (amount / 100) : 0;
+                _transactionAmount = amount ?? 0;
                 isPaymentSuccessful = true;
                 _completeAllAnimations();
                 break;
@@ -129,7 +161,8 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                 ):
                 ("SdkPaymentStatusModal 🚀 Initiated: tx=$transactionID, amount=$amount)")
                     .log();
-                _transactionAmount = amount != null ? (amount / 100) : 0;
+
+                _transactionAmount = amount ?? 0;
                 break;
 
               default:
@@ -145,43 +178,47 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     );
   }
 
-  Future<void> _completeAllAnimations({
+  void _resetAnimations() {
+    _firstProgressController.reset();
+    _secondProgressController.reset();
+    _thirdProgressController.reset();
+    _flowAnimationController.reset();
+    setState(() {
+      _currentStage = 0;
+    });
+  }
+
+  void _completeAllAnimations({
     bool isCompletedTransaction = true,
   }) async {
-    await Future.delayed(
+    Future.delayed(
       const Duration(milliseconds: 500),
-      () async {
+      () {
         setState(() => _currentStage = 1);
 
-        //
-        await _secondProgressController.forward(
+        _secondProgressController.forward(
           from: _secondProgressController.value,
         );
 
-        //
-        await Future.delayed(
+        Future.delayed(
           const Duration(milliseconds: 1500),
           () async {
-            setState(() => _currentStage = 2);
+            setState(() {
+              _currentStage = 2;
+            });
 
             _thirdProgressController.forward(
               from: _thirdProgressController.value,
             );
 
+            await Future.delayed(Duration(milliseconds: 500));
+
             showPaymentSuccessfulOrFailed = true;
 
-            await Future.delayed(Duration(seconds: 3));
+            await Future.delayed(Duration(seconds: 2));
 
             if (isCompletedTransaction) {
               sdkNotifier.handleNavToConfirmationScreen();
-              /* await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return ResultView();
-                  },
-                ),
-              ); */
-
               return;
             }
           },
@@ -190,18 +227,12 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     );
   }
 
-  void _resetAnimations() {
-    _firstProgressController.reset();
-    _secondProgressController.reset();
-    _thirdProgressController.reset();
-    setState(() => _currentStage = 0);
-  }
-
   @override
   void dispose() {
     _firstProgressController.dispose();
     _secondProgressController.dispose();
     _thirdProgressController.dispose();
+    _flowAnimationController.dispose();
     super.dispose();
   }
 
@@ -209,7 +240,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ///
         Container(
           margin: EdgeInsets.all(16),
           padding: EdgeInsets.all(16),
@@ -220,9 +250,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
             ),
           ),
           child: AnimatedSwitcher(
-            duration: Duration(
-              milliseconds: 300,
-            ),
+            duration: Duration(milliseconds: 300),
             child: switch (showPaymentSuccessfulOrFailed) {
               true => Column(
                   children: [
@@ -256,7 +284,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
                     Text(
                       isPaymentSuccessful
-                          ? "Your payment of ₦$_transactionAmount was successful. Mona has sent you a transaction receipt!"
+                          ? "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} was successful. Mona has sent you a transaction receipt!"
                           : "Your payment of ₦$_transactionAmount failed!. Please try again or use a different payment method.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -273,8 +301,11 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                       onTap: () {
                         if (isPaymentSuccessful == false) {
                           _resetAnimations();
-                          sdkNotifier.resetSDKState();
-                          SDKUtils.popMultiple(context, 2);
+                          sdkNotifier.resetSDKState(
+                            clearMonaCheckout: false,
+                            clearPendingPaymentResponseModel: false,
+                          );
+                          Navigator.of(context).pop();
                           return;
                         }
 
@@ -335,11 +366,18 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
                         Expanded(
                           flex: 3,
-                          child: AnimatedProgressBar(
-                            isCurrentStage: _currentStage >= 1,
-                            colorAnimation: _secondProgressColorAnimation,
-                            controller: _secondProgressController,
-                          ),
+                          child: _currentStage == 1
+                              ? FlowingProgressBar(
+                                  flowAnimation: _flowAnimation,
+                                  baseColor:
+                                      MonaColors.successColour.withOpacity(0.1),
+                                  flowColor: MonaColors.successColour,
+                                )
+                              : AnimatedProgressBar(
+                                  isCurrentStage: _currentStage >= 1,
+                                  colorAnimation: _secondProgressColorAnimation,
+                                  controller: _secondProgressController,
+                                ),
                         ),
 
                         context.sbW(4),
@@ -398,10 +436,12 @@ class AnimatedProgressBar extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: MonaColors.successColour.withOpacity(0.2),
+              color: MonaColors.successColour.withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
+
+          // Animated foreground bar
           AnimatedBuilder(
             animation: controller,
             builder: (context, child) {
@@ -435,13 +475,11 @@ class PaymentStageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 48.0,
+      width: 40.0,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           context.sbH(16),
-
-          //
           CircleAvatar(
             radius: 12,
             backgroundColor: isCurrentStage
@@ -467,7 +505,7 @@ class PaymentStageWidget extends StatelessWidget {
           Text(
             stageText,
             style: TextStyle(
-              fontSize: 12.0,
+              fontSize: 10.0,
             ),
           ),
         ],

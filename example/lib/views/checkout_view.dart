@@ -7,7 +7,6 @@ import 'package:example/utils/responsive_scaffold.dart';
 import 'package:example/utils/size_config.dart';
 import 'package:example/views/result_view.dart';
 import 'package:example/views/utils/app_utils.dart';
-import 'package:example/views/widgets/payment_status_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:otp_pin_field/otp_pin_field.dart';
@@ -220,7 +219,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                           ),
                         ),
                         Text(
-                          "₦${widget.amount / 100}",
+                          "₦${AppUtils.formatMoney(double.parse(widget.amount.toString()))}",
                           style: TextStyle(
                             fontSize: context.sp(16),
                             fontWeight: FontWeight.w500,
