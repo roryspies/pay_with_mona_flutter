@@ -167,14 +167,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                       context.sbW(16.0),
                       CircleAvatar(
                         radius: 32,
-                        backgroundColor: MonaColors.primaryBlue,
-                        child: Text(
-                          "NG",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: MonaColors.neutralWhite,
-                          ),
+                        backgroundColor:
+                            MonaColors.primaryBlue.withOpacity(0.1),
+                        backgroundImage: AssetImage(
+                          "ng_deals_logo".png,
                         ),
                       ),
                     ],

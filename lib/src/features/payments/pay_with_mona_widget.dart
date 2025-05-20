@@ -370,29 +370,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
               ),
 
               context.sbH(16),
-
-              Center(
-                child: TextButton(
-                  onPressed: () async {
-                    final navigator = Navigator.of(context);
-
-                    sdkNotifier
-                      ..invalidate()
-                      ..permanentlyClearKeys();
-
-                    navigator.pop();
-                  },
-                  child: Text(
-                    "Clear Exchange Keys",
-                    style: TextStyle(
-                      fontSize: context.sp(14),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-
-              context.sbH(16),
             ],
           ),
         ),

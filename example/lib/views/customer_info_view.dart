@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/utils/custom_text_field.dart';
@@ -8,6 +10,7 @@ import 'package:example/utils/size_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class CustomerInfoView extends ConsumerStatefulWidget {
@@ -30,23 +33,26 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
   final showInfo = false.notifier;
 
   final sdkNotifier = MonaSDKNotifier();
+  bool isSignedIn = false;
   late final StreamSubscription<AuthState> _authStateSub;
 
   @override
   void initState() {
     super.initState();
-    _authStateSub = sdkNotifier.authStateStream.listen((state) {
-      "CustomerInfoView :::AUTH STATE ::: $state".log();
-      if (state == AuthState.loggedOut || state == AuthState.error) {
-        setState(() {
+    _authStateSub = sdkNotifier.authStateStream.listen(
+      (state) {
+        " :::AUTH STATE ::: $state".log();
+        if (state == AuthState.loggedOut || state == AuthState.error) {
           authText = 'Not signed in';
-        });
-      } else {
-        setState(() {
+          isSignedIn = false;
+        } else {
           authText = 'Signed in';
-        });
-      }
-    });
+          isSignedIn = true;
+        }
+
+        setState(() {});
+      },
+    );
 
     controllers = [
       _phoneNumberController,
@@ -97,8 +103,10 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: context.w(32)).copyWith(
-        top: context.h(20),
+      padding: EdgeInsets.symmetric(
+        horizontal: context.w(16),
+      ).copyWith(
+        top: context.h(16),
       ),
       width: double.infinity,
       decoration: BoxDecoration(
@@ -109,9 +117,26 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Color(0xFFE4E5FC),
+              AnimatedContainer(
+                width: 48,
+                height: 48,
+                duration: Duration(milliseconds: 200),
+                margin: EdgeInsets.zero,
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: switch (isSignedIn) {
+                    true => MonaColors.primary.withOpacity(0.1),
+                    false => MonaColors.bgGrey,
+                  },
+                ),
+                child: SvgPicture.asset(
+                  "account".svg,
+                  color: switch (isSignedIn) {
+                    true => MonaColors.primary,
+                    false => null,
+                  },
+                ),
               ),
               context.sbW(8),
               Text(

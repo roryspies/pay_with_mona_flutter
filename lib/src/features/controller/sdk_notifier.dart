@@ -583,6 +583,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     await _listenForAuthEvents(sessionID, authCompleter);
 
     final url = _buildURL(
+      doDirectPayment: await checkIfUserHasKeyID() != null,
       sessionID: sessionID,
       method: _selectedPaymentMethod,
       bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
