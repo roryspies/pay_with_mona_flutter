@@ -197,12 +197,23 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                         color: Colors.black,
                       ),
                     ),
-                    Opacity(
-                      opacity: 0,
-                      child: IconButton(
-                        onPressed: () {},
-                        icon: Icon(
-                          Icons.keyboard_arrow_left,
+                    Center(
+                      child: TextButton(
+                        onPressed: () async {
+                          final navigator = Navigator.of(context);
+
+                          sdkNotifier
+                            ..invalidate()
+                            ..permanentlyClearKeys();
+
+                          navigator.pop();
+                        },
+                        child: Text(
+                          "Clear Keys",
+                          style: TextStyle(
+                            fontSize: context.sp(16),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
