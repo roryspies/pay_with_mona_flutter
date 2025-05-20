@@ -137,7 +137,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                     ),
 
                     ///
-                    Positioned(
+                    /* Positioned(
                       right: 16,
                       top: 0,
                       bottom: 0,
@@ -156,7 +156,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                           ),
                         ),
                       ),
-                    ),
+                    ), */
                   ],
                 ),
               ),

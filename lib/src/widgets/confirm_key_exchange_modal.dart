@@ -11,10 +11,8 @@ class ConfirmKeyExchangeModal extends StatefulWidget {
   const ConfirmKeyExchangeModal({
     super.key,
     required this.onUserDecision,
-    //required this.userImageURL,
   });
 
-  //final String userImageURL;
   final void Function(bool) onUserDecision;
 
   @override
@@ -114,9 +112,7 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                       top: 0,
                       bottom: 0,
                       child: InkWell(
-                        onTap: () {
-                          widget.onUserDecision(false);
-                        },
+                        onTap: () => widget.onUserDecision(false),
                         child: CircleAvatar(
                           backgroundColor:
                               MonaColors.neutralWhite.withOpacity(0.2),
@@ -235,11 +231,7 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                   ///
                   CustomButton(
                     label: "Set Up",
-                    onTap: () {
-                      "ON USER DECISION".log();
-                      widget.onUserDecision(true);
-                      //Navigator.of(context).pop(true);
-                    },
+                    onTap: () => widget.onUserDecision(true),
                   ),
                 ],
               ),
