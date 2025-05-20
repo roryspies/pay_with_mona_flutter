@@ -18,6 +18,8 @@ class CollectionsService {
 
   final _apiService = ApiService();
 
+  final _merchantId = "67e41f884126830aded0b43c";
+
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
     required Map<String, dynamic> payload,
@@ -134,7 +136,7 @@ class CollectionsService {
         "maximumAmount": multiplyBy100(maximumAmount),
         "expiryDate": expiryDate,
         "startDate": startDate,
-        "monthlyLimit": multiplyBy100(monthlyLimit),
+        // "monthlyLimit": multiplyBy100(monthlyLimit),
         "reference": reference,
         "debitType": debitType,
         "schedule": {
@@ -221,6 +223,36 @@ class CollectionsService {
       }
 
       return;
+    }
+  }
+
+  FutureOutcome<Map<String, dynamic>> fetchCollections({
+    required String bankId,
+  }) async {
+    final secureStorage = SecureStorage();
+    final monaKeyID = await secureStorage.read(
+          key: SecureStorageKeys.keyID,
+        ) ??
+        "";
+    try {
+      final response = await _apiService.get(
+        '/collections',
+        queryParams: {
+          "bankId": bankId,
+        },
+        headers: {
+          "x-merchant-Id": _merchantId,
+          'x-mona-key-id': monaKeyID,
+        },
+      );
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } catch (e) {
+      final apiEx = APIException.fromHttpError(e);
+      '❌ createCollections() Error: ${apiEx.message}'.log();
+      return left(Failure(apiEx.message));
     }
   }
 }

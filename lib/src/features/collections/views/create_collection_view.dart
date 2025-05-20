@@ -296,16 +296,16 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                     onPressed: () {},
                                   ),
                                 ),
-                              CustomTextField(
-                                title: 'Monthly Limit',
-                                controller: _monthlyLimitController,
-                                onChanged: (value) {},
-                                keyboardType: TextInputType.number,
-                                suffixIcon: IconButton(
-                                  icon: Icon(Icons.edit),
-                                  onPressed: () {},
-                                ),
-                              ),
+                              // CustomTextField(
+                              //   title: 'Monthly Limit',
+                              //   controller: _monthlyLimitController,
+                              //   onChanged: (value) {},
+                              //   keyboardType: TextInputType.number,
+                              //   suffixIcon: IconButton(
+                              //     icon: Icon(Icons.edit),
+                              //     onPressed: () {},
+                              //   ),
+                              // ),
                               if (collectionMethod.value ==
                                   CollectionsMethod.subscription)
                                 CustomTextField(
