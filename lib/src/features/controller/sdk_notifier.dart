@@ -352,6 +352,16 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     final userKeyID = await checkIfUserHasKeyID();
 
+    'USER KEY ID IS: $userKeyID'.log();
+
+    if (userKeyID == null &&
+        phoneNumber == null &&
+        bvn == null &&
+        dob == null) {
+      _updateState(MonaSDKState.idle);
+      return;
+    }
+
     final response = await _authService.validatePII(
       phoneNumber: phoneNumber,
       bvn: bvn,

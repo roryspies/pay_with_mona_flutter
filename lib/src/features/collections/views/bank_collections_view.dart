@@ -133,44 +133,54 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
             ),
 
             // Dropdown
-            if (savedBanks != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: DropdownButtonFormField<BankOption>(
-                  style: TextStyle(
-                    fontSize: 14,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Select Bank',
-                    border: OutlineInputBorder(),
-                  ),
-                  value: selectedBank,
-                  items: savedBanks
-                      .map((bank) => DropdownMenuItem<BankOption>(
-                            value: bank,
-                            child: Row(
-                              spacing: 10,
-                              children: [
-                                CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                    bank.logo ?? '',
-                                  ),
-                                  radius: 16,
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: savedBanks != null
+                  ? DropdownButtonFormField<BankOption>(
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Select Bank',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: selectedBank,
+                      items: savedBanks
+                          .map((bank) => DropdownMenuItem<BankOption>(
+                                value: bank,
+                                child: Row(
+                                  spacing: 10,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: NetworkImage(
+                                        bank.logo ?? '',
+                                      ),
+                                      radius: 16,
+                                    ),
+                                    Text(
+                                      '${bank.bankName ?? ''} - ${bank.accountNumber ?? ''}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  '${bank.bankName ?? ''} - ${bank.accountNumber ?? ''}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: _onBankSelected,
-                ),
-              ),
+                              ))
+                          .toList(),
+                      onChanged: _onBankSelected,
+                    )
+                  : const SizedBox(
+                      height: 50,
+                      child: Center(
+                        child: Text(
+                          'No collections available',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+            ),
 
             const SizedBox(height: 20),
 
