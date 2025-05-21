@@ -6,7 +6,7 @@ import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
 class CollectionsService {

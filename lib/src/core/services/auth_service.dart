@@ -7,7 +7,7 @@ import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.da
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
 import "package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart";
 import "package:pay_with_mona/src/core/generators/uuid_generator.dart";
-import "package:pay_with_mona/src/utils/extensions.dart";
+import "package:pay_with_mona/ui/utils/extensions.dart";
 
 class AuthService {
   factory AuthService() => singleInstance;

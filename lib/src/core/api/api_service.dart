@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_response.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 
 import 'api_config.dart';
 

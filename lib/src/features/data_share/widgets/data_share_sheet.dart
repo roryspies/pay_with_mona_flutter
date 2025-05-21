@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
@@ -203,7 +203,6 @@ class DataShareSheet extends StatelessWidget {
     );
   }
 }
-
 
 enum FeatureItem {
   quickEasy(

@@ -11,7 +11,7 @@ import 'package:pay_with_mona/src/features/collections/widgets/collections_check
 import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
@@ -244,7 +244,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                               Icon(
                                 Icons.add,
                                 color: Colors.black,
-                                size:20,
+                                size: 20,
                               ),
                               Text(
                                 "Add an account",
