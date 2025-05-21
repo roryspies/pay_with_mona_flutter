@@ -7,7 +7,7 @@ import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/sdk_strings.dart';
 import 'package:pay_with_mona/src/utils/sdk_utils.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/sdk_payment_status_modal.dart';
 

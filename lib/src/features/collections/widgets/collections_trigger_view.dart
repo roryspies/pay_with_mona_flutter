@@ -9,7 +9,7 @@ import 'package:pay_with_mona/src/features/collections/controller/notifier_enums
 import 'package:pay_with_mona/src/features/collections/widgets/trigger_result_view.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/custom_drop_down.dart';
 

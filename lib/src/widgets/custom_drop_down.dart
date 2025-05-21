@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 
 class CustomDropDown<T> extends StatefulWidget {
   const CustomDropDown({

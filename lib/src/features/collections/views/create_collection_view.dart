@@ -12,7 +12,7 @@ import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/custom_drop_down.dart';
 import 'package:pay_with_mona/src/widgets/custom_text_field.dart';

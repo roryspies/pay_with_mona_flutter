@@ -13,7 +13,7 @@ import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
