@@ -217,16 +217,4 @@ class AuthService {
       throw Exception("Failed to clear secure storage keys: $e\n$stackTrace");
     }
   }
-
-  /// Deletes all entries using default options (no platform-specific settings).
-  ///
-  /// Provided for compatibility; preferred method is [clear()].
-  Future<void> clearKeys() async {
-    try {
-      await _secureStorage.clearKeys();
-      "Deleted Storage Keys".log();
-    } catch (e, stackTrace) {
-      throw Exception("Failed to delete storage keys: $e\n$stackTrace");
-    }
-  }
 }

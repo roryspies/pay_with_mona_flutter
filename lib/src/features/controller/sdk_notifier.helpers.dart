@@ -82,33 +82,42 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     final screenHeight = _callingBuildContext!.screenHeight;
     final screenWidth = _callingBuildContext!.screenWidth;
 
-    await launchUrl(
-      uri,
-      customTabsOptions: CustomTabsOptions.partial(
-        configuration: PartialCustomTabsConfiguration(
-          initialHeight: screenHeight * 0.85,
-          initialWidth: screenWidth,
-          activitySideSheetMaximizationEnabled: true,
-          activitySideSheetDecorationType:
-              CustomTabsActivitySideSheetDecorationType.shadow,
-          activitySideSheetRoundedCornersPosition:
-              CustomTabsActivitySideSheetRoundedCornersPosition.top,
-          cornerRadius: 16,
+    try {
+      await launchUrl(
+        uri,
+        customTabsOptions: CustomTabsOptions.partial(
+          showTitle: true,
+          configuration: PartialCustomTabsConfiguration(
+            initialHeight: screenHeight * 0.85,
+            initialWidth: screenWidth,
+            activitySideSheetMaximizationEnabled: true,
+            activitySideSheetDecorationType:
+                CustomTabsActivitySideSheetDecorationType.shadow,
+            activitySideSheetRoundedCornersPosition:
+                CustomTabsActivitySideSheetRoundedCornersPosition.top,
+            cornerRadius: 16,
+          ),
         ),
-      ),
-      safariVCOptions: SafariViewControllerOptions.pageSheet(
-        configuration: const SheetPresentationControllerConfiguration(
-          detents: {
-            SheetPresentationControllerDetent.large,
-          },
-          prefersEdgeAttachedInCompactHeight: true,
-          preferredCornerRadius: 16.0,
-          prefersScrollingExpandsWhenScrolledToEdge: true,
-          prefersGrabberVisible: true,
+        safariVCOptions: SafariViewControllerOptions.pageSheet(
+          configuration: const SheetPresentationControllerConfiguration(
+            detents: {
+              SheetPresentationControllerDetent.large,
+            },
+            prefersEdgeAttachedInCompactHeight: true,
+            preferredCornerRadius: 16.0,
+            prefersScrollingExpandsWhenScrolledToEdge: true,
+            prefersGrabberVisible: true,
+          ),
+          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
         ),
-        dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
-      ),
-    );
+      );
+
+      closeCustomTabs();
+    } catch (e) {
+      "Could not launch URL: $e".log();
+    } finally {
+      "CUSTOM TAB CLOSED".log();
+    }
   }
 
   Future<Map<String, dynamic>> buildBankPaymentPayload() async {
