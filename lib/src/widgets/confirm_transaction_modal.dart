@@ -58,6 +58,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                       .log();
 
                   showTransactionStatusIndicator = true;
+                  _sdkNotifier.setShowCancelButton(showCancelButton: false);
 
                   break;
                 default:
@@ -117,7 +118,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       child: SafeArea(
         child: Column(
           children: [
-            SizedBox(
+            /* SizedBox(
               height: 40,
               width: double.infinity,
               child: DecoratedBox(
@@ -163,7 +164,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                 ),
               ),
             ),
-
+ */
             ///
             //context.sbH(8.0),
 

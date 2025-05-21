@@ -84,6 +84,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _strongAuthToken;
   String? _transactionOTP;
   String? _transactionPIN;
+  bool showCancelButton = true;
   MerchantPaymentSettingsEnum _merchantPaymentSettingsEnum =
       MerchantPaymentSettingsEnum.walletReceiveComplete;
   MonaCheckOut? _monaCheckOut;
@@ -265,6 +266,13 @@ class MonaSDKNotifier extends ChangeNotifier {
         amount: _monaCheckOut?.amount,
       ),
     );
+    notifyListeners();
+  }
+
+  void setShowCancelButton({
+    required bool showCancelButton,
+  }) {
+    this.showCancelButton = showCancelButton;
     notifyListeners();
   }
 
@@ -615,6 +623,12 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
+        onCancelButtonTap: () {
+          if (canEnrollKeysCompleter.isCompleted == false) {
+            "ConfirmKeyExchangeModal ::: User Decision: false".log();
+            canEnrollKeysCompleter.complete(false);
+          }
+        },
         child: ConfirmKeyExchangeModal(
           onUserDecision: (bool canEnrolKeys) {
             if (canEnrollKeysCompleter.isCompleted == false) {
@@ -649,6 +663,7 @@ class MonaSDKNotifier extends ChangeNotifier {
             if (_callingBuildContext != null) {
               Navigator.of(_callingBuildContext!).pop();
             }
+
             await SDKUtils.showSDKModalBottomSheet(
               isDismissible: false,
               enableDrag: false,
@@ -926,7 +941,7 @@ class MonaSDKNotifier extends ChangeNotifier {
           await _collectionsService.fetchCollections(bankId: bankId);
 
       if (failure != null) {
-        final errorMsg = failure.message ?? 'Failed to fetch collections.';
+        final errorMsg = failure.message;
         _handleError(errorMsg);
         onError?.call(errorMsg);
         return {};

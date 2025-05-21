@@ -111,12 +111,8 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
           dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
         ),
       );
-
-      closeCustomTabs();
     } catch (e) {
       "Could not launch URL: $e".log();
-    } finally {
-      "CUSTOM TAB CLOSED".log();
     }
   }
 
