@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -41,6 +43,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   final subscriptionFrequency = SubscriptionFrequency.none.notifier;
   final debitType = DebitType.merchant.notifier;
   final sdkNotifier = MonaSDKNotifier();
+  String? _popupMessage;
+  bool _showPopup = false;
+  Timer? _popupTimer;
 
   List<TextEditingController> controllers = [];
 
@@ -106,6 +111,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     _referenceController.dispose();
     _monthlyLimitController.dispose();
     showMore.dispose();
+    _popupTimer?.cancel();
     super.dispose();
   }
 
@@ -160,6 +166,24 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   }
 
   void _onSdktateChange() => setState(() {});
+
+  void showPopupMessage(String message,
+      {Duration duration = const Duration(seconds: 2)}) {
+    setState(() {
+      _popupMessage = message;
+      _showPopup = true;
+    });
+
+    // Auto-hide after duration
+    _popupTimer?.cancel();
+    _popupTimer = Timer(duration, () {
+      if (mounted) {
+        setState(() {
+          _showPopup = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -590,6 +614,58 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             ],
                           ),
                         ),
+                        if (_showPopup && _popupMessage != null)
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 400),
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: child,
+                              );
+                            },
+                            child: Container(
+                              margin: EdgeInsets.symmetric(
+                                horizontal: context.w(20),
+                                vertical: context.h(24),
+                              ).copyWith(top: 0),
+                              padding: EdgeInsets.symmetric(
+                                vertical: context.h(10),
+                                horizontal: context.w(16),
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade700,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.white,
+                                    size: context.w(20),
+                                  ),
+                                  context.sbW(8),
+                                  Expanded(
+                                    child: Text(
+                                      _popupMessage!,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: context.sp(15),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         sdkNotifier.state == MonaSDKState.loading
                             ? Align(
                                 alignment: Alignment.center,
@@ -608,7 +684,11 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
                                   sdkNotifier
                                     ..setCallingBuildContext(context: context)
-                                    ..createCollectionsNavigation(
+                                    ..validateCreateCollectionFields(
+                                      onError: (message) {
+                                        showPopupMessage(message,
+                                            duration: Duration(seconds: 3));
+                                      },
                                       scheduleEntries: scheduleEntries,
                                       maximumAmount:
                                           _debitLimitController.text.trim(),

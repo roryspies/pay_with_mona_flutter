@@ -795,7 +795,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> createCollectionsNavigation({
+  Future<void> validateCreateCollectionFields({
     required String maximumAmount,
     required String expiryDate,
     required String startDate,
@@ -809,41 +809,66 @@ class MonaSDKNotifier extends ChangeNotifier {
     required CollectionsMethod method,
     required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
-    void Function(Map<String, dynamic>?)? onSuccess,
+    void Function(String)? onError,
+    void Function()? onSuccess,
   }) async {
-    //     if (failure != null) {
-    //       _handleError('Collection creation failed.');
-    //       throw (failure.message);
-    //     }
-    showModalBottomSheet(
-      context: _callingBuildContext!,
-      isScrollControlled: true,
-      builder: (_) => Wrap(
-        children: [
-          CollectionsCheckoutSheet(
-            debitType: debitType,
-            scheduleEntries: scheduleEntries,
-            method: method,
-            details: Collection(
-              maxAmount: maximumAmount,
-              expiryDate: expiryDate,
-              startDate: startDate,
-              monthlyLimit: monthlyLimit,
-              schedule: Schedule(
-                frequency: frequency,
-                type: type,
-                amount: amount,
-                entries: [],
-              ),
-              reference: reference,
-              status: '',
-              nextCollectionAt: '',
-            ),
-            merchantName: merchantName,
-          ),
-        ],
-      ),
+    _updateState(MonaSDKState.loading);
+    final (Map<String, dynamic>? success, failure) =
+        await _collectionsService.validateCreateCollectionFields(
+      maximumAmount: maximumAmount,
+      expiryDate: expiryDate,
+      startDate: startDate,
+      monthlyLimit: monthlyLimit,
+      reference: reference,
+      type: type,
+      frequency: frequency,
+      amount: amount,
+      merchantId: merchantId,
+      debitType: debitType,
+      scheduleEntries: scheduleEntries,
     );
+
+    if (failure != null) {
+      final errorMsg = failure.message;
+      _handleError(errorMsg);
+      onError?.call(errorMsg);
+      return;
+    }
+
+    if (success != null) {
+      success.log();
+      _updateState(MonaSDKState.success);
+      showModalBottomSheet(
+        context: _callingBuildContext!,
+        isScrollControlled: true,
+        builder: (_) => Wrap(
+          children: [
+            CollectionsCheckoutSheet(
+              debitType: debitType,
+              scheduleEntries: scheduleEntries,
+              method: method,
+              details: Collection(
+                maxAmount: maximumAmount,
+                expiryDate: expiryDate,
+                startDate: startDate,
+                monthlyLimit: monthlyLimit,
+                schedule: Schedule(
+                  frequency: frequency,
+                  type: type,
+                  amount: amount,
+                  entries: [],
+                ),
+                reference: reference,
+                status: '',
+                nextCollectionAt: '',
+              ),
+              merchantName: merchantName,
+            ),
+          ],
+        ),
+      );
+      return;
+    }
   }
 
   Future<void> collectionHandOffToAuth({

@@ -20,6 +20,52 @@ class CollectionsService {
 
   final _merchantId = "67e41f884126830aded0b43c";
 
+  FutureOutcome<Map<String, dynamic>> validateCreateCollectionFields({
+    Function? onComplete,
+    void Function()? onError,
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+    required String merchantId,
+    required String debitType,
+    required List<Map<String, dynamic>> scheduleEntries,
+  }) async {
+    final payload = {
+      "maximumAmount": multiplyBy100(maximumAmount),
+      "expiryDate": expiryDate,
+      "startDate": startDate,
+      // "monthlyLimit": multiplyBy100(monthlyLimit),
+      "reference": reference,
+      "debitType": debitType,
+      "schedule": {
+        "type": type,
+        "frequency": frequency,
+        "amount": amount != null ? multiplyBy100(amount) : null,
+        "entries": type == 'SCHEDULED' ? scheduleEntries : []
+      }
+    };
+
+    try {
+      final response = await _apiService.post(
+        '/collections/validate',
+        data: payload,
+      );
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } catch (e) {
+      final apiEx = APIException.fromHttpError(e);
+      '❌ validateCreateCollectionFields() Error: ${apiEx.message}'.log();
+      return left(Failure(apiEx.message));
+    }
+  }
+
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
     required Map<String, dynamic> payload,
