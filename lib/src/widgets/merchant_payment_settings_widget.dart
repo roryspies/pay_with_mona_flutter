@@ -122,6 +122,8 @@ class _MerchantPaymentSettingsWidgetState
 
                             await SDKUtils.showSDKModalBottomSheet(
                               callingContext: context,
+                              isDismissible: false,
+                              enableDrag: false,
                               child: MerchantPaymentSettingsBottomSheetContent(
                                 transactionAmountInKobo:
                                     widget.transactionAmountInKobo,
