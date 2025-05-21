@@ -1,12 +1,11 @@
-import 'package:example/utils/custom_button.dart';
-import 'package:example/utils/extensions.dart';
-import 'package:example/utils/size_config.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
+import 'package:pay_with_mona/src/widgets/custom_button.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 
-class OtpOrPinModalContent extends ConsumerWidget {
+class OtpOrPinModalContent extends StatelessWidget {
   const OtpOrPinModalContent({
     super.key,
     required this.controller,
@@ -19,7 +18,7 @@ class OtpOrPinModalContent extends ConsumerWidget {
   final Function(String) onDone;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Column(

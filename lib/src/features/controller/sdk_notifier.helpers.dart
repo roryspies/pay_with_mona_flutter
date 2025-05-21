@@ -147,6 +147,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     required TransactionTaskModel pinOrOTPTask,
   }) {
     _pinOrOTPCompleter = Completer<String>();
+    final otpPinFieldController = GlobalKey<OtpPinFieldState>();
 
     if (pinOrOTP == PaymentTaskType.pin) {
       _txnStateStream.emit(
@@ -155,9 +156,21 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
         ),
       );
     } else if (pinOrOTP == PaymentTaskType.otp) {
-      _txnStateStream.emit(
+      /* _txnStateStream.emit(
         state: TransactionStateRequestOTPTask(
           task: pinOrOTPTask,
+        ),
+      ); */
+      SDKUtils.showSDKModalBottomSheet(
+        callingContext: _callingBuildContext!,
+        child: OtpOrPinModalContent(
+          controller: otpPinFieldController,
+          onDone: (pinOrOTP) {
+            sendOTPToServer(pinOrOTP: pinOrOTP);
+          },
+          task: TransactionStateRequestOTPTask(
+            task: pinOrOTPTask,
+          ),
         ),
       );
     }

@@ -39,9 +39,6 @@ PODS:
     - Flutter
     - FlutterMacOS
   - SignatureBiometricSwift (1.0.10)
-  - webview_flutter_wkwebview (0.0.1):
-    - Flutter
-    - FlutterMacOS
 
 DEPENDENCIES:
   - biometric_signature (from `.symlinks/plugins/biometric_signature/ios`)
@@ -54,7 +51,6 @@ DEPENDENCIES:
   - local_auth_signature (from `.symlinks/plugins/local_auth_signature/ios`)
   - otp_pin_field (from `.symlinks/plugins/otp_pin_field/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
-  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -85,8 +81,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/otp_pin_field/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
-  webview_flutter_wkwebview:
-    :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
   biometric_signature: 89f8456bee939e7d1646f60785e55c2b4ed193c7
@@ -104,7 +98,6 @@ SPEC CHECKSUMS:
   otp_pin_field: d7876d051dc3061287d586940de50e9c7012069d
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   SignatureBiometricSwift: e8f35299350fe33b93e7a1342ccb88448c80ff98
-  webview_flutter_wkwebview: 1821ceac936eba6f7984d89a9f3bcb4dea99ebb2
 
 PODFILE CHECKSUM: 1959d098c91d8a792531a723c4a9d7e9f6a01e38
 

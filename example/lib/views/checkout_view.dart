@@ -9,7 +9,6 @@ import 'package:example/views/result_view.dart';
 import 'package:example/views/utils/app_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class CheckoutView extends ConsumerStatefulWidget {
@@ -28,7 +27,6 @@ class CheckoutView extends ConsumerStatefulWidget {
 
 class _CheckoutViewState extends ConsumerState<CheckoutView> {
   final sdkNotifier = MonaSDKNotifier();
-  final _otpPinFieldController = GlobalKey<OtpPinFieldState>();
 
   @override
   void initState() {
@@ -79,21 +77,6 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                     );
                   } */
 
-                  break;
-
-                case TransactionStateRequestOTPTask(:final task):
-                  ("CheckoutView 🔑 Need OTP: ${task.taskDescription}").log();
-                  await AppUtils.showOTPModal(
-                    context,
-                    (String pinOrOTP) {
-                      "CheckoutView ::: TransactionStateRequestOTPTask ::: returned value ::: $pinOrOTP"
-                          .log();
-
-                      sdkNotifier.sendOTPToServer(pinOrOTP: pinOrOTP);
-                    },
-                    controller: _otpPinFieldController,
-                    task: state,
-                  );
                   break;
 
                 case TransactionStateRequestPINTask(:final task):

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
@@ -27,6 +28,7 @@ import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
 import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
+import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';

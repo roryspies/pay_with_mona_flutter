@@ -19,7 +19,6 @@ dependencies:
   firebase_core: ^3.13.0
   pay_with_mona:
     path: ../
-  otp_pin_field: ^1.4.1
 
 dev_dependencies:
   flutter_test:
