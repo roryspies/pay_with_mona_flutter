@@ -24,7 +24,7 @@ define loading
 endef
 
 cleanAndGet:
-	flutter clean && flutter pub get && clear
+	flutter clean && rm pubspec.lock && rm -rf .pub && flutter pub get
 	$(call box,$(ORANGE)::: CLEAN AND GET COMMAND $(PURPLE)==>> $(GREEN)Done.)
 
 gitFetchAndCheckoutMain:
@@ -44,8 +44,7 @@ commit:
 cleanIOS:
 	$(call box,$(ORANGE)🚀 STARTING PROJECT CLEANUP $(PURPLE)==>>)
 	$(call loading)
-	flutter clean
-	cd ios && rm -rf Pods Podfile.lock && cd ..
-	flutter pub get
-	cd ios && pod install
+	cd example
+	flutter clean && flutter pub get
+	cd ios && rm -rf Pods Podfile.lock && pod install
 	$(call box,$(GREEN)🎉 PROJECT BUILD COMPLETE $(PURPLE)==>> $(GREEN)Done)

@@ -5,6 +5,13 @@ import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/widgets/merchant_payment_settings_widget.dart';
 
 class PayWithMona {
+  static Future<void> initialize({
+    required String publicKey,
+    required String secretKey,
+    required String merchantId,
+    required String environment,
+  }) async {}
+
   static Widget payWidget({
     required BuildContext context,
     required MonaCheckOut payload,
