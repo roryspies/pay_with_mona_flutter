@@ -26,6 +26,7 @@ import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
+import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
@@ -96,7 +97,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   Completer<String>? _pinOrOTPCompleter;
-  Completer<bool>? _confirmKeyEnrolmentCompleter;
 
   /// Current payment process state.
   MonaSDKState get state => _state;
@@ -611,10 +611,21 @@ class MonaSDKNotifier extends ChangeNotifier {
         return;
       }
 
-      final canEnrollKeys = await SDKUtils.showSDKModalBottomSheet(
+      final canEnrollKeysCompleter = Completer<bool>();
+
+      SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
-        child: ConfirmKeyExchangeModal(),
+        child: ConfirmKeyExchangeModal(
+          onUserDecision: (bool canEnrolKeys) {
+            if (canEnrollKeysCompleter.isCompleted == false) {
+              "ConfirmKeyExchangeModal ::: User Decision: $canEnrolKeys".log();
+              canEnrollKeysCompleter.complete(canEnrolKeys);
+            }
+          },
+        ),
       );
+
+      final canEnrollKeys = await canEnrollKeysCompleter.future;
 
       if (canEnrollKeys) {
         "USER ALLOWED TO ENROLL KEYS".log();
@@ -633,13 +644,31 @@ class MonaSDKNotifier extends ChangeNotifier {
             _updateState(MonaSDKState.success);
             _authStream.emit(state: AuthState.loggedIn);
             validatePII();
-            resetSDKState(clearMonaCheckout: false);
+
+            /// *** Close Modal
+            if (_callingBuildContext != null) {
+              Navigator.of(_callingBuildContext!).pop();
+            }
+            await SDKUtils.showSDKModalBottomSheet(
+              isDismissible: false,
+              enableDrag: false,
+              callingContext: _callingBuildContext!,
+              child: ConfirmTransactionModal(
+                selectedPaymentMethod: selectedPaymentMethod,
+                transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
+              ),
+            );
+            //resetSDKState(clearMonaCheckout: false);
           },
         );
       }
 
       "USER DECLINED TO ENROLL KEYS".log();
 
+      /// *** Close Modal
+      if (_callingBuildContext != null) {
+        Navigator.of(_callingBuildContext!).pop();
+      }
       _updateState(MonaSDKState.idle);
       _authStream.emit(state: AuthState.loggedOut);
       ScaffoldMessenger.of(_callingBuildContext!).showSnackBar(
@@ -885,5 +914,40 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> permanentlyClearKeys() async {
     await AuthService.singleInstance.permanentlyClearKeys();
     _authStream.emit(state: AuthState.loggedOut);
+  }
+
+  Future<Map<String, dynamic>> fetchCollectionsForBank({
+    required String bankId,
+    void Function(String)? onError,
+  }) async {
+    _updateState(MonaSDKState.loading);
+    try {
+      final (Map<String, dynamic>? success, failure) =
+          await _collectionsService.fetchCollections(bankId: bankId);
+
+      if (failure != null) {
+        final errorMsg = failure.message ?? 'Failed to fetch collections.';
+        _handleError(errorMsg);
+        onError?.call(errorMsg);
+        return {};
+      }
+
+      if (success != null) {
+        success.log();
+        _updateState(MonaSDKState.success);
+        return success;
+      }
+
+      // Just in case both success and failure are null
+      _handleError('Unknown error occurred.');
+      onError?.call('Unknown error occurred.');
+      return {};
+    } catch (e) {
+      final err = e.toString();
+      err.log();
+      _handleError(err);
+      onError?.call('Something went wrong');
+      return {};
+    }
   }
 }
