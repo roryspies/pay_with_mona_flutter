@@ -41,29 +41,16 @@ class _MerchantPaymentSettingsBottomSheetContentState
       child: SafeArea(
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Merchant Settings",
-                    style: TextStyle(
-                      fontSize: 21.0,
-                      fontWeight: FontWeight.w500,
-                      color: MonaColors.textHeading,
-                    ),
-                  ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Merchant Settings",
+                style: TextStyle(
+                  fontSize: 21.0,
+                  fontWeight: FontWeight.w600,
+                  color: MonaColors.textHeading,
                 ),
-                CircleAvatar(
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    icon: Icon(
-                      Icons.close,
-                    ),
-                  ),
-                )
-              ],
+              ),
             ),
 
             context.sbH(8.0),
@@ -104,15 +91,28 @@ class _MerchantPaymentSettingsBottomSheetContentState
                       fontSize: 14.0,
                     ),
                   ),
-                  trailing: isCurrentOption
-                      ? CircleAvatar(
+                  trailing: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 200),
+                    child: switch (isCurrentOption) {
+                      true => CircleAvatar(
                           backgroundColor:
                               MonaColors.primaryBlue.withOpacity(0.1),
                           child: Icon(
                             Icons.check,
                           ),
-                        )
-                      : null,
+                        ),
+                      false => CircleAvatar(
+                          backgroundColor:
+                              MonaColors.primaryBlue.withOpacity(0.1),
+                          child: Transform.scale(
+                            scale: 0.8,
+                            child: CircleAvatar(
+                              backgroundColor: MonaColors.neutralWhite,
+                            ),
+                          ),
+                        ),
+                    },
+                  ),
                 );
               },
             )
