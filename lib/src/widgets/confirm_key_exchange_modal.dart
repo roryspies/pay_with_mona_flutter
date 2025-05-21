@@ -6,6 +6,7 @@ import 'package:pay_with_mona/src/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
+import 'package:pay_with_mona/src/widgets/secured_by_mona.dart';
 
 class ConfirmKeyExchangeModal extends StatefulWidget {
   const ConfirmKeyExchangeModal({

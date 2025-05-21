@@ -10,6 +10,7 @@ import 'package:pay_with_mona/src/utils/sdk_utils.dart';
 import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/sdk_payment_status_modal.dart';
+import 'package:pay_with_mona/src/widgets/secured_by_mona.dart';
 
 class ConfirmTransactionModal extends StatefulWidget {
   const ConfirmTransactionModal({

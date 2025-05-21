@@ -27,12 +27,14 @@ class CheckoutView extends ConsumerStatefulWidget {
 }
 
 class _CheckoutViewState extends ConsumerState<CheckoutView> {
+  late PayWithMona _payWithMona;
   final sdkNotifier = MonaSDKNotifier();
   final _otpPinFieldController = GlobalKey<OtpPinFieldState>();
 
   @override
   void initState() {
     super.initState();
+    _payWithMona = PayWithMona.instance;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         // bool isPaymentStatusModalOpen = false;
@@ -232,9 +234,11 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                 ),
               ),
               context.sbH(8),
-              PayWithMona.payWidget(
+
+              /// *** Main Pay Widget
+              _payWithMona.payWidget(
                 context: context,
-                payload: MonaCheckOut(
+                checkoutPayload: MonaCheckOut(
                   firstName: '',
                   lastName: '',
                   dateOfBirth: DateTime.now(),

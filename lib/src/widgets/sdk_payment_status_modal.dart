@@ -9,6 +9,7 @@ import 'package:pay_with_mona/src/utils/size_config.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/flowing_progress_bar.dart';
+import 'package:pay_with_mona/src/widgets/secured_by_mona.dart';
 
 class SdkPaymentStatusModal extends StatefulWidget {
   const SdkPaymentStatusModal({super.key});
