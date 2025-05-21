@@ -53,6 +53,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   List<PaymentScheduleTextController> paymentScheduleTextControllers = [];
 
   final showMore = false.notifier;
+  final showAllFields = false.notifier;
 
   @override
   void initState() {
@@ -192,7 +193,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                           size: context.sp(30),
                         ),
                       ),
-                      context.sbW(20),
+                      context.sbW(1),
                       Text(
                         'Collections',
                         style: TextStyle(
@@ -216,29 +217,23 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                             child: Text(
                               "Clear Keys",
                               style: TextStyle(
+                                decoration: TextDecoration.underline,
                                 fontSize: context.sp(16),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          IconButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BankCollectionsView(
-                                        merchantName: "ngdeals"),
-                                  ),
-                                );
-                              },
-                              icon: Icon(Icons.history))
                         ],
                       ),
                     ],
                   ),
                 ),
-                [collectionMethod, subscriptionFrequency, debitType].multiSync(
-                    builder: (context, child) {
+                [
+                  collectionMethod,
+                  subscriptionFrequency,
+                  debitType,
+                  showAllFields,
+                ].multiSync(builder: (context, child) {
                   return Container(
                     width: double.infinity,
                     margin: EdgeInsets.only(
@@ -280,33 +275,22 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                   collectionMethod.value = value;
                                 },
                               ),
-                              if (collectionMethod.value !=
-                                  CollectionsMethod.none) ...[
-                                if (collectionMethod.value ==
-                                    CollectionsMethod.subscription)
-                                  CustomDropDownn(
-                                    title: 'Frequency',
-                                    items: subscriptionFrequencies,
-                                    value: subscriptionFrequency.value,
-                                    onChanged: (value) {
-                                      subscriptionFrequency.value = value;
-                                    },
-                                  ),
-                                CustomTextField(
-                                  title: 'Total debit limit',
-                                  controller: _debitLimitController,
-                                  onChanged: (value) {},
-                                  keyboardType: TextInputType.number,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(Icons.edit),
-                                    onPressed: () {},
-                                  ),
-                                ),
-                                if (collectionMethod.value ==
-                                    CollectionsMethod.subscription)
+                              if (showAllFields.value) ...[
+                                if (collectionMethod.value !=
+                                    CollectionsMethod.none) ...[
+                                  if (collectionMethod.value ==
+                                      CollectionsMethod.subscription)
+                                    CustomDropDownn(
+                                      title: 'Frequency',
+                                      items: subscriptionFrequencies,
+                                      value: subscriptionFrequency.value,
+                                      onChanged: (value) {
+                                        subscriptionFrequency.value = value;
+                                      },
+                                    ),
                                   CustomTextField(
-                                    title: 'Amount',
-                                    controller: _amountController,
+                                    title: 'Total debit limit',
+                                    controller: _debitLimitController,
                                     onChanged: (value) {},
                                     keyboardType: TextInputType.number,
                                     suffixIcon: IconButton(
@@ -314,21 +298,81 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                       onPressed: () {},
                                     ),
                                   ),
-                                // CustomTextField(
-                                //   title: 'Monthly Limit',
-                                //   controller: _monthlyLimitController,
-                                //   onChanged: (value) {},
-                                //   keyboardType: TextInputType.number,
-                                //   suffixIcon: IconButton(
-                                //     icon: Icon(Icons.edit),
-                                //     onPressed: () {},
-                                //   ),
-                                // ),
-                                if (collectionMethod.value ==
-                                    CollectionsMethod.subscription)
+                                  if (collectionMethod.value ==
+                                      CollectionsMethod.subscription)
+                                    CustomTextField(
+                                      title: 'Amount',
+                                      controller: _amountController,
+                                      onChanged: (value) {},
+                                      keyboardType: TextInputType.number,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(Icons.edit),
+                                        onPressed: () {},
+                                      ),
+                                    ),
+                                  // CustomTextField(
+                                  //   title: 'Monthly Limit',
+                                  //   controller: _monthlyLimitController,
+                                  //   onChanged: (value) {},
+                                  //   keyboardType: TextInputType.number,
+                                  //   suffixIcon: IconButton(
+                                  //     icon: Icon(Icons.edit),
+                                  //     onPressed: () {},
+                                  //   ),
+                                  // ),
+                                  if (collectionMethod.value ==
+                                      CollectionsMethod.subscription)
+                                    CustomTextField(
+                                      title: 'Start date',
+                                      controller: _startDateController,
+                                      onChanged: (value) {},
+                                      suffixIcon: IconButton(
+                                        icon: Icon(Icons.edit),
+                                        onPressed: () async {
+                                          final now = DateTime.now();
+
+                                          final pickedDate =
+                                              await showDatePicker(
+                                            context: context,
+                                            initialDate: now,
+                                            firstDate: DateTime(1900),
+                                            lastDate: DateTime(2100),
+                                          );
+
+                                          if (pickedDate != null) {
+                                            final pickedTime =
+                                                await showTimePicker(
+                                              context: context,
+                                              initialTime:
+                                                  TimeOfDay.fromDateTime(now),
+                                            );
+
+                                            if (pickedTime != null) {
+                                              final fullDateTime = DateTime(
+                                                pickedDate.year,
+                                                pickedDate.month,
+                                                pickedDate.day,
+                                                pickedTime.hour,
+                                                pickedTime.minute,
+                                              );
+
+                                              _startDateController.text =
+                                                  DateFormat('HH:mm dd/MM/yy')
+                                                      .format(fullDateTime);
+                                            }
+                                          }
+                                        },
+                                      ),
+                                      inputFormatters: [
+                                        LengthLimitingTextInputFormatter(10),
+                                        FilteringTextInputFormatter
+                                            .singleLineFormatter,
+                                        DOBTextInputFormatter(),
+                                      ],
+                                    ),
                                   CustomTextField(
-                                    title: 'Start date',
-                                    controller: _startDateController,
+                                    title: 'Expiration date',
+                                    controller: _expDateController,
                                     onChanged: (value) {},
                                     suffixIcon: IconButton(
                                       icon: Icon(Icons.edit),
@@ -359,7 +403,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                               pickedTime.minute,
                                             );
 
-                                            _startDateController.text =
+                                            _expDateController.text =
                                                 DateFormat('HH:mm dd/MM/yy')
                                                     .format(fullDateTime);
                                           }
@@ -373,221 +417,176 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                       DOBTextInputFormatter(),
                                     ],
                                   ),
-                                CustomTextField(
-                                  title: 'Expiration date',
-                                  controller: _expDateController,
-                                  onChanged: (value) {},
-                                  suffixIcon: IconButton(
-                                    icon: Icon(Icons.edit),
-                                    onPressed: () async {
-                                      final now = DateTime.now();
-
-                                      final pickedDate = await showDatePicker(
-                                        context: context,
-                                        initialDate: now,
-                                        firstDate: DateTime(1900),
-                                        lastDate: DateTime(2100),
-                                      );
-
-                                      if (pickedDate != null) {
-                                        final pickedTime = await showTimePicker(
-                                          context: context,
-                                          initialTime:
-                                              TimeOfDay.fromDateTime(now),
-                                        );
-
-                                        if (pickedTime != null) {
-                                          final fullDateTime = DateTime(
-                                            pickedDate.year,
-                                            pickedDate.month,
-                                            pickedDate.day,
-                                            pickedTime.hour,
-                                            pickedTime.minute,
-                                          );
-
-                                          _expDateController.text =
-                                              DateFormat('HH:mm dd/MM/yy')
-                                                  .format(fullDateTime);
-                                        }
-                                      }
-                                    },
+                                  CustomTextField(
+                                    title: 'Reference',
+                                    controller: _referenceController,
+                                    onChanged: (value) {},
+                                    suffixIcon: IconButton(
+                                      icon: Icon(Icons.edit),
+                                      onPressed: () {},
+                                    ),
                                   ),
-                                  inputFormatters: [
-                                    LengthLimitingTextInputFormatter(10),
-                                    FilteringTextInputFormatter
-                                        .singleLineFormatter,
-                                    DOBTextInputFormatter(),
-                                  ],
-                                ),
-                                CustomTextField(
-                                  title: 'Reference',
-                                  controller: _referenceController,
-                                  onChanged: (value) {},
-                                  suffixIcon: IconButton(
-                                    icon: Icon(Icons.edit),
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              ],
-                              if (collectionMethod.value ==
-                                  CollectionsMethod.scheduled)
-                                Column(
-                                  spacing: context.h(24),
-                                  children: List.generate(
-                                    paymentScheduleTextControllers.length,
-                                    (index) {
-                                      return Row(
-                                        children: [
-                                          Expanded(
-                                            child: CustomTextField(
-                                              title: 'Payment ${index + 1}',
-                                              controller:
-                                                  paymentScheduleTextControllers[
-                                                          index]
-                                                      .paymentTextcontroller,
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              onChanged: (value) {},
-                                              suffixIcon: IconButton(
-                                                icon: Icon(Icons.edit),
-                                                onPressed: () {},
-                                              ),
-                                              inputFormatters: [
-                                                // LengthLimitingTextInputFormatter(10),
-                                                // FilteringTextInputFormatter
-                                                //     .singleLineFormatter,
-                                                // DOBTextInputFormatter(),
-                                              ],
-                                            ),
-                                          ),
-                                          context.sbW(21),
-                                          Expanded(
-                                            child: CustomTextField(
-                                              title: 'Date & Time',
-                                              readOnly: true,
-                                              onTap: () async {
-                                                final now = DateTime.now();
-
-                                                final pickedDate =
-                                                    await showDatePicker(
-                                                  context: context,
-                                                  initialDate: now,
-                                                  firstDate: DateTime(1900),
-                                                  lastDate: DateTime(2100),
-                                                );
-
-                                                if (pickedDate != null) {
-                                                  final pickedTime =
-                                                      await showTimePicker(
-                                                    context: context,
-                                                    initialTime:
-                                                        TimeOfDay.fromDateTime(
-                                                            now),
-                                                  );
-
-                                                  if (pickedTime != null) {
-                                                    final fullDateTime =
-                                                        DateTime(
-                                                      pickedDate.year,
-                                                      pickedDate.month,
-                                                      pickedDate.day,
-                                                      pickedTime.hour,
-                                                      pickedTime.minute,
-                                                    );
-
-                                                    // Format: 14:00 26/10/25
+                                ],
+                                if (collectionMethod.value ==
+                                    CollectionsMethod.scheduled)
+                                  Column(
+                                    spacing: context.h(24),
+                                    children: List.generate(
+                                      paymentScheduleTextControllers.length,
+                                      (index) {
+                                        return Row(
+                                          children: [
+                                            Expanded(
+                                              child: CustomTextField(
+                                                title: 'Payment ${index + 1}',
+                                                controller:
                                                     paymentScheduleTextControllers[
                                                             index]
-                                                        .dateTextcontroller
-                                                        .text = DateFormat(
-                                                            'HH:mm dd/MM/yy')
-                                                        .format(fullDateTime);
-                                                  }
-                                                }
-                                              },
-                                              controller:
-                                                  paymentScheduleTextControllers[
-                                                          index]
-                                                      .dateTextcontroller,
-                                              onChanged: (value) {},
-                                              // suffixIcon: IconButton(
-                                              //   icon: Icon(Icons.edit),
-                                              //   onPressed: () {},
-                                              // ),
-                                              inputFormatters: [
-                                                FilteringTextInputFormatter
-                                                    .digitsOnly,
-                                                LengthLimitingTextInputFormatter(
-                                                    11),
-                                              ],
-                                              keyboardType:
-                                                  TextInputType.number,
-                                            ),
-                                          ),
-                                          if (index > 0) ...[
-                                            context.sbW(10),
-                                            InkWell(
-                                              onTap: () {
-                                                removeController(
-                                                    indexId:
-                                                        paymentScheduleTextControllers[
-                                                                index]
-                                                            .index);
-                                              },
-                                              child: CircleAvatar(
-                                                radius: 10,
-                                                child: Icon(Icons.remove),
+                                                        .paymentTextcontroller,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (value) {},
+                                                suffixIcon: IconButton(
+                                                  icon: Icon(Icons.edit),
+                                                  onPressed: () {},
+                                                ),
+                                                inputFormatters: [
+                                                  // LengthLimitingTextInputFormatter(10),
+                                                  // FilteringTextInputFormatter
+                                                  //     .singleLineFormatter,
+                                                  // DOBTextInputFormatter(),
+                                                ],
                                               ),
-                                            )
-                                          ]
-                                        ],
-                                      );
-                                    },
+                                            ),
+                                            context.sbW(21),
+                                            Expanded(
+                                              child: CustomTextField(
+                                                title: 'Date & Time',
+                                                readOnly: true,
+                                                onTap: () async {
+                                                  final now = DateTime.now();
+
+                                                  final pickedDate =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate: now,
+                                                    firstDate: DateTime(1900),
+                                                    lastDate: DateTime(2100),
+                                                  );
+
+                                                  if (pickedDate != null) {
+                                                    final pickedTime =
+                                                        await showTimePicker(
+                                                      context: context,
+                                                      initialTime: TimeOfDay
+                                                          .fromDateTime(now),
+                                                    );
+
+                                                    if (pickedTime != null) {
+                                                      final fullDateTime =
+                                                          DateTime(
+                                                        pickedDate.year,
+                                                        pickedDate.month,
+                                                        pickedDate.day,
+                                                        pickedTime.hour,
+                                                        pickedTime.minute,
+                                                      );
+
+                                                      // Format: 14:00 26/10/25
+                                                      paymentScheduleTextControllers[
+                                                              index]
+                                                          .dateTextcontroller
+                                                          .text = DateFormat(
+                                                              'HH:mm dd/MM/yy')
+                                                          .format(fullDateTime);
+                                                    }
+                                                  }
+                                                },
+                                                controller:
+                                                    paymentScheduleTextControllers[
+                                                            index]
+                                                        .dateTextcontroller,
+                                                onChanged: (value) {},
+                                                // suffixIcon: IconButton(
+                                                //   icon: Icon(Icons.edit),
+                                                //   onPressed: () {},
+                                                // ),
+                                                inputFormatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                  LengthLimitingTextInputFormatter(
+                                                      11),
+                                                ],
+                                                keyboardType:
+                                                    TextInputType.number,
+                                              ),
+                                            ),
+                                            if (index > 0) ...[
+                                              context.sbW(10),
+                                              InkWell(
+                                                onTap: () {
+                                                  removeController(
+                                                      indexId:
+                                                          paymentScheduleTextControllers[
+                                                                  index]
+                                                              .index);
+                                                },
+                                                child: CircleAvatar(
+                                                  radius: 10,
+                                                  child: Icon(Icons.remove),
+                                                ),
+                                              )
+                                            ]
+                                          ],
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                              if (collectionMethod.value ==
-                                  CollectionsMethod.scheduled)
-                                context.sbH(12),
-                              if (collectionMethod.value ==
-                                  CollectionsMethod.scheduled)
-                                InkWell(
-                                  onTap: () {
-                                    addController(
-                                        newPaymentScheduleTextController:
-                                            PaymentScheduleTextController(
-                                      index:
-                                          paymentScheduleTextControllers.length,
-                                      paymentTextcontroller:
-                                          TextEditingController(),
-                                      dateTextcontroller:
-                                          TextEditingController(),
-                                    ));
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Icon(
-                                        Icons.add,
-                                      ),
-                                      Text(
-                                        'Add payment',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: context.sp(14),
-                                          color: Colors.black,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                      ),
-                                      Opacity(
-                                        opacity: 0,
-                                        child: Icon(
+                                if (collectionMethod.value ==
+                                    CollectionsMethod.scheduled)
+                                  context.sbH(12),
+                                if (collectionMethod.value ==
+                                    CollectionsMethod.scheduled)
+                                  InkWell(
+                                    onTap: () {
+                                      addController(
+                                          newPaymentScheduleTextController:
+                                              PaymentScheduleTextController(
+                                        index: paymentScheduleTextControllers
+                                            .length,
+                                        paymentTextcontroller:
+                                            TextEditingController(),
+                                        dateTextcontroller:
+                                            TextEditingController(),
+                                      ));
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Icon(
                                           Icons.add,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                )
+                                        Text(
+                                          'Add payment',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: context.sp(14),
+                                            color: Colors.black,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                        ),
+                                        Opacity(
+                                          opacity: 0,
+                                          child: Icon(
+                                            Icons.add,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                              ],
                             ],
                           ),
                         ),
@@ -600,6 +599,11 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                               )
                             : CustomButton(
                                 onTap: () {
+                                  if (!showAllFields.value) {
+                                    showAllFields.value = true;
+                                    return;
+                                  }
+
                                   final scheduleEntries = getScheduleEntries();
 
                                   sdkNotifier
@@ -641,6 +645,27 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                 },
                                 label: 'Continue',
                               ),
+                        context.sbH(32),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BankCollectionsView(
+                                    merchantName: "ngdeals"),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'See existing collections',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: context.sp(14),
+                              color: Colors.black,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   );
