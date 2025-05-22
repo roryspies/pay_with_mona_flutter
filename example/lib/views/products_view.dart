@@ -132,13 +132,15 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                 radius: context.w(24),
                                 backgroundColor:
                                     MonaColors.primary.withOpacity(0.1),
-                                backgroundImage:
-                                    _sdkNotifier.merchantBrandingDetails != null
-                                        ? NetworkImage(_sdkNotifier
-                                            .merchantBrandingDetails!.image)
-                                        : AssetImage(
-                                            "ng_deals_logo".png,
-                                          ),
+                                backgroundImage: switch (
+                                    _sdkNotifier.merchantBrandingDetails !=
+                                        null) {
+                                  true => NetworkImage(_sdkNotifier
+                                      .merchantBrandingDetails!.image),
+                                  false => AssetImage(
+                                      "ng_deals_logo".png,
+                                    ),
+                                },
                               ),
                               Text(
                                 _sdkNotifier
