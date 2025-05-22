@@ -704,17 +704,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   Future<void> createCollections({
     required String bankId,
-    required String maximumAmount,
-    required String expiryDate,
-    required String startDate,
-    required String monthlyLimit,
-    required String reference,
-    required String type,
-    required String frequency,
-    required String? amount,
-    required String merchantId,
-    required String debitType,
-    required List<Map<String, dynamic>> scheduleEntries,
+    required String accessRequestId,
     void Function(Map<String, dynamic>?)? onSuccess,
     void Function()? onFailure,
   }) async {
@@ -723,18 +713,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     _firebaseSSE.initialize();
     try {
       await _collectionsService.createCollectionRequest(
-        debitType: debitType,
         bankId: bankId,
-        maximumAmount: maximumAmount,
-        expiryDate: expiryDate,
-        startDate: startDate,
-        monthlyLimit: monthlyLimit,
-        reference: reference,
-        type: type,
-        frequency: frequency,
-        amount: amount,
-        merchantId: merchantId,
-        scheduleEntries: scheduleEntries,
+        accessRequestId: accessRequestId,
         onComplete: (res, p) {
           final success = res as Map<String, dynamic>;
           success.log();
@@ -814,7 +794,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String type,
     required String frequency,
     required String? amount,
-    required String merchantId,
     required String merchantName,
     required CollectionsMethod method,
     required String debitType,
@@ -833,7 +812,6 @@ class MonaSDKNotifier extends ChangeNotifier {
       type: type,
       frequency: frequency,
       amount: amount,
-      merchantId: merchantId,
       debitType: debitType,
       scheduleEntries: scheduleEntries,
     );
@@ -848,12 +826,16 @@ class MonaSDKNotifier extends ChangeNotifier {
     if (success != null) {
       success.log();
       _updateState(MonaSDKState.success);
+
+      final accessRequestId =
+          (success['data']['requests'] as List).last['id'] as String;
       showModalBottomSheet(
         context: _callingBuildContext!,
         isScrollControlled: true,
         builder: (_) => Wrap(
           children: [
             CollectionsCheckoutSheet(
+              accessRequestId: accessRequestId,
               debitType: debitType,
               scheduleEntries: scheduleEntries,
               method: method,
@@ -971,7 +953,7 @@ class MonaSDKNotifier extends ChangeNotifier {
           await _collectionsService.fetchCollections(bankId: bankId);
 
       if (failure != null) {
-        final errorMsg = failure.message ?? 'Failed to fetch collections.';
+        final errorMsg = failure.message;
         _handleError(errorMsg);
         onError?.call(errorMsg);
         return {};

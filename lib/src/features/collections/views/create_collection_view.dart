@@ -716,7 +716,6 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                           .value.name
                                           .toUpperCase(),
                                       amount: _amountController.text.trim(),
-                                      merchantId: '67e41f884126830aded0b43c',
                                       merchantName: widget.merchantName,
                                       method: collectionMethod.value,
                                       debitType:

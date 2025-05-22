@@ -25,6 +25,7 @@ class CollectionsBankSheet extends StatefulWidget {
     required this.merchantName,
     required this.scheduleEntries,
     required this.debitType,
+    required this.accessRequestId,
   });
 
   final Collection? details;
@@ -32,6 +33,7 @@ class CollectionsBankSheet extends StatefulWidget {
   final String merchantName;
   final String debitType;
   final List<Map<String, dynamic>> scheduleEntries;
+  final String accessRequestId;
 
   @override
   State<CollectionsBankSheet> createState() => _CollectionsBankSheetState();
@@ -278,26 +280,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
                                       sdkNotifier.createCollections(
-                                        debitType: widget.debitType,
                                         bankId: selectedBank?.bankId ??
                                             '680f5d983bccd31f1312645d',
-                                        scheduleEntries: widget.scheduleEntries,
-                                        maximumAmount: collection.maxAmount,
-                                        expiryDate: collection.expiryDate!,
-                                        startDate: collection.startDate!,
-                                        monthlyLimit: collection.monthlyLimit!,
-                                        reference: collection.reference,
-                                        type: widget.method ==
-                                                CollectionsMethod.scheduled
-                                            ? 'SCHEDULED'
-                                            : 'SUBSCRIPTION',
-                                        frequency:
-                                            collection.schedule.frequency!,
-                                        amount: widget.method ==
-                                                CollectionsMethod.scheduled
-                                            ? null
-                                            : schedule.amount,
-                                        merchantId: '67e41f884126830aded0b43c',
+                                        accessRequestId: widget.accessRequestId,
                                         onSuccess: (successMap) {
                                           Navigator.of(context).pop();
                                           showModalBottomSheet(
@@ -306,6 +291,8 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                             builder: (_) => Wrap(
                                               children: [
                                                 CollectionsCheckoutSheet(
+                                                  accessRequestId:
+                                                      widget.accessRequestId,
                                                   debitType: widget.debitType,
                                                   selectedBank: selectedBank,
                                                   successMap: successMap,
