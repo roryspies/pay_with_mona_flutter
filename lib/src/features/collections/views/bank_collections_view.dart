@@ -51,7 +51,9 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
     });
   }
 
-  void _onSdkStateChange() => setState(() {});
+  void _onSdkStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void _onBankSelected(BankOption? bank) {
     setState(() {
