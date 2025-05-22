@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/features/data_share/widgets/data_share_sheet.dart';
 import 'package:pay_with_mona/src/features/payments/pay_with_mona_widget.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
-import 'package:pay_with_mona/src/widgets/merchant_payment_settings_widget.dart';
+import 'package:pay_with_mona/ui/widgets/merchant_payment_settings_widget.dart';
 
 class PayWithMona {
   static Future<void> initialize({

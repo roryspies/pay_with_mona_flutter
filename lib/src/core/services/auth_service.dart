@@ -2,6 +2,7 @@ import "dart:convert";
 import "dart:io";
 import "package:flutter/services.dart";
 import "package:pay_with_mona/src/core/api/api_endpoints.dart";
+import "package:pay_with_mona/src/core/api/api_header_model.dart";
 import "package:pay_with_mona/src/core/api/api_service.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
@@ -17,6 +18,25 @@ class AuthService {
   /// ***
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
+
+  Future<Map<String, dynamic>?> initMerchant({
+    required String merchantKey,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        APIEndpoints.initMerchant,
+        headers: ApiHeaderModel.initSDKHeaders(
+          merchantKey: merchantKey,
+        ),
+      );
+
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (error) {
+      "$error".log();
+
+      return null;
+    }
+  }
 
   Future<Map<String, dynamic>?> validatePII({
     String? phoneNumber,

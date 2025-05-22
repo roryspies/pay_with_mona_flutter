@@ -47,8 +47,6 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$baseUrl$endpoint');
 
-    print(uri.toString());
-
     if (logRequests) {
       '🚀 POST Request to $uri'.log();
       if (data != null) {
@@ -211,8 +209,6 @@ class ApiService {
     Map<String, String>? headers,
   }) async {
     final uri = Uri.parse('$baseUrl$endpoint');
-
-    print(uri.toString());
 
     if (logRequests) {
       '🚀 POST Request to $uri'.log();

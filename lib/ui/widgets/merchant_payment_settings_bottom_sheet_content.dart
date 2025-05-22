@@ -93,25 +93,28 @@ class _MerchantPaymentSettingsBottomSheetContentState
                   ),
                   trailing: AnimatedSwitcher(
                     duration: Duration(milliseconds: 200),
-                    child: switch (isCurrentOption) {
-                      true => CircleAvatar(
-                          backgroundColor:
-                              MonaColors.primaryBlue.withOpacity(0.1),
-                          child: Icon(
-                            Icons.check,
-                          ),
-                        ),
-                      false => CircleAvatar(
-                          backgroundColor:
-                              MonaColors.primaryBlue.withOpacity(0.1),
-                          child: Transform.scale(
-                            scale: 0.8,
-                            child: CircleAvatar(
-                              backgroundColor: MonaColors.neutralWhite,
+                    child: Transform.scale(
+                      scale: 0.6,
+                      child: switch (isCurrentOption) {
+                        true => CircleAvatar(
+                            backgroundColor:
+                                MonaColors.primaryBlue.withOpacity(0.1),
+                            child: Icon(
+                              Icons.check,
                             ),
                           ),
-                        ),
-                    },
+                        false => CircleAvatar(
+                            backgroundColor:
+                                MonaColors.primaryBlue.withOpacity(0.1),
+                            child: Transform.scale(
+                              scale: 0.8,
+                              child: CircleAvatar(
+                                backgroundColor: MonaColors.neutralWhite,
+                              ),
+                            ),
+                          ),
+                      },
+                    ),
                   ),
                 );
               },
