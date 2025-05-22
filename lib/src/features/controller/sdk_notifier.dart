@@ -372,39 +372,41 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> initSDK({
     required String merchantKey,
   }) async {
+    bool succeeded = false;
+
     try {
       if (_cachedMerchantKey == merchantKey &&
           _merchantBrandingDetails != null) {
-        notifyListeners();
-        return;
+        succeeded = true;
+      } else {
+        final storedKey = _cachedMerchantKey ?? await _getMerchantKey();
+
+        if (storedKey == merchantKey) {
+          _merchantBrandingDetails ??= await _getMerchantBranding();
+          succeeded = true;
+        } else {
+          _cachedMerchantKey = merchantKey;
+          await _setMerchantKey(merchantKey: merchantKey);
+
+          final branding =
+              await _authService.initMerchant(merchantKey: merchantKey);
+
+          if (branding != null) {
+            _merchantBrandingDetails = branding;
+            unawaited(_setMerchantBranding(merchant: branding));
+            succeeded = true;
+          } else {
+            _handleError("Failed to initialize SDK");
+          }
+        }
+
+        if (succeeded) notifyListeners();
       }
-
-      final storedKey = _cachedMerchantKey ?? await _getMerchantKey();
-      if (storedKey == merchantKey) {
-        _merchantBrandingDetails ??= await _getMerchantBranding();
-        notifyListeners();
-        return;
-      }
-
-      _cachedMerchantKey = merchantKey;
-      await _setMerchantKey(merchantKey: merchantKey);
-
-      final branding =
-          await _authService.initMerchant(merchantKey: merchantKey);
-      if (branding == null) {
-        _handleError("Failed to initialize SDK");
-        return;
-      }
-
-      _merchantBrandingDetails = branding;
-      notifyListeners();
-
-      unawaited(_setMerchantBranding(merchant: branding));
     } catch (e, st) {
-      _handleError(
-        "Init SDK error $e ::: Stack Trace $st",
-      );
-    } finally {
+      _handleError("Init SDK error $e ::: Stack Trace $st");
+    }
+
+    if (succeeded && _merchantBrandingDetails != null) {
       MonaColors.setBranding(
         merchantBrandingColours: _merchantBrandingDetails!.colors,
       );
