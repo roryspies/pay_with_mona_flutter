@@ -41,8 +41,8 @@ class _BottomSheetTopHeaderState extends State<BottomSheetTopHeader> {
       decoration: BoxDecoration(
         color: MonaColors.primaryBlue,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
         ),
       ),
 
