@@ -25,7 +25,7 @@ class ProductsView extends ConsumerStatefulWidget {
 class _ProductsViewState extends ConsumerState<ProductsView> {
   late PayWithMona _payWithMona;
   final paymentNotifier = PaymentNotifier();
-  final sdkNotifier = MonaSDKNotifier();
+  final _sdkNotifier = MonaSDKNotifier();
   final _amountController = TextEditingController();
   bool isLoading = false;
 
@@ -37,7 +37,8 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
     _amountController.text = '20';
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
-        sdkNotifier
+        _sdkNotifier.merchantBrandingDetails?.toJson().log();
+        _sdkNotifier
           ..confirmLoggedInUser()
           ..sdkStateStream.listen(
             (state) async {
@@ -174,14 +175,14 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                       context.closeKeyboard();
                                       switch (product) {
                                         case Products.checkout:
-                                          sdkNotifier.setCallingBuildContext(
+                                          _sdkNotifier.setCallingBuildContext(
                                             context: context,
                                           );
 
                                           final result =
                                               await Future.wait<Object?>(
                                             [
-                                              sdkNotifier.initiatePayment(
+                                              _sdkNotifier.initiatePayment(
                                                 tnxAmountInKobo: num.parse(
                                                       _amountController
                                                           .value.text
@@ -189,7 +190,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                                     ) *
                                                     100,
                                               ),
-                                              sdkNotifier.validatePII()
+                                              _sdkNotifier.validatePII()
                                             ],
                                           );
 

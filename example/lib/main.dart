@@ -12,9 +12,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  PayWithMona.initialize(
-    merchantAPIKey: "YOUR_MERCHANT_API_KEY",
-  );
+  await PayWithMona.initialize(merchantKey: "mona_pub_76e93ca1");
 
   runApp(
     ProviderScope(

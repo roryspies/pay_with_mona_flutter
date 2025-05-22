@@ -20,6 +20,14 @@ class CollectionsService {
 
   final _merchantId = "67e41f884126830aded0b43c";
 
+  final _secureStorage = SecureStorage();
+
+  Future<String?> getMerchantKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantKey,
+    );
+  }
+
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
     required Map<String, dynamic> payload,

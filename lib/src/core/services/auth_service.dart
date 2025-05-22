@@ -8,6 +8,7 @@ import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.da
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
 import "package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart";
 import "package:pay_with_mona/src/core/generators/uuid_generator.dart";
+import "package:pay_with_mona/src/models/merchant_branding.dart";
 import "package:pay_with_mona/ui/utils/extensions.dart";
 
 class AuthService {
@@ -19,18 +20,26 @@ class AuthService {
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
 
-  Future<Map<String, dynamic>?> initMerchant({
+  Future<String?> _getMerchantKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantKey,
+    );
+  }
+
+  Future<MerchantBranding?> initMerchant({
     required String merchantKey,
   }) async {
     try {
-      final response = await _apiService.post(
+      final response = await _apiService.get(
         APIEndpoints.initMerchant,
         headers: ApiHeaderModel.initSDKHeaders(
           merchantKey: merchantKey,
         ),
       );
 
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      return MerchantBranding.fromJSON(
+        json: (jsonDecode(response.body) as Map<String, dynamic>)["data"],
+      );
     } catch (error) {
       "$error".log();
 

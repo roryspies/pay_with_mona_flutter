@@ -2,6 +2,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
+import 'package:pay_with_mona/src/features/data_share/widgets/data_share_sheet.dart';
 import 'package:pay_with_mona/src/features/payments/pay_with_mona_widget.dart';
 import 'package:pay_with_mona/ui/widgets/merchant_payment_settings_widget.dart';
 
@@ -21,11 +22,11 @@ abstract class PayWithMona {
   }
 
   /// Initialize the SDK with your merchant API key
-  static void initialize({
-    required String merchantAPIKey,
-  }) {
-    _instance ??= _MonaSDKImpl.initialize(
-      merchantAPIKey: merchantAPIKey,
+  static Future<void> initialize({
+    required String merchantKey,
+  }) async {
+    _instance ??= await _MonaSDKImpl.initialize(
+      merchantKey: merchantKey,
     );
   }
 
