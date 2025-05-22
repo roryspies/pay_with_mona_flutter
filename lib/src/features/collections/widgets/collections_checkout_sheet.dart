@@ -173,7 +173,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                         MonaColors.primaryBlue.withOpacity(0.1),
                                     backgroundImage: switch (
                                         sdkNotifier.merchantBrandingDetails !=
-                                            null) {
+                                                null &&
+                                            sdkNotifier.merchantBrandingDetails!
+                                                .image.isNotEmpty) {
                                       true => NetworkImage(
                                           sdkNotifier
                                               .merchantBrandingDetails!.image,
@@ -182,7 +184,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                     },
                                     child: switch (
                                         sdkNotifier.merchantBrandingDetails !=
-                                            null) {
+                                                null &&
+                                            sdkNotifier.merchantBrandingDetails!
+                                                .image.isNotEmpty) {
                                       true => null,
                                       false => Text(
                                           getInitials(widget.merchantName),

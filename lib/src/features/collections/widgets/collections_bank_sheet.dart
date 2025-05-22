@@ -142,19 +142,23 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                               backgroundColor:
                                   MonaColors.primaryBlue.withOpacity(0.1),
                               backgroundImage: switch (
-                                  sdkNotifier.merchantBrandingDetails != null) {
+                                  sdkNotifier.merchantBrandingDetails != null &&
+                                      sdkNotifier.merchantBrandingDetails!.image
+                                          .isNotEmpty) {
                                 true => NetworkImage(
                                     sdkNotifier.merchantBrandingDetails!.image,
                                   ),
                                 false => null,
                               },
                               child: switch (
-                                  sdkNotifier.merchantBrandingDetails != null) {
+                                  sdkNotifier.merchantBrandingDetails != null &&
+                                      sdkNotifier.merchantBrandingDetails!.image
+                                          .isNotEmpty) {
                                 true => null,
                                 false => Text(
                                     getInitials(widget.merchantName),
                                     style: TextStyle(
-                                      fontSize: context.sp(16),
+                                      fontSize: context.sp(25),
                                       fontWeight: FontWeight.w600,
                                       color: MonaColors.primaryBlue,
                                     ),
