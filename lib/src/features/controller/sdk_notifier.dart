@@ -949,7 +949,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                 maxAmount: maximumAmount,
                 expiryDate: expiryDate,
                 startDate: startDate,
-                monthlyLimit: divideBy100(monthlyLimitt),
+                monthlyLimit: divideBy100NoDecimal(monthlyLimitt),
                 schedule: Schedule(
                   frequency: frequency,
                   type: type,
