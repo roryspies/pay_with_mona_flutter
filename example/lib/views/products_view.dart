@@ -132,12 +132,18 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                 radius: context.w(24),
                                 backgroundColor:
                                     MonaColors.primary.withOpacity(0.1),
-                                backgroundImage: AssetImage(
-                                  "ng_deals_logo".png,
-                                ),
+                                backgroundImage:
+                                    _sdkNotifier.merchantBrandingDetails != null
+                                        ? NetworkImage(_sdkNotifier
+                                            .merchantBrandingDetails!.image)
+                                        : AssetImage(
+                                            "ng_deals_logo".png,
+                                          ),
                               ),
                               Text(
-                                "NGDeals",
+                                _sdkNotifier
+                                        .merchantBrandingDetails?.tradingName ??
+                                    "NGDeals",
                                 style: TextStyle(
                                   fontSize: context.sp(36),
                                   fontWeight: FontWeight.w500,

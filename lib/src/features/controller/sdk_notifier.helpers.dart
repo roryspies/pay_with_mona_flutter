@@ -156,11 +156,6 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
         ),
       );
     } else if (pinOrOTP == PaymentTaskType.otp) {
-      /* _txnStateStream.emit(
-        state: TransactionStateRequestOTPTask(
-          task: pinOrOTPTask,
-        ),
-      ); */
       SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
         child: OtpOrPinModalContent(
