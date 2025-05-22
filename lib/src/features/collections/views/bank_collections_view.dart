@@ -1,10 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/core/services/collections_services.dart';
-
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/trigger_result_view.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
@@ -140,46 +137,6 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
             ),
 
             // Dropdown
-
-            if (savedBanks != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: DropdownButtonFormField<BankOption>(
-                  style: TextStyle(
-                    fontSize: 14,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Select Bank',
-                    border: OutlineInputBorder(),
-                  ),
-                  value: selectedBank,
-                  items: savedBanks
-                      .map((bank) => DropdownMenuItem<BankOption>(
-                            value: bank,
-                            child: Row(
-                              spacing: 10,
-                              children: [
-                                CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                    bank.logo ?? '',
-                                  ),
-                                  radius: 16,
-                                ),
-                                Text(
-                                  '${bank.bankName ?? ''} - ${bank.accountNumber ?? ''}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: _onBankSelected,
-                ),
-              ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: savedBanks != null
@@ -494,10 +451,4 @@ String? convertToIsoDate(dynamic input) {
     ('Error converting date: $e').log();
     return null;
   }
-}
-
-String _formatAmount(dynamic amount) {
-  final value = double.tryParse(amount.toString()) ?? 0;
-  final formatter = NumberFormat("#,##0", "en_NG");
-  return formatter.format(value);
 }
