@@ -1,10 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/core/services/collections_services.dart';
-
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/trigger_result_view.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
@@ -51,7 +48,9 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
     });
   }
 
-  void _onSdkStateChange() => setState(() {});
+  void _onSdkStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void _onBankSelected(BankOption? bank) {
     setState(() {
@@ -138,7 +137,6 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
             ),
 
             // Dropdown
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: savedBanks != null
@@ -453,10 +451,4 @@ String? convertToIsoDate(dynamic input) {
     ('Error converting date: $e').log();
     return null;
   }
-}
-
-String _formatAmount(dynamic amount) {
-  final value = double.tryParse(amount.toString()) ?? 0;
-  final formatter = NumberFormat("#,##0", "en_NG");
-  return formatter.format(value);
 }

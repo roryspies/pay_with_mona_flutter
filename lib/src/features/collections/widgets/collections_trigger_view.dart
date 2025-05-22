@@ -76,7 +76,9 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
     super.dispose();
   }
 
-  void _onSdkStateChange() => setState(() {});
+  void _onSdkStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

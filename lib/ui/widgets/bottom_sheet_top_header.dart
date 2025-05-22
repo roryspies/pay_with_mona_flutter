@@ -28,7 +28,9 @@ class _BottomSheetTopHeaderState extends State<BottomSheetTopHeader> {
     sdkNotifier.addListener(_onSdkStateChange);
   }
 
-  void _onSdkStateChange() => setState(() {});
+  void _onSdkStateChange() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {

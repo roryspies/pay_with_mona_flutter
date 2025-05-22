@@ -61,7 +61,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
     });
   }
 
-  void _onSdkStateChange() => setState(() {});
+  void _onSdkStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void selectBank({required BankOption bank}) {
     setState(() {
