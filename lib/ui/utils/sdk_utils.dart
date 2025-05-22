@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pay_with_mona/ui/widgets/sdk_bottom_sheet_container.dart';
 
-class SDKUtils {
+abstract class SDKUtils {
   static String formatMoney(double price) {
     final lastValue = (price / 100).toString().split(".").last.toLowerCase();
 
@@ -18,6 +19,8 @@ class SDKUtils {
     required Widget child,
     bool isDismissible = true,
     bool enableDrag = true,
+    bool showCancelButton = true,
+    final Function()? onCancelButtonTap,
   }) async {
     final result = await showModalBottomSheet<bool>(
       context: callingContext,
@@ -26,16 +29,15 @@ class SDKUtils {
       enableDrag: enableDrag,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
       ),
       builder: (context) {
-        return AnimatedPadding(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Wrap(children: [child]),
+        return SdkBottomSheetWrapper(
+          showCancelButton: showCancelButton,
+          onCancelButtonTap: onCancelButtonTap,
+          child: child,
         );
       },
     );

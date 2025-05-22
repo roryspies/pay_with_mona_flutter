@@ -2,12 +2,14 @@ import "dart:convert";
 import "dart:io";
 import "package:flutter/services.dart";
 import "package:pay_with_mona/src/core/api/api_endpoints.dart";
+import "package:pay_with_mona/src/core/api/api_header_model.dart";
 import "package:pay_with_mona/src/core/api/api_service.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
 import "package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart";
 import "package:pay_with_mona/src/core/generators/uuid_generator.dart";
-import "package:pay_with_mona/src/utils/extensions.dart";
+import "package:pay_with_mona/src/models/merchant_branding.dart";
+import "package:pay_with_mona/ui/utils/extensions.dart";
 
 class AuthService {
   factory AuthService() => singleInstance;
@@ -17,6 +19,33 @@ class AuthService {
   /// ***
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
+
+  Future<String?> _getMerchantKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantKey,
+    );
+  }
+
+  Future<MerchantBranding?> initMerchant({
+    required String merchantKey,
+  }) async {
+    try {
+      final response = await _apiService.get(
+        APIEndpoints.initMerchant,
+        headers: ApiHeaderModel.initSDKHeaders(
+          merchantKey: merchantKey,
+        ),
+      );
+
+      return MerchantBranding.fromJSON(
+        json: (jsonDecode(response.body) as Map<String, dynamic>)["data"],
+      );
+    } catch (error) {
+      "$error".log();
+
+      return null;
+    }
+  }
 
   Future<Map<String, dynamic>?> validatePII({
     String? phoneNumber,
@@ -215,18 +244,6 @@ class AuthService {
       "Cleared Secure Storage Keys".log();
     } catch (e, stackTrace) {
       throw Exception("Failed to clear secure storage keys: $e\n$stackTrace");
-    }
-  }
-
-  /// Deletes all entries using default options (no platform-specific settings).
-  ///
-  /// Provided for compatibility; preferred method is [clear()].
-  Future<void> clearKeys() async {
-    try {
-      await _secureStorage.clearKeys();
-      "Deleted Storage Keys".log();
-    } catch (e, stackTrace) {
-      throw Exception("Failed to delete storage keys: $e\n$stackTrace");
     }
   }
 }

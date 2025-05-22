@@ -11,7 +11,7 @@ import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
 /// Service to orchestrate payment‐related endpoints.
@@ -22,6 +22,14 @@ class PaymentService {
   factory PaymentService() => _instance;
 
   final _apiService = ApiService();
+
+  final _secureStorage = SecureStorage();
+
+  Future<String?> getMerchantKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantKey,
+    );
+  }
 
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> initiatePayment({
@@ -51,32 +59,6 @@ class PaymentService {
     }
   }
 
-/*   FutureOutcome<Map<String, dynamic>> updateMerchantSettings({
-    required String merchantID,
-    required String successRateType,
-  }) async {
-    try {
-      final response = await _apiService.post(
-        '/demo/checkout',
-        headers: {
-          "merchant-owner": merchantID,
-        },
-        data: {
-          ""
-          'successRateType': successRateType,
-        },
-      );
-
-      return right(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } catch (e) {
-      final apiEx = APIException.fromHttpError(e);
-      '❌ initiatePayment() Error: ${apiEx.message}'.log();
-      return left(Failure(apiEx.message));
-    }
-  }
- */
   /// Retrieves available payment methods for a transaction.
   FutureOutcome<PendingPaymentResponseModel> getPaymentMethods({
     required String transactionId,

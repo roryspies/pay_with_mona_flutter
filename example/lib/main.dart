@@ -4,21 +4,25 @@ import 'package:example/views/products_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await PayWithMona.initialize(merchantKey: "mona_pub_76e93ca1");
+
   runApp(
     ProviderScope(
-      child: const PayWithMona(),
+      child: const PayWithMonaExampleApp(),
     ),
   );
 }
 
-class PayWithMona extends StatelessWidget {
-  const PayWithMona({super.key});
+class PayWithMonaExampleApp extends StatelessWidget {
+  const PayWithMonaExampleApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

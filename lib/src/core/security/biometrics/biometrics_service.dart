@@ -1,7 +1,7 @@
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_exception.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_prompt_config.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_signature_manager.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 
 /// A high-level service that wraps biometric signature operations.
 ///

@@ -11,10 +11,10 @@ import 'package:pay_with_mona/src/features/collections/widgets/collections_check
 import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'package:pay_with_mona/src/widgets/bottom_sheet_top_header.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
+import 'package:pay_with_mona/ui/widgets/bottom_sheet_top_header.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
 class CollectionsBankSheet extends StatefulWidget {
@@ -25,6 +25,7 @@ class CollectionsBankSheet extends StatefulWidget {
     required this.merchantName,
     required this.scheduleEntries,
     required this.debitType,
+    required this.accessRequestId,
   });
 
   final Collection? details;
@@ -32,6 +33,7 @@ class CollectionsBankSheet extends StatefulWidget {
   final String merchantName;
   final String debitType;
   final List<Map<String, dynamic>> scheduleEntries;
+  final String accessRequestId;
 
   @override
   State<CollectionsBankSheet> createState() => _CollectionsBankSheetState();
@@ -135,13 +137,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                 height: context.h(22)),
                             CircleAvatar(
                               radius: context.w(24),
-                              child: Text(
-                                getInitials(widget.merchantName).toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: context.sp(10),
-                                  fontWeight: FontWeight.w500,
-                                  color: MonaColors.textHeading,
-                                ),
+                              backgroundColor: MonaColors.primaryBlue,
+                              backgroundImage: AssetImage(
+                                "ng_deals_logo".png,
                               ),
                             ),
                           ],
@@ -244,7 +242,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                               Icon(
                                 Icons.add,
                                 color: Colors.black,
-                                size:20,
+                                size: 20,
                               ),
                               Text(
                                 "Add an account",
@@ -282,26 +280,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                       sdkNotifier.setCallingBuildContext(
                                           context: context);
                                       sdkNotifier.createCollections(
-                                        debitType: widget.debitType,
                                         bankId: selectedBank?.bankId ??
                                             '680f5d983bccd31f1312645d',
-                                        scheduleEntries: widget.scheduleEntries,
-                                        maximumAmount: collection.maxAmount,
-                                        expiryDate: collection.expiryDate!,
-                                        startDate: collection.startDate!,
-                                        monthlyLimit: collection.monthlyLimit!,
-                                        reference: collection.reference,
-                                        type: widget.method ==
-                                                CollectionsMethod.scheduled
-                                            ? 'SCHEDULED'
-                                            : 'SUBSCRIPTION',
-                                        frequency:
-                                            collection.schedule.frequency!,
-                                        amount: widget.method ==
-                                                CollectionsMethod.scheduled
-                                            ? null
-                                            : schedule.amount,
-                                        merchantId: '67e41f884126830aded0b43c',
+                                        accessRequestId: widget.accessRequestId,
                                         onSuccess: (successMap) {
                                           Navigator.of(context).pop();
                                           showModalBottomSheet(
@@ -310,6 +291,8 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                             builder: (_) => Wrap(
                                               children: [
                                                 CollectionsCheckoutSheet(
+                                                  accessRequestId:
+                                                      widget.accessRequestId,
                                                   debitType: widget.debitType,
                                                   selectedBank: selectedBank,
                                                   successMap: successMap,

@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 
 class ConfirmKeyExchangeModal extends StatefulWidget {
@@ -87,52 +87,6 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
       child: SafeArea(
         child: Column(
           children: [
-            SizedBox(
-              height: 40,
-              width: double.infinity,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                  color: MonaColors.primaryBlue,
-                ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.asset(
-                        "lagos_city".png,
-                        fit: BoxFit.fitWidth,
-                      ),
-                    ),
-
-                    ///
-                    Positioned(
-                      right: 16,
-                      top: 0,
-                      bottom: 0,
-                      child: InkWell(
-                        onTap: () => widget.onUserDecision(false),
-                        child: CircleAvatar(
-                          backgroundColor:
-                              MonaColors.neutralWhite.withOpacity(0.2),
-                          radius: 12,
-                          child: Icon(
-                            Icons.close,
-                            color: MonaColors.textHeading,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            ///
-            context.sbH(8.0),
-
             Container(
               padding: EdgeInsets.all(16),
               margin: EdgeInsets.all(16),
@@ -212,6 +166,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                         SvgPicture.asset(
                           "vault".svg,
                         ),
+
+                        context.sbW(8.0),
+
+                        ///
                         Expanded(
                           child: Text(
                             "This is to make sure that you are the only one who can authorize payments.",

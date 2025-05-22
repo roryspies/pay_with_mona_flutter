@@ -1,30 +1,45 @@
+library;
+
 import 'package:flutter/material.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/data_share/widgets/data_share_sheet.dart';
 import 'package:pay_with_mona/src/features/payments/pay_with_mona_widget.dart';
-import 'package:pay_with_mona/src/models/mona_checkout.dart';
-import 'package:pay_with_mona/src/widgets/merchant_payment_settings_widget.dart';
+import 'package:pay_with_mona/ui/widgets/merchant_payment_settings_widget.dart';
 
-class PayWithMona {
-  static Widget payWidget({
+part "_pay_with_mona_impl.dart";
+
+abstract class PayWithMona {
+  static PayWithMona? _instance;
+
+  /// Access the singleton instance
+  static PayWithMona get instance {
+    if (_instance == null) {
+      throw Exception(
+        'PayWithMona has not been initialized. Call PayWithMona.initialize() first.',
+      );
+    }
+    return _instance!;
+  }
+
+  /// Initialize the SDK with your merchant API key
+  static Future<void> initialize({
+    required String merchantKey,
+  }) async {
+    _instance ??= await _MonaSDKImpl.initialize(
+      merchantKey: merchantKey,
+    );
+  }
+
+  Widget payWidget({
     required BuildContext context,
-    required MonaCheckOut payload,
-  }) {
-    return PayWithMonaWidget(
-      monaCheckOut: payload,
-      callingContext: context,
-    );
-  }
+    required MonaCheckOut checkoutPayload,
+  });
 
-  static Widget paymentSettingsWidget({
+  Widget paymentUpdateSettingsWidget({
     num? transactionAmountInKobo,
-  }) {
-    return MerchantPaymentSettingsWidget(
-      transactionAmountInKobo: transactionAmountInKobo,
-    );
-  }
+  });
 
-  /// Opens the data share widget in a bottom sheet
-  static Future<void> showDataShareSheet({
+  Future<void> showDataShareSheet({
     required BuildContext context,
     required String firstName,
     String? middleName,
@@ -36,17 +51,5 @@ class PayWithMona {
     required Color secondaryColor,
     required String phoneNumber,
     String? bvn,
-  }) {
-    final widget = DataShareSheet();
-
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => Wrap(
-        children: [
-          widget,
-        ],
-      ),
-    );
-  }
+  });
 }

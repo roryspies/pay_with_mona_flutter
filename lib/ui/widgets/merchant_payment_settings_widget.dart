@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/sdk_utils.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
-import 'package:pay_with_mona/src/widgets/merchant_payment_settings_bottom_sheet_content.dart';
+import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
+import 'package:pay_with_mona/ui/widgets/merchant_payment_settings_bottom_sheet_content.dart';
 
 class MerchantPaymentSettingsWidget extends StatefulWidget {
   const MerchantPaymentSettingsWidget({
@@ -122,6 +122,8 @@ class _MerchantPaymentSettingsWidgetState
 
                             await SDKUtils.showSDKModalBottomSheet(
                               callingContext: context,
+                              isDismissible: false,
+                              enableDrag: false,
                               child: MerchantPaymentSettingsBottomSheetContent(
                                 transactionAmountInKobo:
                                     widget.transactionAmountInKobo,

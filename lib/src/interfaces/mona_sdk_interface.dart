@@ -8,7 +8,7 @@ abstract class IMonaSDK {
     bool enableDebugLogs = false,
   });
 
-  /// Set up checkout details
+  /* /// Set up checkout details
   void setupCheckout(
       /* {
     required MonaCheckOut checkoutDetails,
@@ -54,7 +54,7 @@ abstract class IMonaSDK {
   Stream /* <TransactionState> */ get transactionStream;
 
   /// Get authentication state updates
-  Stream /* <AuthState> */ get authStateStream;
+  Stream /* <AuthState> */ get authStateStream; */
 
   /// Reset the SDK state
   void reset();
