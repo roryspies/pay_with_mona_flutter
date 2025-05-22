@@ -7,7 +7,7 @@ import 'package:pay_with_mona/src/core/security/biometrics/biometric_exception.d
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_platform_interface.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometric_prompt_config.dart';
 import 'dart:async';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 
 /// Android-specific implementation of biometric operations.
 ///

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
@@ -18,15 +19,18 @@ import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
+import 'package:pay_with_mona/src/models/merchant_branding.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
-import 'package:pay_with_mona/src/utils/sdk_utils.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/src/utils/mona_colors.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
 import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
+import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
@@ -84,6 +88,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _strongAuthToken;
   String? _transactionOTP;
   String? _transactionPIN;
+  bool showCancelButton = true;
+  String? _cachedMerchantKey;
+  MerchantBranding? _merchantBrandingDetails;
   MerchantPaymentSettingsEnum _merchantPaymentSettingsEnum =
       MerchantPaymentSettingsEnum.walletReceiveComplete;
   MonaCheckOut? _monaCheckOut;
@@ -116,6 +123,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   BankOption? get selectedBankOption => _selectedBankOption;
 
   CardOption? get selectedCardOption => _selectedCardOption;
+  MerchantBranding? get merchantBrandingDetails => _merchantBrandingDetails;
   MerchantPaymentSettingsEnum? get currentMerchantPaymentSettingsEnum =>
       _merchantPaymentSettingsEnum;
 
@@ -268,6 +276,13 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setShowCancelButton({
+    required bool showCancelButton,
+  }) {
+    this.showCancelButton = showCancelButton;
+    notifyListeners();
+  }
+
   Future<void> updateMerchantPaymentSettingsWidget({
     required MerchantPaymentSettingsEnum currentSetting,
     required String merchantID,
@@ -316,6 +331,83 @@ class MonaSDKNotifier extends ChangeNotifier {
           .log();
 
       _handleError(error.toString());
+    }
+  }
+
+  Future<void> _setMerchantKey({required String merchantKey}) async {
+    await _secureStorage.write(
+      key: SecureStorageKeys.merchantKey,
+      value: merchantKey,
+    );
+  }
+
+  Future<String?> _getMerchantKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantKey,
+    );
+  }
+
+  Future<void> _setMerchantBranding({
+    required MerchantBranding merchant,
+  }) async {
+    final jsonString = jsonEncode(merchant.toJson());
+    await _secureStorage.write(
+      key: SecureStorageKeys.merchantBranding,
+      value: jsonString,
+    );
+  }
+
+  Future<MerchantBranding?> _getMerchantBranding() async {
+    final encodedString = await _secureStorage.read(
+      key: SecureStorageKeys.merchantBranding,
+    );
+
+    if (encodedString == null) {
+      return null;
+    }
+
+    return MerchantBranding.fromJSON(json: jsonDecode(encodedString));
+  }
+
+  Future<void> initSDK({
+    required String merchantKey,
+  }) async {
+    try {
+      if (_cachedMerchantKey == merchantKey &&
+          _merchantBrandingDetails != null) {
+        notifyListeners();
+        return;
+      }
+
+      final storedKey = _cachedMerchantKey ?? await _getMerchantKey();
+      if (storedKey == merchantKey) {
+        _merchantBrandingDetails ??= await _getMerchantBranding();
+        notifyListeners();
+        return;
+      }
+
+      _cachedMerchantKey = merchantKey;
+      await _setMerchantKey(merchantKey: merchantKey);
+
+      final branding =
+          await _authService.initMerchant(merchantKey: merchantKey);
+      if (branding == null) {
+        _handleError("Failed to initialize SDK");
+        return;
+      }
+
+      _merchantBrandingDetails = branding;
+      notifyListeners();
+
+      unawaited(_setMerchantBranding(merchant: branding));
+    } catch (e, st) {
+      _handleError(
+        "Init SDK error $e ::: Stack Trace $st",
+      );
+    } finally {
+      MonaColors.setBranding(
+        merchantBrandingColours: _merchantBrandingDetails!.colors,
+      );
     }
   }
 
@@ -631,6 +723,12 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
+        onCancelButtonTap: () {
+          if (canEnrollKeysCompleter.isCompleted == false) {
+            "ConfirmKeyExchangeModal ::: User Decision: false".log();
+            canEnrollKeysCompleter.complete(false);
+          }
+        },
         child: ConfirmKeyExchangeModal(
           onUserDecision: (bool canEnrolKeys) {
             if (canEnrollKeysCompleter.isCompleted == false) {

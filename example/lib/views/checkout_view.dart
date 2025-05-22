@@ -9,7 +9,6 @@ import 'package:example/views/result_view.dart';
 import 'package:example/views/utils/app_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 class CheckoutView extends ConsumerStatefulWidget {
@@ -27,12 +26,13 @@ class CheckoutView extends ConsumerStatefulWidget {
 }
 
 class _CheckoutViewState extends ConsumerState<CheckoutView> {
+  late PayWithMona _payWithMona;
   final sdkNotifier = MonaSDKNotifier();
-  final _otpPinFieldController = GlobalKey<OtpPinFieldState>();
 
   @override
   void initState() {
     super.initState();
+    _payWithMona = PayWithMona.instance;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         // bool isPaymentStatusModalOpen = false;
@@ -79,21 +79,6 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                     );
                   } */
 
-                  break;
-
-                case TransactionStateRequestOTPTask(:final task):
-                  ("CheckoutView 🔑 Need OTP: ${task.taskDescription}").log();
-                  await AppUtils.showOTPModal(
-                    context,
-                    (String pinOrOTP) {
-                      "CheckoutView ::: TransactionStateRequestOTPTask ::: returned value ::: $pinOrOTP"
-                          .log();
-
-                      sdkNotifier.sendOTPToServer(pinOrOTP: pinOrOTP);
-                    },
-                    controller: _otpPinFieldController,
-                    task: state,
-                  );
                   break;
 
                 case TransactionStateRequestPINTask(:final task):
@@ -232,9 +217,11 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                 ),
               ),
               context.sbH(8),
-              PayWithMona.payWidget(
+
+              /// *** Main Pay Widget
+              _payWithMona.payWidget(
                 context: context,
-                payload: MonaCheckOut(
+                checkoutPayload: MonaCheckOut(
                   firstName: '',
                   lastName: '',
                   dateOfBirth: DateTime.now(),

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 // ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 
 /// Enum to represent different states of the SSE connection
 enum SSEConnectionState {

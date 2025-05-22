@@ -6,4 +6,4 @@ export 'src/core/events/transaction_state_stream.dart';
 export 'src/models/mona_checkout.dart';
 export 'src/core/events/transaction_state_classes.dart';
 export 'src/features/collections/views/create_collection_view.dart';
-export 'src/widgets/secured_by_mona.dart';
+export 'ui/widgets/secured_by_mona.dart';

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 
 /* /// Defines the possible states of a transaction.
 enum TransactionState {

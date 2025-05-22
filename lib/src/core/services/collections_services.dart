@@ -6,7 +6,7 @@ import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
 
 class CollectionsService {
@@ -19,6 +19,14 @@ class CollectionsService {
   final _apiService = ApiService();
 
   final _merchantId = "67e41f884126830aded0b43c";
+
+  final _secureStorage = SecureStorage();
+
+  Future<String?> getMerchantKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantKey,
+    );
+  }
 
   FutureOutcome<Map<String, dynamic>> validateCreateCollectionFields({
     Function? onComplete,

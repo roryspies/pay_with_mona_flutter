@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/constants/sdk_strings.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 
 class SecuredByMona extends StatelessWidget {
   const SecuredByMona({
@@ -19,7 +20,7 @@ class SecuredByMona extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          title ?? "Secured by",
+          title ?? SDKStrings.securedBy,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -31,7 +32,7 @@ class SecuredByMona extends StatelessWidget {
 
         ///
         SvgPicture.asset(
-          "mona_written_logo".svg,
+          SDKStrings.monaLogoWritten.svg,
         )
       ],
     );

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 
 class MerchantPaymentSettingsBottomSheetContent extends StatefulWidget {
   const MerchantPaymentSettingsBottomSheetContent({
@@ -41,29 +41,16 @@ class _MerchantPaymentSettingsBottomSheetContentState
       child: SafeArea(
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Merchant Settings",
-                    style: TextStyle(
-                      fontSize: 21.0,
-                      fontWeight: FontWeight.w500,
-                      color: MonaColors.textHeading,
-                    ),
-                  ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Merchant Settings",
+                style: TextStyle(
+                  fontSize: 21.0,
+                  fontWeight: FontWeight.w600,
+                  color: MonaColors.textHeading,
                 ),
-                CircleAvatar(
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    icon: Icon(
-                      Icons.close,
-                    ),
-                  ),
-                )
-              ],
+              ),
             ),
 
             context.sbH(8.0),
@@ -104,15 +91,31 @@ class _MerchantPaymentSettingsBottomSheetContentState
                       fontSize: 14.0,
                     ),
                   ),
-                  trailing: isCurrentOption
-                      ? CircleAvatar(
-                          backgroundColor:
-                              MonaColors.primaryBlue.withOpacity(0.1),
-                          child: Icon(
-                            Icons.check,
+                  trailing: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 200),
+                    child: Transform.scale(
+                      scale: 0.6,
+                      child: switch (isCurrentOption) {
+                        true => CircleAvatar(
+                            backgroundColor:
+                                MonaColors.primaryBlue.withOpacity(0.1),
+                            child: Icon(
+                              Icons.check,
+                            ),
                           ),
-                        )
-                      : null,
+                        false => CircleAvatar(
+                            backgroundColor:
+                                MonaColors.primaryBlue.withOpacity(0.1),
+                            child: Transform.scale(
+                              scale: 0.8,
+                              child: CircleAvatar(
+                                backgroundColor: MonaColors.neutralWhite,
+                              ),
+                            ),
+                          ),
+                      },
+                    ),
+                  ),
                 );
               },
             )

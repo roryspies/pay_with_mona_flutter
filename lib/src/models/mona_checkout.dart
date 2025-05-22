@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_null_comparison
+// ignore_for_file: unnecessary_null_comparison, deprecated_member_use
 
 import 'package:flutter/material.dart';
 
@@ -42,10 +42,10 @@ class MonaCheckOut {
       transactionId: json['transaction_id'] as String? ?? '',
       merchantName: json['merchant_name'] as String? ?? '',
       phoneNumber: json['phone'] as String? ?? '',
-      primaryColor: json['primary_color'] as int != null
+      primaryColor: json['primary_color'] != null
           ? Color(json['primary_color'] as int)
           : Colors.black,
-      secondaryColor: json['secondary_color'] as int != null
+      secondaryColor: json['secondary_color'] != null
           ? Color(json['secondary_color'] as int)
           : Colors.black,
       amount: json['amount'] as num? ?? 0,

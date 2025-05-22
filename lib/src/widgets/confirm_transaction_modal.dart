@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
-import 'package:pay_with_mona/src/utils/extensions.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/src/utils/sdk_strings.dart';
-import 'package:pay_with_mona/src/utils/sdk_utils.dart';
-import 'package:pay_with_mona/src/utils/size_config.dart';
+import 'package:pay_with_mona/ui/constants/sdk_strings.dart';
+import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
+import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/src/widgets/sdk_payment_status_modal.dart';
 
@@ -58,6 +58,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                       .log();
 
                   showTransactionStatusIndicator = true;
+                  _sdkNotifier.setShowCancelButton(showCancelButton: false);
 
                   break;
                 default:
@@ -117,7 +118,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       child: SafeArea(
         child: Column(
           children: [
-            SizedBox(
+            /* SizedBox(
               height: 40,
               width: double.infinity,
               child: DecoratedBox(
@@ -163,7 +164,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                 ),
               ),
             ),
-
+ */
             ///
             //context.sbH(8.0),
 

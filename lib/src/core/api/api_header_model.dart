@@ -1,6 +1,15 @@
 abstract class ApiHeaderModel {
   static const String _xClientType = "bioApp";
 
+  static Map<String, String> initSDKHeaders({
+    required String merchantKey,
+  }) {
+    return {
+      "x-client-type": _xClientType,
+      "x-public-key": merchantKey,
+    };
+  }
+
   static Map<String, dynamic> getHeaders() {
     return {
       "x-client-type": _xClientType,
