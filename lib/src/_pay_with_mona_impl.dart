@@ -1,16 +1,14 @@
 part of "pay_with_mona.dart";
 
 class _MonaSDKImpl extends PayWithMona {
-  //final String merchantAPIKey;
-
-  _MonaSDKImpl._(/* {required this.merchantAPIKey} */);
+  _MonaSDKImpl._();
 
   static Future<_MonaSDKImpl> initialize({
     required String merchantKey,
   }) async {
     await MonaSDKNotifier().initSDK(merchantKey: merchantKey);
 
-    return _MonaSDKImpl._(/* merchantAPIKey: merchantKey */);
+    return _MonaSDKImpl._();
   }
 
   @override

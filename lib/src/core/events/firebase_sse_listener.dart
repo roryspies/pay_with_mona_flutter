@@ -112,6 +112,8 @@ class FirebaseSSEListener {
   String _transactionMessagePath(String transactionId) =>
       '/public/transaction-messages/$transactionId.json';
 
+  String _customTabsPath() => '/public/close_tab.json';
+
   /// Constructs the Firebase database path for authentication events
   String _authNPath(String sessionID) =>
       '/public/login_success/authn_$sessionID.json';
@@ -199,6 +201,47 @@ class FirebaseSSEListener {
       _currentTransactionId = transactionId;
       final uri =
           Uri.parse('$_databaseUrl${_transactionMessagePath(transactionId)}');
+
+      await _establishConnection(
+        uri: uri,
+        onDataChange: onDataChange,
+        onError: onError,
+        connectionType: 'Transaction Messages',
+        autoReconnect: autoReconnect,
+      );
+    } catch (e) {
+      _logMessage('Failed to listen for transaction messages: $e');
+      _handleError(e, onError);
+      await _stopListening();
+    }
+  }
+
+  Future<void> listenForCustomTabEvents({
+    //required String transactionId,
+    Function(String)? onDataChange,
+    Function(Object)? onError,
+    bool autoReconnect = true,
+  }) async {
+    _ensureInitialized();
+
+    try {
+      if (_databaseUrl.isEmpty) {
+        throw StateError(
+            'Firebase SSE not initialized with valid database URL.');
+      }
+
+      /* // Check if already listening to this transaction
+      if (_currentTransactionId == transactionId && isListening) {
+        _logMessage(
+            'Already listening to transaction messages: $transactionId');
+        return;
+      } */
+
+      // Stop any existing listener
+      /* await _stopListening();
+
+      _currentTransactionId = transactionId; */
+      final uri = Uri.parse('$_databaseUrl${_customTabsPath()}');
 
       await _establishConnection(
         uri: uri,
