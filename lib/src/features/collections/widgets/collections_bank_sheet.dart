@@ -135,13 +135,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                 height: context.h(22)),
                             CircleAvatar(
                               radius: context.w(24),
-                              child: Text(
-                                getInitials(widget.merchantName).toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: context.sp(10),
-                                  fontWeight: FontWeight.w500,
-                                  color: MonaColors.textHeading,
-                                ),
+                              backgroundColor: MonaColors.primaryBlue,
+                              backgroundImage: AssetImage(
+                                "ng_deals_logo".png,
                               ),
                             ),
                           ],
@@ -244,7 +240,7 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                               Icon(
                                 Icons.add,
                                 color: Colors.black,
-                                size:20,
+                                size: 20,
                               ),
                               Text(
                                 "Add an account",

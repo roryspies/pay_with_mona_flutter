@@ -166,14 +166,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                       height: context.h(22)),
                                   CircleAvatar(
                                     radius: context.w(24),
-                                    child: Text(
-                                      getInitials(widget.merchantName)
-                                          .toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: context.sp(10),
-                                        fontWeight: FontWeight.w500,
-                                        color: MonaColors.textHeading,
-                                      ),
+                                    backgroundColor: MonaColors.primaryBlue,
+                                    backgroundImage: AssetImage(
+                                      "ng_deals_logo".png,
                                     ),
                                   ),
                                 ],

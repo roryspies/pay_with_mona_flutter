@@ -468,7 +468,11 @@ class MonaSDKNotifier extends ChangeNotifier {
       final authCompleter = Completer<void>();
 
       /// *** Needed to trigger necessary Key Exchange stuffs.
-      await _listenForAuthEvents(sessionID, authCompleter);
+      await _listenForAuthEvents(
+        sessionID,
+        authCompleter,
+        isFromCollections: isFromCollections,
+      );
 
       final url = _buildURL(
         isFromCollections: isFromCollections,
@@ -608,7 +612,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// *** Performs strong authentication using the received SSE token.
   ///
   /// Updates payment methods upon success.
-  Future<void> loginWithStrongAuth() async {
+  Future<void> loginWithStrongAuth({
+    bool isFromCollections = false,
+  }) async {
     _updateState(MonaSDKState.loading);
     try {
       final response = await _authService.loginWithStrongAuth(
@@ -655,19 +661,23 @@ class MonaSDKNotifier extends ChangeNotifier {
             _authStream.emit(state: AuthState.loggedIn);
             validatePII();
 
-            /// *** Close Modal
-            if (_callingBuildContext != null) {
-              Navigator.of(_callingBuildContext!).pop();
+            if (!isFromCollections) {
+              if (_callingBuildContext != null) {
+                Navigator.of(_callingBuildContext!).pop();
+              }
+              await SDKUtils.showSDKModalBottomSheet(
+                isDismissible: false,
+                enableDrag: false,
+                callingContext: _callingBuildContext!,
+                child: ConfirmTransactionModal(
+                  selectedPaymentMethod: selectedPaymentMethod,
+                  transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
+                ),
+              );
             }
-            await SDKUtils.showSDKModalBottomSheet(
-              isDismissible: false,
-              enableDrag: false,
-              callingContext: _callingBuildContext!,
-              child: ConfirmTransactionModal(
-                selectedPaymentMethod: selectedPaymentMethod,
-                transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
-              ),
-            );
+
+            /// *** Close Modal
+
             //resetSDKState(clearMonaCheckout: false);
           },
         );
