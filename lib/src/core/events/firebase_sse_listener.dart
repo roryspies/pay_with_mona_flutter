@@ -217,7 +217,6 @@ class FirebaseSSEListener {
   }
 
   Future<void> listenForCustomTabEvents({
-    //required String transactionId,
     Function(String)? onDataChange,
     Function(Object)? onError,
     bool autoReconnect = true,
@@ -230,24 +229,13 @@ class FirebaseSSEListener {
             'Firebase SSE not initialized with valid database URL.');
       }
 
-      /* // Check if already listening to this transaction
-      if (_currentTransactionId == transactionId && isListening) {
-        _logMessage(
-            'Already listening to transaction messages: $transactionId');
-        return;
-      } */
-
-      // Stop any existing listener
-      /* await _stopListening();
-
-      _currentTransactionId = transactionId; */
       final uri = Uri.parse('$_databaseUrl${_customTabsPath()}');
 
       await _establishConnection(
         uri: uri,
         onDataChange: onDataChange,
         onError: onError,
-        connectionType: 'Transaction Messages',
+        connectionType: 'Custom Tabs',
         autoReconnect: autoReconnect,
       );
     } catch (e) {

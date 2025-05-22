@@ -31,10 +31,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   late Animation<Color?> _secondProgressColorAnimation;
   late Animation<Color?> _thirdProgressColorAnimation;
 
-  // Flow animation for the middle bar
-  late AnimationController _flowAnimationController;
-  late Animation<double> _flowAnimation;
-
   bool showPaymentSuccessfulOrFailed = false;
   bool isPaymentSuccessful = false;
 
@@ -60,16 +56,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
-    _flowAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _flowAnimation = Tween<double>(
-      begin: -1,
-      end: 1.5,
-    ).animate(_flowAnimationController);
 
     _firstProgressColorAnimation = ColorTween(
       begin: MonaColors.successColour.withOpacity(0.1),
@@ -98,18 +84,11 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       setState(() {});
     });
 
-    _flowAnimationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _flowAnimationController.repeat();
-      }
-    });
-
     _firstProgressController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         setState(() {
           _currentStage = 1; // Sent stage
         });
-        _flowAnimationController.forward();
       }
     });
 
@@ -118,7 +97,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
         setState(() {
           _currentStage = 2;
         });
-        _flowAnimationController.stop();
       }
     });
 
@@ -182,7 +160,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     _firstProgressController.reset();
     _secondProgressController.reset();
     _thirdProgressController.reset();
-    _flowAnimationController.reset();
     setState(() {
       _currentStage = 0;
     });
@@ -232,7 +209,6 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     _firstProgressController.dispose();
     _secondProgressController.dispose();
     _thirdProgressController.dispose();
-    _flowAnimationController.dispose();
     super.dispose();
   }
 
@@ -285,7 +261,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                     Text(
                       isPaymentSuccessful
                           ? "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} was successful. Mona has sent you a transaction receipt!"
-                          : "Your payment of ₦$_transactionAmount failed!. Please try again or use a different payment method.",
+                          : "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} failed! \nPlease try again or use a different payment method.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -368,7 +344,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                           flex: 3,
                           child: _currentStage == 1
                               ? FlowingProgressBar(
-                                  flowAnimation: _flowAnimation,
+                                  //flowAnimation: _flowAnimation,
                                   baseColor:
                                       MonaColors.successColour.withOpacity(0.1),
                                   flowColor: MonaColors.successColour,

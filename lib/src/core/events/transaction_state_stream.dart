@@ -2,19 +2,6 @@ import 'dart:async';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 
-/* /// Defines the possible states of a transaction.
-enum TransactionState {
-  initiated, // Transaction has been started
-  completed, // Transaction was successful
-  failed, // Transaction encountered an error
-  requestOTPTask(task: {}), // Got a transaction task requesting OTP
-  requestPINTask(task: {}); // Got a transaction task requesting PIN
-
-  const TransactionState({this.task});
-
-  final Map<String, dynamic>? task;
-} */
-
 /// Make TransactionState an abstract base class…
 
 /// A singleton that manages a broadcast stream of [TransactionState] events.

@@ -20,6 +20,7 @@ class AuthService {
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
 
+  // ignore: unused_element
   Future<String?> _getMerchantKey() async {
     return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,

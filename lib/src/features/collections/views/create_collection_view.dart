@@ -4,13 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
-
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/views/bank_collections_view.dart';
-import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
-import 'package:pay_with_mona/src/models/collection_response.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/formatters.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -51,8 +47,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
   final firstPayment = PaymentScheduleTextController(
     index: 0,
-    paymentTextcontroller: TextEditingController(),
-    dateTextcontroller: TextEditingController(),
+    paymentTextController: TextEditingController(),
+    dateTextController: TextEditingController(),
   );
 
   List<PaymentScheduleTextController> paymentScheduleTextControllers = [];
@@ -63,7 +59,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
   @override
   void initState() {
     super.initState();
-    sdkNotifier.addListener(_onSdktateChange);
+    sdkNotifier.addListener(_onSdkStateChange);
     controllers = [
       _debitLimitController,
       _merchantNameController,
@@ -142,9 +138,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     final entries = <Map<String, dynamic>>[];
 
     for (final controller in paymentScheduleTextControllers) {
-      if (controller.paymentTextcontroller.text.isNotEmpty &&
-          controller.dateTextcontroller.text.isNotEmpty) {
-        final dateTimeStr = controller.dateTextcontroller.text;
+      if (controller.paymentTextController.text.isNotEmpty &&
+          controller.dateTextController.text.isNotEmpty) {
+        final dateTimeStr = controller.dateTextController.text;
         DateTime? dateTime;
 
         try {
@@ -157,7 +153,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
         entries.add({
           'date': dateTime.toIso8601String(), // UTC ISO format
-          'amount': multiplyBy100(controller.paymentTextcontroller.text.trim()),
+          'amount': multiplyBy100(controller.paymentTextController.text.trim()),
         });
       }
     }
@@ -165,7 +161,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
     return entries;
   }
 
-  void _onSdktateChange() => setState(() {});
+  void _onSdkStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void showPopupMessage(String message,
       {Duration duration = const Duration(seconds: 2)}) {
@@ -466,7 +464,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                 controller:
                                                     paymentScheduleTextControllers[
                                                             index]
-                                                        .paymentTextcontroller,
+                                                        .paymentTextController,
                                                 keyboardType:
                                                     TextInputType.number,
                                                 onChanged: (value) {},
@@ -519,7 +517,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                       // Format: 14:00 26/10/25
                                                       paymentScheduleTextControllers[
                                                               index]
-                                                          .dateTextcontroller
+                                                          .dateTextController
                                                           .text = DateFormat(
                                                               'HH:mm dd/MM/yy')
                                                           .format(fullDateTime);
@@ -529,7 +527,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                                 controller:
                                                     paymentScheduleTextControllers[
                                                             index]
-                                                        .dateTextcontroller,
+                                                        .dateTextController,
                                                 onChanged: (value) {},
                                                 // suffixIcon: IconButton(
                                                 //   icon: Icon(Icons.edit),
@@ -578,9 +576,9 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                               PaymentScheduleTextController(
                                         index: paymentScheduleTextControllers
                                             .length,
-                                        paymentTextcontroller:
+                                        paymentTextController:
                                             TextEditingController(),
-                                        dateTextcontroller:
+                                        dateTextController:
                                             TextEditingController(),
                                       ));
                                     },
@@ -698,7 +696,7 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                               CollectionsMethod.scheduled
                                           ? convertToIsoDate(
                                               paymentScheduleTextControllers[0]
-                                                  .dateTextcontroller
+                                                  .dateTextController
                                                   .text
                                                   .trim())!
                                           : convertToIsoDate(
@@ -760,25 +758,25 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
 
 class PaymentScheduleTextController {
   final int index;
-  final TextEditingController paymentTextcontroller;
-  final TextEditingController dateTextcontroller;
+  final TextEditingController paymentTextController;
+  final TextEditingController dateTextController;
 
   PaymentScheduleTextController({
     required this.index,
-    required this.paymentTextcontroller,
-    required this.dateTextcontroller,
+    required this.paymentTextController,
+    required this.dateTextController,
   });
 
   PaymentScheduleTextController copyWith({
     int? index,
-    TextEditingController? paymentTextcontroller,
-    TextEditingController? dateTextcontroller,
+    TextEditingController? paymentTextController,
+    TextEditingController? dateTextController,
   }) {
     return PaymentScheduleTextController(
       index: index ?? this.index,
-      paymentTextcontroller:
-          paymentTextcontroller ?? this.paymentTextcontroller,
-      dateTextcontroller: dateTextcontroller ?? this.dateTextcontroller,
+      paymentTextController:
+          paymentTextController ?? this.paymentTextController,
+      dateTextController: dateTextController ?? this.dateTextController,
     );
   }
 }
