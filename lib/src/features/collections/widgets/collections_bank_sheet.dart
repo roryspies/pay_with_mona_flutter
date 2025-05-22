@@ -139,10 +139,27 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                 height: context.h(22)),
                             CircleAvatar(
                               radius: context.w(24),
-                              backgroundColor: MonaColors.primaryBlue,
-                              backgroundImage: AssetImage(
-                                "ng_deals_logo".png,
-                              ),
+                              backgroundColor:
+                                  MonaColors.primaryBlue.withOpacity(0.1),
+                              backgroundImage: switch (
+                                  sdkNotifier.merchantBrandingDetails != null) {
+                                true => NetworkImage(
+                                    sdkNotifier.merchantBrandingDetails!.image,
+                                  ),
+                                false => null,
+                              },
+                              child: switch (
+                                  sdkNotifier.merchantBrandingDetails != null) {
+                                true => null,
+                                false => Text(
+                                    getInitials(widget.merchantName),
+                                    style: TextStyle(
+                                      fontSize: context.sp(16),
+                                      fontWeight: FontWeight.w600,
+                                      color: MonaColors.primaryBlue,
+                                    ),
+                                  ),
+                              },
                             ),
                           ],
                         ),
