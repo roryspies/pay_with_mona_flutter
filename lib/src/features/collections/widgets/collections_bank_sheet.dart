@@ -175,6 +175,21 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
 
                                 "Selected Bank ID: $selectedBankID";
 
+                                if (bank.bankName!
+                                        .toLowerCase()
+                                        .contains('opay') ||
+                                    bank.bankName!
+                                        .toLowerCase()
+                                        .contains('palm') ||
+                                    bank.bankName!
+                                        .toLowerCase()
+                                        .contains('kuda') ||
+                                    bank.bankName!
+                                        .toLowerCase()
+                                        .contains('monie')) {
+                                  return SizedBox.shrink();
+                                }
+
                                 return ListTile(
                                   onTap: () {
                                     selectBank(bank: bank);
