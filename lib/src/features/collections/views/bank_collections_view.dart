@@ -66,7 +66,12 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
       Map<String, dynamic> response) {
     final List<dynamic> requests = response['data']?['requests'] ?? [];
 
-    if (requests.isEmpty) return [];
+    if (requests.isEmpty) {
+      'IT IS EMPTY'.log();
+      return [];
+    }
+
+    'IT IS NOT EMPTY'.log();
 
     final latestRequest = requests.last;
     final collection = latestRequest['collection'];

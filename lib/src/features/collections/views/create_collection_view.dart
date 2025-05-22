@@ -350,57 +350,8 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                       title: 'Start date',
                                       controller: _startDateController,
                                       onChanged: (value) {},
-                                      suffixIcon: IconButton(
-                                        icon: Icon(Icons.edit),
-                                        onPressed: () async {
-                                          final now = DateTime.now();
-
-                                          final pickedDate =
-                                              await showDatePicker(
-                                            context: context,
-                                            initialDate: now,
-                                            firstDate: DateTime(1900),
-                                            lastDate: DateTime(2100),
-                                          );
-
-                                          if (pickedDate != null) {
-                                            final pickedTime =
-                                                await showTimePicker(
-                                              context: context,
-                                              initialTime:
-                                                  TimeOfDay.fromDateTime(now),
-                                            );
-
-                                            if (pickedTime != null) {
-                                              final fullDateTime = DateTime(
-                                                pickedDate.year,
-                                                pickedDate.month,
-                                                pickedDate.day,
-                                                pickedTime.hour,
-                                                pickedTime.minute,
-                                              );
-
-                                              _startDateController.text =
-                                                  DateFormat('HH:mm dd/MM/yy')
-                                                      .format(fullDateTime);
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      inputFormatters: [
-                                        LengthLimitingTextInputFormatter(10),
-                                        FilteringTextInputFormatter
-                                            .singleLineFormatter,
-                                        DOBTextInputFormatter(),
-                                      ],
-                                    ),
-                                  CustomTextField(
-                                    title: 'Expiration date',
-                                    controller: _expDateController,
-                                    onChanged: (value) {},
-                                    suffixIcon: IconButton(
-                                      icon: Icon(Icons.edit),
-                                      onPressed: () async {
+                                      readOnly: true,
+                                      onTap: () async {
                                         final now = DateTime.now();
 
                                         final pickedDate = await showDatePicker(
@@ -427,13 +378,62 @@ class _CreateCollectionViewState extends State<CreateCollectionView> {
                                               pickedTime.minute,
                                             );
 
-                                            _expDateController.text =
+                                            _startDateController.text =
                                                 DateFormat('HH:mm dd/MM/yy')
                                                     .format(fullDateTime);
                                           }
                                         }
                                       },
+                                      suffixIcon: IconButton(
+                                          icon: Icon(Icons.edit),
+                                          onPressed: () {}),
+                                      inputFormatters: [
+                                        LengthLimitingTextInputFormatter(10),
+                                        FilteringTextInputFormatter
+                                            .singleLineFormatter,
+                                        DOBTextInputFormatter(),
+                                      ],
                                     ),
+                                  CustomTextField(
+                                    title: 'Expiration date',
+                                    controller: _expDateController,
+                                    onChanged: (value) {},
+                                    readOnly: true,
+                                    onTap: () async {
+                                      final now = DateTime.now();
+
+                                      final pickedDate = await showDatePicker(
+                                        context: context,
+                                        initialDate: now,
+                                        firstDate: DateTime(1900),
+                                        lastDate: DateTime(2100),
+                                      );
+
+                                      if (pickedDate != null) {
+                                        final pickedTime = await showTimePicker(
+                                          context: context,
+                                          initialTime:
+                                              TimeOfDay.fromDateTime(now),
+                                        );
+
+                                        if (pickedTime != null) {
+                                          final fullDateTime = DateTime(
+                                            pickedDate.year,
+                                            pickedDate.month,
+                                            pickedDate.day,
+                                            pickedTime.hour,
+                                            pickedTime.minute,
+                                          );
+
+                                          _expDateController.text =
+                                              DateFormat('HH:mm dd/MM/yy')
+                                                  .format(fullDateTime);
+                                        }
+                                      }
+                                    },
+                                    suffixIcon: IconButton(
+                                        icon: Icon(Icons.edit),
+                                        onPressed: () {}),
                                     inputFormatters: [
                                       LengthLimitingTextInputFormatter(10),
                                       FilteringTextInputFormatter

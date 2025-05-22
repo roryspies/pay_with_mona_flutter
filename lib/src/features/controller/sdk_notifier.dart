@@ -827,8 +827,10 @@ class MonaSDKNotifier extends ChangeNotifier {
       success.log();
       _updateState(MonaSDKState.success);
 
-      final accessRequestId =
-          (success['data']['requests'] as List).last['id'] as String;
+      final requestsMap = success['data'] as Map<String, dynamic>;
+
+      final accessRequestId = requestsMap['id'] as String;
+
       showModalBottomSheet(
         context: _callingBuildContext!,
         isScrollControlled: true,
