@@ -29,6 +29,7 @@ class CollectionsCheckoutSheet extends StatefulWidget {
     this.successMap,
     this.selectedBank,
     required this.debitType,
+    required this.accessRequestId,
   });
 
   final Collection? details;
@@ -39,6 +40,7 @@ class CollectionsCheckoutSheet extends StatefulWidget {
   final Map<String, dynamic>? successMap;
   final BankOption? selectedBank;
   final String debitType;
+  final String accessRequestId;
 
   @override
   State<CollectionsCheckoutSheet> createState() =>
@@ -111,6 +113,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
       builder: (_) => Wrap(
         children: [
           CollectionsBankSheet(
+            accessRequestId: widget.accessRequestId,
             debitType: widget.debitType,
             method: widget.method,
             merchantName: widget.merchantName,
@@ -166,14 +169,9 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                       height: context.h(22)),
                                   CircleAvatar(
                                     radius: context.w(24),
-                                    child: Text(
-                                      getInitials(widget.merchantName)
-                                          .toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: context.sp(10),
-                                        fontWeight: FontWeight.w500,
-                                        color: MonaColors.textHeading,
-                                      ),
+                                    backgroundColor: MonaColors.primaryBlue,
+                                    backgroundImage: AssetImage(
+                                      "ng_deals_logo".png,
                                     ),
                                   ),
                                 ],
@@ -322,7 +320,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                             isScheduled
                                                 ? formatDate(
                                                     collection.expiryDate)
-                                                : schedule.frequency ?? '-',
+                                                : (schedule.frequency ?? '-')
+                                                    .toCapitalized(),
                                             style: TextStyle(
                                               fontSize: context.sp(14),
                                               fontWeight: FontWeight.w500,

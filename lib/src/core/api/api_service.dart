@@ -107,8 +107,10 @@ class ApiService {
       );
 
       if (!apiResponse.isSuccess) {
+        final errorMessage = extractErrorMessage(response.statusCode, body);
+
         throw APIException(
-          'Server responded with error code ${response.statusCode}',
+          errorMessage,
           statusCode: response.statusCode,
           responseBody: body,
           requestUrl: uri,
@@ -185,8 +187,10 @@ class ApiService {
       );
 
       if (!apiResponse.isSuccess) {
+        final errorMessage = extractErrorMessage(response.statusCode, body);
+
         throw APIException(
-          'Server responded with error code ${response.statusCode}',
+          errorMessage,
           statusCode: response.statusCode,
           responseBody: body,
           requestUrl: uri,
@@ -270,12 +274,14 @@ class ApiService {
       );
 
       if (!apiResponse.isSuccess) {
+        final errorMessage = extractErrorMessage(response.statusCode, body);
+
         throw APIException(
-          'Server responded with error code ${response.statusCode}',
+          errorMessage,
           statusCode: response.statusCode,
           responseBody: body,
           requestUrl: uri,
-          requestMethod: 'POST',
+          requestMethod: 'PUT',
         );
       }
 
@@ -372,5 +378,39 @@ class ApiService {
     } else {
       return '"$json"';
     }
+  }
+
+  /// Extracts the most appropriate error message from an API response
+  String extractErrorMessage(int statusCode, String responseBody) {
+    String errorMessage = 'Server responded with error code $statusCode';
+
+    // Try to extract error message from response body
+    try {
+      final Map<String, dynamic> errorData = jsonDecode(responseBody);
+
+      // Check different common error fields
+      if (errorData.containsKey('message')) {
+        errorMessage = errorData['message'];
+      } else if (errorData.containsKey('error')) {
+        if (errorData['error'] is String) {
+          errorMessage = errorData['error'];
+        } else if (errorData['error'] is Map &&
+            errorData['error'].containsKey('message')) {
+          errorMessage = errorData['error']['message'];
+        }
+      } else if (errorData.containsKey('errorMessage')) {
+        errorMessage = errorData['errorMessage'];
+      } else if (errorData.containsKey('detail')) {
+        errorMessage = errorData['detail'];
+      } else {
+        errorMessage = 'Error: ${_truncateForLogging(responseBody)}';
+      }
+    } catch (e) {
+      if (responseBody.isNotEmpty && responseBody.length < 500) {
+        errorMessage = 'Error: $responseBody';
+      }
+    }
+
+    return errorMessage;
   }
 }

@@ -119,8 +119,9 @@ extension SDKNotifierListeners on MonaSDKNotifier {
 
   Future<void> _listenForAuthEvents(
     String sessionId,
-    Completer<void> authCompleter,
-  ) async {
+    Completer<void> authCompleter, {
+    bool isFromCollections = false,
+  }) async {
     try {
       await _firebaseSSE.listenToAuthNEvents(
         sessionID: sessionId,
@@ -134,7 +135,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
               await closeCustomTabs();
               _sdkStateStream.emit(state: MonaSDKState.loading);
 
-              await loginWithStrongAuth();
+              await loginWithStrongAuth(isFromCollections: isFromCollections);
               authCompleter.complete();
             }
           } catch (error, stackTrace) {

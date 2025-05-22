@@ -444,6 +444,16 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     final userKeyID = await checkIfUserHasKeyID();
 
+    'USER KEY ID IS: $userKeyID'.log();
+
+    if (userKeyID == null &&
+        phoneNumber == null &&
+        bvn == null &&
+        dob == null) {
+      _updateState(MonaSDKState.idle);
+      return;
+    }
+
     final response = await _authService.validatePII(
       phoneNumber: phoneNumber,
       bvn: bvn,
@@ -550,7 +560,11 @@ class MonaSDKNotifier extends ChangeNotifier {
       final authCompleter = Completer<void>();
 
       /// *** Needed to trigger necessary Key Exchange stuffs.
-      await _listenForAuthEvents(sessionID, authCompleter);
+      await _listenForAuthEvents(
+        sessionID,
+        authCompleter,
+        isFromCollections: isFromCollections,
+      );
 
       final url = _buildURL(
         isFromCollections: isFromCollections,
@@ -691,7 +705,9 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// *** Performs strong authentication using the received SSE token.
   ///
   /// Updates payment methods upon success.
-  Future<void> loginWithStrongAuth() async {
+  Future<void> loginWithStrongAuth({
+    bool isFromCollections = false,
+  }) async {
     _updateState(MonaSDKState.loading);
     try {
       final response = await _authService.loginWithStrongAuth(
@@ -744,20 +760,23 @@ class MonaSDKNotifier extends ChangeNotifier {
             _authStream.emit(state: AuthState.loggedIn);
             validatePII();
 
-            /// *** Close Modal
-            if (_callingBuildContext != null) {
-              Navigator.of(_callingBuildContext!).pop();
+            if (!isFromCollections) {
+              if (_callingBuildContext != null) {
+                Navigator.of(_callingBuildContext!).pop();
+              }
+              await SDKUtils.showSDKModalBottomSheet(
+                isDismissible: false,
+                enableDrag: false,
+                callingContext: _callingBuildContext!,
+                child: ConfirmTransactionModal(
+                  selectedPaymentMethod: selectedPaymentMethod,
+                  transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
+                ),
+              );
             }
 
-            await SDKUtils.showSDKModalBottomSheet(
-              isDismissible: false,
-              enableDrag: false,
-              callingContext: _callingBuildContext!,
-              child: ConfirmTransactionModal(
-                selectedPaymentMethod: selectedPaymentMethod,
-                transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
-              ),
-            );
+            /// *** Close Modal
+
             //resetSDKState(clearMonaCheckout: false);
           },
         );
@@ -784,17 +803,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   Future<void> createCollections({
     required String bankId,
-    required String maximumAmount,
-    required String expiryDate,
-    required String startDate,
-    required String monthlyLimit,
-    required String reference,
-    required String type,
-    required String frequency,
-    required String? amount,
-    required String merchantId,
-    required String debitType,
-    required List<Map<String, dynamic>> scheduleEntries,
+    required String accessRequestId,
     void Function(Map<String, dynamic>?)? onSuccess,
     void Function()? onFailure,
   }) async {
@@ -803,18 +812,8 @@ class MonaSDKNotifier extends ChangeNotifier {
     _firebaseSSE.initialize();
     try {
       await _collectionsService.createCollectionRequest(
-        debitType: debitType,
         bankId: bankId,
-        maximumAmount: maximumAmount,
-        expiryDate: expiryDate,
-        startDate: startDate,
-        monthlyLimit: monthlyLimit,
-        reference: reference,
-        type: type,
-        frequency: frequency,
-        amount: amount,
-        merchantId: merchantId,
-        scheduleEntries: scheduleEntries,
+        accessRequestId: accessRequestId,
         onComplete: (res, p) {
           final success = res as Map<String, dynamic>;
           success.log();
@@ -886,7 +885,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> createCollectionsNavigation({
+  Future<void> validateCreateCollectionFields({
     required String maximumAmount,
     required String expiryDate,
     required String startDate,
@@ -895,46 +894,75 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String type,
     required String frequency,
     required String? amount,
-    required String merchantId,
     required String merchantName,
     required CollectionsMethod method,
     required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
-    void Function(Map<String, dynamic>?)? onSuccess,
+    void Function(String)? onError,
+    void Function()? onSuccess,
   }) async {
-    //     if (failure != null) {
-    //       _handleError('Collection creation failed.');
-    //       throw (failure.message);
-    //     }
-    showModalBottomSheet(
-      context: _callingBuildContext!,
-      isScrollControlled: true,
-      builder: (_) => Wrap(
-        children: [
-          CollectionsCheckoutSheet(
-            debitType: debitType,
-            scheduleEntries: scheduleEntries,
-            method: method,
-            details: Collection(
-              maxAmount: maximumAmount,
-              expiryDate: expiryDate,
-              startDate: startDate,
-              monthlyLimit: monthlyLimit,
-              schedule: Schedule(
-                frequency: frequency,
-                type: type,
-                amount: amount,
-                entries: [],
-              ),
-              reference: reference,
-              status: '',
-              nextCollectionAt: '',
-            ),
-            merchantName: merchantName,
-          ),
-        ],
-      ),
+    _updateState(MonaSDKState.loading);
+    final (Map<String, dynamic>? success, failure) =
+        await _collectionsService.validateCreateCollectionFields(
+      maximumAmount: maximumAmount,
+      expiryDate: expiryDate,
+      startDate: startDate,
+      monthlyLimit: monthlyLimit,
+      reference: reference,
+      type: type,
+      frequency: frequency,
+      amount: amount,
+      debitType: debitType,
+      scheduleEntries: scheduleEntries,
     );
+
+    if (failure != null) {
+      final errorMsg = failure.message;
+      _handleError(errorMsg);
+      onError?.call(errorMsg);
+      return;
+    }
+
+    if (success != null) {
+      success.log();
+      _updateState(MonaSDKState.success);
+
+      final requestsMap = success['data'] as Map<String, dynamic>;
+
+      final accessRequestId = requestsMap['id'] as String;
+
+      showModalBottomSheet(
+        context: _callingBuildContext!,
+        isScrollControlled: true,
+        builder: (_) => Wrap(
+          children: [
+            CollectionsCheckoutSheet(
+              accessRequestId: accessRequestId,
+              debitType: debitType,
+              scheduleEntries: scheduleEntries,
+              method: method,
+              details: Collection(
+                maxAmount: maximumAmount,
+                expiryDate: expiryDate,
+                startDate: startDate,
+                monthlyLimit: monthlyLimit,
+                schedule: Schedule(
+                  frequency: frequency,
+                  type: type,
+                  amount: amount,
+                  entries: [],
+                ),
+                reference: reference,
+                status: '',
+                nextCollectionAt: '',
+              ),
+              merchantName: merchantName,
+            ),
+          ],
+        ),
+      );
+      return;
+    }
   }
 
   Future<void> collectionHandOffToAuth({

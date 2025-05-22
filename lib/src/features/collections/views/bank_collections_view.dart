@@ -68,7 +68,12 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
       Map<String, dynamic> response) {
     final List<dynamic> requests = response['data']?['requests'] ?? [];
 
-    if (requests.isEmpty) return [];
+    if (requests.isEmpty) {
+      'IT IS EMPTY'.log();
+      return [];
+    }
+
+    'IT IS NOT EMPTY'.log();
 
     final latestRequest = requests.last;
     final collection = latestRequest['collection'];
@@ -135,6 +140,7 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
             ),
 
             // Dropdown
+
             if (savedBanks != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -173,6 +179,54 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
                   onChanged: _onBankSelected,
                 ),
               ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: savedBanks != null
+                  ? DropdownButtonFormField<BankOption>(
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Select Bank',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: selectedBank,
+                      items: savedBanks
+                          .map((bank) => DropdownMenuItem<BankOption>(
+                                value: bank,
+                                child: Row(
+                                  spacing: 10,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: NetworkImage(
+                                        bank.logo ?? '',
+                                      ),
+                                      radius: 16,
+                                    ),
+                                    Text(
+                                      '${bank.bankName ?? ''} - ${bank.accountNumber ?? ''}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: _onBankSelected,
+                    )
+                  : const SizedBox(
+                      height: 50,
+                      child: Center(
+                        child: Text(
+                          'No collections available',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+            ),
 
             const SizedBox(height: 20),
 

@@ -28,19 +28,66 @@ class CollectionsService {
     );
   }
 
+  FutureOutcome<Map<String, dynamic>> validateCreateCollectionFields({
+    Function? onComplete,
+    void Function()? onError,
+    required String maximumAmount,
+    required String expiryDate,
+    required String startDate,
+    required String monthlyLimit,
+    required String reference,
+    required String type,
+    required String frequency,
+    required String? amount,
+    required String debitType,
+    required List<Map<String, dynamic>> scheduleEntries,
+  }) async {
+    final payload = {
+      "maximumAmount": multiplyBy100(maximumAmount),
+      "expiryDate": expiryDate,
+      "startDate": startDate,
+      // "monthlyLimit": multiplyBy100(monthlyLimit),
+      "reference": reference,
+      "debitType": debitType,
+      "schedule": {
+        "type": type,
+        "frequency": frequency,
+        "amount": amount != null ? multiplyBy100(amount) : null,
+        "entries": type == 'SCHEDULED' ? scheduleEntries : []
+      }
+    };
+
+    try {
+      final response = await _apiService.post(
+        '/collections',
+        data: payload,
+        headers: {
+          "x-merchant-Id": _merchantId,
+        },
+      );
+
+      return right(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    } catch (e) {
+      final apiEx = APIException.fromHttpError(e);
+      '❌ validateCreateCollectionFields() Error: ${apiEx.message}'.log();
+      return left(Failure(apiEx.message));
+    }
+  }
+
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> createCollections({
     required Map<String, dynamic> payload,
-    required String merchantId,
     String? monaKeyId,
     String? signature,
     String? nonce,
     String? timestamp,
   }) async {
     try {
-      final response =
-          await _apiService.post('/collections', data: payload, headers: {
-        "x-merchant-Id": merchantId,
+      final response = await _apiService
+          .post('/collections/consent', data: payload, headers: {
+        "x-merchant-Id": _merchantId,
         "x-client-type": "bioApp",
         if (monaKeyId != null) 'x-mona-key-id': monaKeyId,
         if (signature != null) 'x-mona-pay-auth': signature,
@@ -102,7 +149,7 @@ class CollectionsService {
 
     Map<String, dynamic> data = {
       "method": base64Encode(utf8.encode("POST")),
-      "uri": base64Encode(utf8.encode("/collections")),
+      "uri": base64Encode(utf8.encode("/collections/consent")),
       "body": encodedPayload,
       "params": base64Encode(utf8.encode(jsonEncode({}))),
       "nonce": base64Encode(utf8.encode(nonce)),
@@ -125,43 +172,18 @@ class CollectionsService {
     Function? onComplete,
     void Function()? onError,
     required String bankId,
-    required String maximumAmount,
-    required String expiryDate,
-    required String startDate,
-    required String monthlyLimit,
-    required String reference,
-    required String type,
-    required String frequency,
-    required String? amount,
-    required String merchantId,
-    required String debitType,
-    required List<Map<String, dynamic>> scheduleEntries,
+    required String accessRequestId,
   }) async {
     try {
       final secureStorage = SecureStorage();
       final payload = {
         "bankId": bankId,
-        "maximumAmount": multiplyBy100(maximumAmount),
-        "expiryDate": expiryDate,
-        "startDate": startDate,
-        // "monthlyLimit": multiplyBy100(monthlyLimit),
-        "reference": reference,
-        "debitType": debitType,
-        "schedule": {
-          "type": type,
-          "frequency": frequency,
-          "amount": amount != null ? multiplyBy100(amount) : null,
-          "entries": type == 'SCHEDULED' ? scheduleEntries : []
-        }
+        "accessRequestId": accessRequestId,
       };
       final monaKeyID = await secureStorage.read(
             key: SecureStorageKeys.keyID,
           ) ??
           "";
-      // final userCheckoutID = await secureStorage.read(
-      //       key: SecureStorageKeys.monaCheckoutID,
-      //     ) ??
-      //     "";
 
       final nonce = UUIDGenerator.v4();
       final timestamp =
@@ -191,7 +213,6 @@ class CollectionsService {
         signature: signature,
         nonce: nonce,
         timestamp: timestamp,
-        merchantId: merchantId,
       );
     } catch (e) {
       onError?.call();
@@ -206,7 +227,6 @@ class CollectionsService {
     String? signature,
     String? nonce,
     String? timestamp,
-    required String merchantId,
   }) async {
     "$_repoName submitPaymentRequest REACHED SUBMISSION".log();
 
@@ -216,7 +236,6 @@ class CollectionsService {
       signature: signature,
       nonce: nonce,
       timestamp: timestamp,
-      merchantId: merchantId,
     );
 
     if (failure != null) {
