@@ -23,6 +23,7 @@ class ProductsView extends ConsumerStatefulWidget {
 }
 
 class _ProductsViewState extends ConsumerState<ProductsView> {
+  late PayWithMona _payWithMona;
   final paymentNotifier = PaymentNotifier();
   final sdkNotifier = MonaSDKNotifier();
   final _amountController = TextEditingController();
@@ -31,6 +32,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
   @override
   void initState() {
     super.initState();
+    _payWithMona = PayWithMona.instance;
     paymentNotifier.addListener(_onPaymentStateChange);
     _amountController.text = '20';
     WidgetsBinding.instance.addPostFrameCallback(
@@ -222,7 +224,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                           break;
 
                                         case Products.dataShare:
-                                          PayWithMona.showDataShareSheet(
+                                          _payWithMona.showDataShareSheet(
                                             context: context,
                                             firstName: 'Ada',
                                             lastName: 'Obi',
@@ -282,7 +284,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                     context.sbH(16),
 
                     /// ***
-                    PayWithMona.paymentSettingsWidget(
+                    _payWithMona.paymentUpdateSettingsWidget(
                       transactionAmountInKobo: num.parse(
                             _amountController.value.text.trim(),
                           ) *
