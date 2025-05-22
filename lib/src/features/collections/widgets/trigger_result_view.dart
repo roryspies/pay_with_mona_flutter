@@ -149,9 +149,8 @@ class TriggerResultView extends StatelessWidget {
                       onTap: () {
                         MonaSDKNotifier().resetSDKState();
 
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pop();
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
                       },
                       label: 'Return to home',
                     ),
