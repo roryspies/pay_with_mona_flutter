@@ -96,6 +96,27 @@ extension SDKNotifierListeners on MonaSDKNotifier {
     }
   }
 
+  Future<void> _listenForCustomTabEvents() async {
+    try {
+      await _firebaseSSE.listenForCustomTabEvents(
+        //transactionId: _currentTransactionId ?? "",
+        onDataChange: (event) async {
+          if (event.toString().contains(_currentTransactionId ?? "")) {
+            "_listenForCustomTabEvents ::: EVENT $event".log();
+            final eventData = jsonDecode(event) as Map<String, dynamic>;
+          }
+        },
+        onError: (error) {
+          _handleError("Error during transaction updates.");
+          throw error;
+        },
+      );
+    } catch (error) {
+      "_listenForCustomTabEvents error: $error".log();
+      rethrow;
+    }
+  }
+
   Future<void> _listenForAuthEvents(
     String sessionId,
     Completer<void> authCompleter,

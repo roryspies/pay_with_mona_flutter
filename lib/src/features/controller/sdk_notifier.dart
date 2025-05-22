@@ -614,6 +614,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         [
           _listenForPaymentUpdates(),
           _listenForTransactionUpdateEvents(),
+          _listenForCustomTabEvents()
         ],
       );
     } catch (error) {
@@ -871,6 +872,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         if (transactionId != null) {
           _handleTransactionId(transactionId);
           _listenForTransactionUpdateEvents();
+          _listenForCustomTabEvents();
         }
 
         onSuccess?.call(success);
