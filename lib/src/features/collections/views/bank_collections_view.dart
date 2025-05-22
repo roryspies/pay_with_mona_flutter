@@ -137,6 +137,9 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: DropdownButtonFormField<BankOption>(
+                  style: TextStyle(
+                    fontSize: 14,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Select Bank',
                     border: OutlineInputBorder(),
@@ -145,11 +148,23 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
                   items: savedBanks
                       .map((bank) => DropdownMenuItem<BankOption>(
                             value: bank,
-                            child: Text(
-                              '${bank.bankName ?? ''} - ${bank.accountNumber ?? ''}',
-                              style: TextStyle(
-                                fontSize: 16,
-                              ),
+                            child: Row(
+                              spacing: 10,
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: NetworkImage(
+                                    bank.logo ?? '',
+                                  ),
+                                  radius: 16,
+                                ),
+                                Text(
+                                  '${bank.bankName ?? ''} - ${bank.accountNumber ?? ''}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
                           ))
                       .toList(),
