@@ -2,7 +2,7 @@ import "dart:convert";
 import "dart:io";
 import "package:flutter/services.dart";
 import "package:pay_with_mona/src/core/api/api_endpoints.dart";
-import "package:pay_with_mona/src/core/api/api_header_model.dart";
+import "package:pay_with_mona/src/core/api/api_headers.dart";
 import "package:pay_with_mona/src/core/api/api_service.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
@@ -33,7 +33,7 @@ class AuthService {
     try {
       final response = await _apiService.get(
         APIEndpoints.initMerchant,
-        headers: ApiHeaderModel.initSDKHeaders(
+        headers: ApiHeaders.initSDKHeaders(
           merchantKey: merchantKey,
         ),
       );

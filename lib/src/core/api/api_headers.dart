@@ -1,4 +1,4 @@
-abstract class ApiHeaderModel {
+abstract class ApiHeaders {
   static const String _xClientType = "bioApp";
 
   static Map<String, String> initSDKHeaders({
@@ -16,7 +16,27 @@ abstract class ApiHeaderModel {
     };
   }
 
-  static Map<String, String> paymentHeaders({
+  ///
+  /// *** MARK: Payment Service Headers
+  static Map<String, String> initiatePaymentHeader({
+    required String merchantKey,
+  }) {
+    return {
+      "x-client-type": _xClientType,
+      "x-public-key": merchantKey,
+    };
+  }
+
+  static Map<String, String> getPaymentMethods({
+    required String userEnrolledCheckoutID,
+  }) {
+    return {
+      "x-client-type": _xClientType,
+      "cookie": "mona_checkoutId=$userEnrolledCheckoutID",
+    };
+  }
+
+  static Map<String, String> paymentHeader({
     required String? monaKeyID,
     required String? monaCheckoutID,
     required String? checkoutType,

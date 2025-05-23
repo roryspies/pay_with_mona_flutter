@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:pay_with_mona/src/core/api/api_endpoints.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
-import 'package:pay_with_mona/src/core/api/api_header_model.dart';
+import 'package:pay_with_mona/src/core/api/api_headers.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
 import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
@@ -33,16 +34,16 @@ class PaymentService {
 
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> initiatePayment({
-    required String merchantID,
+    required String merchantKey,
     required num tnxAmountInKobo,
     required String successRateType,
   }) async {
     try {
       final response = await _apiService.post(
-        '/demo/checkout',
-        headers: {
-          "merchant-owner": merchantID,
-        },
+        APIEndpoints.demoCheckout,
+        headers: ApiHeaders.initiatePaymentHeader(
+          merchantKey: merchantKey,
+        ),
         data: {
           "amount": tnxAmountInKobo,
           'successRateType': successRateType,
@@ -66,11 +67,13 @@ class PaymentService {
   }) async {
     try {
       final response = await _apiService.get(
-        '/pay',
-        headers: {
-          'cookie': 'mona_checkoutId=$userEnrolledCheckoutID',
+        APIEndpoints.pay,
+        headers: ApiHeaders.getPaymentMethods(
+          userEnrolledCheckoutID: userEnrolledCheckoutID,
+        ),
+        queryParams: {
+          'transactionId': transactionId,
         },
-        queryParams: {'transactionId': transactionId},
       );
 
       return right(
@@ -222,7 +225,7 @@ class PaymentService {
 
                 await makePaymentRequest(
                   paymentType: paymentType,
-                  sign: true,
+                  //sign: true,
                   onPayComplete: onPayComplete,
                 );
               } else {
@@ -245,7 +248,7 @@ class PaymentService {
 
                 await makePaymentRequest(
                   paymentType: paymentType,
-                  sign: true,
+                  //sign: true,
                   onPayComplete: onPayComplete,
                 );
               } else {
@@ -275,8 +278,8 @@ class PaymentService {
   }) async {
     try {
       final response = await _apiService.post(
-        "/pay",
-        headers: ApiHeaderModel.paymentHeaders(
+        APIEndpoints.pay,
+        headers: ApiHeaders.paymentHeader(
           monaKeyID: monaKeyId,
           monaCheckoutID: monaCheckoutID,
           signature: signature,
