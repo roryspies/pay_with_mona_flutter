@@ -517,7 +517,13 @@ class MonaSDKNotifier extends ChangeNotifier {
           await _paymentsService.initiatePayment(
         tnxAmountInKobo: tnxAmountInKobo,
         merchantKey: await _getMerchantKey() ?? "",
+        userKeyID: await checkIfUserHasKeyID() ?? "",
+        phoneNumber: _monaCheckOut?.phoneNumber,
         successRateType: _merchantPaymentSettingsEnum.paymentName,
+        bvn: _monaCheckOut?.bvn,
+        dob: _monaCheckOut?.dateOfBirth.toLocal().toUtc().toIso8601String(),
+        firstAndLastName:
+            "${_monaCheckOut?.firstName} ${_monaCheckOut!.lastName}",
       );
 
       if (failure != null) {
