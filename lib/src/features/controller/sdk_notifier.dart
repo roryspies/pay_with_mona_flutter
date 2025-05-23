@@ -938,6 +938,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       final accessRequestId = requestsMap['id'] as String;
 
+      final monthlyLimitt = requestsMap['collection']['monthlyLimit'] ?? '';
+
       showModalBottomSheet(
         context: _callingBuildContext!,
         isScrollControlled: true,
@@ -952,7 +954,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                 maxAmount: maximumAmount,
                 expiryDate: expiryDate,
                 startDate: startDate,
-                monthlyLimit: monthlyLimit,
+                monthlyLimit: divideBy100NoDecimal(monthlyLimitt),
                 schedule: Schedule(
                   frequency: frequency,
                   type: type,

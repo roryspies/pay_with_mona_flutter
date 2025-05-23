@@ -295,3 +295,9 @@ String divideBy100(String value) {
   final result = number / 100;
   return result.toStringAsFixed(2);
 }
+
+String divideBy100NoDecimal(String value) {
+  final number = double.tryParse(value) ?? 0;
+  final result = number / 100;
+  return result.toStringAsFixed(0);
+}

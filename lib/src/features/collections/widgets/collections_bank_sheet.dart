@@ -139,10 +139,31 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                 height: context.h(22)),
                             CircleAvatar(
                               radius: context.w(24),
-                              backgroundColor: MonaColors.primaryBlue,
-                              backgroundImage: AssetImage(
-                                "ng_deals_logo".png,
-                              ),
+                              backgroundColor:
+                                  MonaColors.primaryBlue.withOpacity(0.1),
+                              backgroundImage: switch (
+                                  sdkNotifier.merchantBrandingDetails != null &&
+                                      sdkNotifier.merchantBrandingDetails!.image
+                                          .isNotEmpty) {
+                                true => NetworkImage(
+                                    sdkNotifier.merchantBrandingDetails!.image,
+                                  ),
+                                false => null,
+                              },
+                              child: switch (
+                                  sdkNotifier.merchantBrandingDetails != null &&
+                                      sdkNotifier.merchantBrandingDetails!.image
+                                          .isNotEmpty) {
+                                true => null,
+                                false => Text(
+                                    getInitials(widget.merchantName),
+                                    style: TextStyle(
+                                      fontSize: context.sp(25),
+                                      fontWeight: FontWeight.w600,
+                                      color: MonaColors.primaryBlue,
+                                    ),
+                                  ),
+                              },
                             ),
                           ],
                         ),
@@ -174,6 +195,21 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                     sdkNotifier.selectedBankOption?.bankId;
 
                                 "Selected Bank ID: $selectedBankID";
+
+                                if (bank.bankName!
+                                        .toLowerCase()
+                                        .contains('opay') ||
+                                    bank.bankName!
+                                        .toLowerCase()
+                                        .contains('palm') ||
+                                    bank.bankName!
+                                        .toLowerCase()
+                                        .contains('kuda') ||
+                                    bank.bankName!
+                                        .toLowerCase()
+                                        .contains('monie')) {
+                                  return SizedBox.shrink();
+                                }
 
                                 return ListTile(
                                   onTap: () {
