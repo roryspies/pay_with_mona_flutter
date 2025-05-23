@@ -17,6 +17,28 @@ abstract class ApiHeaders {
   }
 
   ///
+  /// *** MARK: Auth Service Headers
+  ///
+  static Map<String, String> loginWithStrongAuth({
+    required String strongAuthToken,
+  }) {
+    return {
+      "x-strong-auth-token": strongAuthToken,
+      "x-mona-key-exchange": "true",
+    };
+  }
+
+  static Map<String, String> validatePII({
+    required String userKeyID,
+  }) {
+    return {
+      "x-client-type": "bioApp",
+      "x-mona-key-id": userKeyID,
+      "content-Type": "application/json",
+    };
+  }
+
+  ///
   /// *** MARK: Payment Service Headers
   static Map<String, String> initiatePaymentHeader({
     required String merchantKey,

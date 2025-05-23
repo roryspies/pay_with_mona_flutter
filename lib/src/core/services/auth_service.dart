@@ -73,11 +73,9 @@ class AuthService {
       final response = await _apiService.post(
         APIEndpoints.validatePII,
         headers: (userKeyID != null && doNotUseBody)
-            ? {
-                "x-client-type": "bioApp",
-                "x-mona-key-id": userKeyID,
-                "content-Type": "application/json",
-              }
+            ? ApiHeaders.validatePII(
+                userKeyID: userKeyID,
+              )
             : null,
         data: (phoneNumber == null && bvn == null && dob == null)
             ? {"": ""}
@@ -103,11 +101,10 @@ class AuthService {
   }) async {
     try {
       final response = await _apiService.post(
-        "/login",
-        headers: {
-          "x-strong-auth-token": strongAuthToken,
-          "x-mona-key-exchange": "true",
-        },
+        APIEndpoints.login,
+        headers: ApiHeaders.loginWithStrongAuth(
+          strongAuthToken: strongAuthToken,
+        ),
         data: {
           "phone": null,
         },
@@ -218,7 +215,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiService.post(
-        "/keys/commit",
+        APIEndpoints.commitKeys,
         headers: {
           "content-type": "application/json",
         },
