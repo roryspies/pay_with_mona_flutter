@@ -222,14 +222,14 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                           break;
 
                                         case Products.collections:
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const CreateCollectionView(
-                                                merchantName: 'ngdeals',
-                                              ),
-                                            ),
-                                          );
+                                          // Navigator.of(context).push(
+                                          //   MaterialPageRoute(
+                                          //     builder: (_) =>
+                                          //         const CreateCollectionView(
+                                          //       merchantName: 'ngdeals',
+                                          //     ),
+                                          //   ),
+                                          // );
                                           break;
 
                                         case Products.dataShare:
