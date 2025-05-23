@@ -37,16 +37,25 @@ class PaymentService {
     required String merchantKey,
     required num tnxAmountInKobo,
     required String successRateType,
+    String? phoneNumber,
+    String? bvn,
+    String? dob,
+    String? firstAndLastName,
+    String? userKeyID,
   }) async {
     try {
       final response = await _apiService.post(
         APIEndpoints.demoCheckout,
         headers: ApiHeaders.initiatePaymentHeader(
           merchantKey: merchantKey,
+          userKeyID: userKeyID,
         ),
         data: {
           "amount": tnxAmountInKobo,
           'successRateType': successRateType,
+          if (phoneNumber != null) "phoneNumber": phoneNumber,
+          if (bvn != null) "bvn": bvn,
+          if (dob != null) "dob": dob,
         },
       );
 

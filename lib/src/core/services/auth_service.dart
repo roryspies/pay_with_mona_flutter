@@ -52,7 +52,7 @@ class AuthService {
     String? phoneNumber,
     String? bvn,
     String? dob,
-    String? name,
+    String? firstAndLastName,
     String? userKeyID,
   }) async {
     try {
@@ -62,12 +62,14 @@ class AuthService {
         return null;
       }
 
-      if (dob != null && name == null) {
-        throw ArgumentError('`name` must not be null when `dob` is provided.');
+      if (dob != null && firstAndLastName == null) {
+        throw ArgumentError(
+            '`Name Value - First and Last` must not be null when `dob` is provided.');
       }
 
-      if (name != null && dob == null) {
-        throw ArgumentError('`dob` must not be null when `name` is provided.');
+      if (firstAndLastName != null && dob == null) {
+        throw ArgumentError(
+            '`dob` must not be null when `Name Value - First and Last` is provided.');
       }
 
       final response = await _apiService.post(
@@ -83,6 +85,7 @@ class AuthService {
                 if (phoneNumber != null) "phoneNumber": phoneNumber,
                 if (bvn != null) "bvn": bvn,
                 if (dob != null) "dob": dob,
+                if (firstAndLastName != null) "name": firstAndLastName,
               },
       );
 
