@@ -42,9 +42,11 @@ abstract class ApiHeaders {
   /// *** MARK: Payment Service Headers
   static Map<String, String> initiatePaymentHeader({
     required String merchantKey,
+    String? userKeyID,
   }) {
     return {
       "x-client-type": _xClientType,
+      if (userKeyID != null) "x-mona-key-id": userKeyID,
       "x-public-key": merchantKey,
     };
   }
