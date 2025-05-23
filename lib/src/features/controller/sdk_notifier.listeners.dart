@@ -99,11 +99,15 @@ extension SDKNotifierListeners on MonaSDKNotifier {
   Future<void> _listenForCustomTabEvents() async {
     try {
       await _firebaseSSE.listenForCustomTabEvents(
-        //transactionId: _currentTransactionId ?? "",
         onDataChange: (event) async {
-          if (event.toString().contains(_currentTransactionId ?? "")) {
-            "_listenForCustomTabEvents ::: EVENT $event".log();
-            final eventData = jsonDecode(event) as Map<String, dynamic>;
+          "_listenForCustomTabEvents ::: EVENT $event".log();
+          final decodedEvent = jsonDecode(event) as Map<String, dynamic>;
+
+          if (decodedEvent["success"] == true) {
+            _sdkStateStream.emit(state: MonaSDKState.idle);
+            await closeCustomTabs();
+          } else if (decodedEvent["event"] == "false") {
+            _handleError("Web Payment Failed");
           }
         },
         onError: (error) {

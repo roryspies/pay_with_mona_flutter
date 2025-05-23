@@ -302,9 +302,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       final (success, failure) = await _paymentsService.initiatePayment(
         tnxAmountInKobo: transactionAmountInKobo ?? _monaCheckOut!.amount,
-
-        /// *** TODO: @Serticode - Update this to use the value passed in the params
-        merchantID: "67e41f884126830aded0b43c",
+        merchantKey: await _getMerchantKey() ?? "",
         successRateType: _merchantPaymentSettingsEnum.paymentName,
       );
 
@@ -518,10 +516,17 @@ class MonaSDKNotifier extends ChangeNotifier {
       final (Map<String, dynamic>? success, failure) =
           await _paymentsService.initiatePayment(
         tnxAmountInKobo: tnxAmountInKobo,
-
-        /// *** TODO: @Serticode - Update this to use the value passed in the params
-        merchantID: "67e41f884126830aded0b43c",
+        merchantKey: await _getMerchantKey() ?? "",
+        userKeyID: await checkIfUserHasKeyID() ?? "",
+        phoneNumber: _monaCheckOut?.phoneNumber,
         successRateType: _merchantPaymentSettingsEnum.paymentName,
+        bvn: _monaCheckOut?.bvn,
+        dob: _monaCheckOut?.dateOfBirth.toLocal().toUtc().toIso8601String(),
+        firstAndLastName: switch (_monaCheckOut?.firstName != null &&
+            _monaCheckOut?.lastName != null) {
+          true => "${_monaCheckOut?.firstName} ${_monaCheckOut?.lastName}",
+          false => null,
+        },
       );
 
       if (failure != null) {

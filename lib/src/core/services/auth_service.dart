@@ -2,7 +2,7 @@ import "dart:convert";
 import "dart:io";
 import "package:flutter/services.dart";
 import "package:pay_with_mona/src/core/api/api_endpoints.dart";
-import "package:pay_with_mona/src/core/api/api_header_model.dart";
+import "package:pay_with_mona/src/core/api/api_headers.dart";
 import "package:pay_with_mona/src/core/api/api_service.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart";
@@ -20,6 +20,7 @@ class AuthService {
   final _apiService = ApiService();
   final _secureStorage = SecureStorage();
 
+  // ignore: unused_element
   Future<String?> _getMerchantKey() async {
     return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,
@@ -32,7 +33,7 @@ class AuthService {
     try {
       final response = await _apiService.get(
         APIEndpoints.initMerchant,
-        headers: ApiHeaderModel.initSDKHeaders(
+        headers: ApiHeaders.initSDKHeaders(
           merchantKey: merchantKey,
         ),
       );
@@ -51,7 +52,7 @@ class AuthService {
     String? phoneNumber,
     String? bvn,
     String? dob,
-    String? name,
+    String? firstAndLastName,
     String? userKeyID,
   }) async {
     try {
@@ -61,22 +62,22 @@ class AuthService {
         return null;
       }
 
-      if (dob != null && name == null) {
-        throw ArgumentError('`name` must not be null when `dob` is provided.');
+      if (dob != null && firstAndLastName == null) {
+        throw ArgumentError(
+            '`Name Value - First and Last` must not be null when `dob` is provided.');
       }
 
-      if (name != null && dob == null) {
-        throw ArgumentError('`dob` must not be null when `name` is provided.');
+      if (firstAndLastName != null && dob == null) {
+        throw ArgumentError(
+            '`dob` must not be null when `Name Value - First and Last` is provided.');
       }
 
       final response = await _apiService.post(
         APIEndpoints.validatePII,
         headers: (userKeyID != null && doNotUseBody)
-            ? {
-                "x-client-type": "bioApp",
-                "x-mona-key-id": userKeyID,
-                "content-Type": "application/json",
-              }
+            ? ApiHeaders.validatePII(
+                userKeyID: userKeyID,
+              )
             : null,
         data: (phoneNumber == null && bvn == null && dob == null)
             ? {"": ""}
@@ -84,6 +85,7 @@ class AuthService {
                 if (phoneNumber != null) "phoneNumber": phoneNumber,
                 if (bvn != null) "bvn": bvn,
                 if (dob != null) "dob": dob,
+                if (firstAndLastName != null) "name": firstAndLastName,
               },
       );
 
@@ -102,11 +104,10 @@ class AuthService {
   }) async {
     try {
       final response = await _apiService.post(
-        "/login",
-        headers: {
-          "x-strong-auth-token": strongAuthToken,
-          "x-mona-key-exchange": "true",
-        },
+        APIEndpoints.login,
+        headers: ApiHeaders.loginWithStrongAuth(
+          strongAuthToken: strongAuthToken,
+        ),
         data: {
           "phone": null,
         },
@@ -217,7 +218,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiService.post(
-        "/keys/commit",
+        APIEndpoints.commitKeys,
         headers: {
           "content-type": "application/json",
         },

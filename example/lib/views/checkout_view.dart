@@ -35,7 +35,6 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
     _payWithMona = PayWithMona.instance;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
-        // bool isPaymentStatusModalOpen = false;
         sdkNotifier
           ..txnStateStream.listen(
             (state) async {
@@ -67,17 +66,6 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                   ):
                   ("CheckoutView 🚀 Initiated: tx=$transactionID, amount=$amount")
                       .log();
-
-                  /* if (isPaymentStatusModalOpen == false) {
-                    isPaymentStatusModalOpen = true;
-
-                    AppUtils.showAppModalBottomSheet(
-                      isDismissible: false,
-                      enableDrag: false,
-                      callingContext: context,
-                      child: PaymentStatusModal(),
-                    );
-                  } */
 
                   break;
 
