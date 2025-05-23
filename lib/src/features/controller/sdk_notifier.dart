@@ -522,8 +522,11 @@ class MonaSDKNotifier extends ChangeNotifier {
         successRateType: _merchantPaymentSettingsEnum.paymentName,
         bvn: _monaCheckOut?.bvn,
         dob: _monaCheckOut?.dateOfBirth.toLocal().toUtc().toIso8601String(),
-        firstAndLastName:
-            "${_monaCheckOut?.firstName} ${_monaCheckOut?.lastName}",
+        firstAndLastName: switch (_monaCheckOut?.firstName != null &&
+            _monaCheckOut?.lastName != null) {
+          true => "${_monaCheckOut?.firstName} ${_monaCheckOut?.lastName}",
+          false => null,
+        },
       );
 
       if (failure != null) {
