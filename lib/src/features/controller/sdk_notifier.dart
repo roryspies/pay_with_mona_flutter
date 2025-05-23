@@ -523,7 +523,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         bvn: _monaCheckOut?.bvn,
         dob: _monaCheckOut?.dateOfBirth.toLocal().toUtc().toIso8601String(),
         firstAndLastName:
-            "${_monaCheckOut?.firstName} ${_monaCheckOut!.lastName}",
+            "${_monaCheckOut?.firstName} ${_monaCheckOut?.lastName}",
       );
 
       if (failure != null) {

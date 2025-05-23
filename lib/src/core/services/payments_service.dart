@@ -56,6 +56,7 @@ class PaymentService {
           if (phoneNumber != null) "phoneNumber": phoneNumber,
           if (bvn != null) "bvn": bvn,
           if (dob != null) "dob": dob,
+          if (firstAndLastName != null) "name": firstAndLastName,
         },
       );
 
