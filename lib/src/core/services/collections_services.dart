@@ -20,8 +20,7 @@ class CollectionsService {
 
   // final _merchantId = "67e41f884126830aded0b43c";
 
-  final _scrtK =
-      "4d85a2a80ea5247c4643692d267f179d9db35132b3299d46014f4350243a68d5";
+  String? _scrtK;
 
   final _secureStorage = SecureStorage();
 
@@ -29,6 +28,10 @@ class CollectionsService {
     return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,
     );
+  }
+
+  void setScrtk(String scrtK) {
+    _scrtK = scrtK;
   }
 
   FutureOutcome<Map<String, dynamic>> validateCreateCollectionFields({
@@ -69,6 +72,8 @@ class CollectionsService {
           "x-secret-key": scrtK,
         },
       );
+
+      setScrtk(scrtK);
 
       return right(
         jsonDecode(response.body) as Map<String, dynamic>,
@@ -126,7 +131,7 @@ class CollectionsService {
           "timeFactor": timeFactor,
         },
         headers: {
-          "x-secret-key": _scrtK,
+          "x-secret-key": _scrtK ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
@@ -272,7 +277,7 @@ class CollectionsService {
           "bankId": bankId,
         },
         headers: {
-          "x-secret-key": _scrtK,
+          "x-secret-key": _scrtK ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
