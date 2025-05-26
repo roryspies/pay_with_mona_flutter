@@ -17,6 +17,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     bool withRedirect = true,
     bool isFromCollections = false,
     bool doDirectPayment = false,
+    bool doDirectPaymentWithPossibleAuth = false,
   }) {
     final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
     final encodedSessionID = Uri.encodeComponent(sessionID);
@@ -27,6 +28,14 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
       final methodType = Uri.encodeComponent(method?.type ?? '');
       return "https://pay.development.mona.ng/$transactionID"
           "?embedding=true&sdk=true&method=$methodType";
+    }
+
+    if (doDirectPaymentWithPossibleAuth) {
+      final methodType = Uri.encodeComponent(method?.type ?? '');
+      return "https://pay.development.mona.ng/$transactionID"
+          "?embedding=true&sdk=true&method=$methodType"
+          "&loginScope=$loginScope"
+          "&sessionId=$encodedSessionID";
     }
 
     if (isFromCollections) {

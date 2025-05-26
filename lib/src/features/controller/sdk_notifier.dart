@@ -450,7 +450,6 @@ class MonaSDKNotifier extends ChangeNotifier {
         phoneNumber == null &&
         bvn == null &&
         dob == null) {
-      _updateState(MonaSDKState.idle);
       return;
     }
 
@@ -697,7 +696,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     await _listenForAuthEvents(sessionID, authCompleter);
 
     final url = _buildURL(
-      doDirectPayment: await checkIfUserHasKeyID() != null,
+      doDirectPaymentWithPossibleAuth: await checkIfUserHasKeyID() == null,
       sessionID: sessionID,
       method: _selectedPaymentMethod,
       bankOrCardId: _selectedPaymentMethod == PaymentMethod.savedBank
@@ -938,7 +937,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       final accessRequestId = requestsMap['id'] as String;
 
-      final monthlyLimitt = requestsMap['collection']['monthlyLimit'] ?? '';
+      final monthlyLimit = requestsMap['collection']['monthlyLimit'] ?? '';
 
       showModalBottomSheet(
         context: _callingBuildContext!,
@@ -954,7 +953,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                 maxAmount: maximumAmount,
                 expiryDate: expiryDate,
                 startDate: startDate,
-                monthlyLimit: divideBy100NoDecimal(monthlyLimitt),
+                monthlyLimit: divideBy100NoDecimal(monthlyLimit),
                 schedule: Schedule(
                   frequency: frequency,
                   type: type,

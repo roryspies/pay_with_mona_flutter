@@ -104,7 +104,8 @@ extension SDKNotifierListeners on MonaSDKNotifier {
           final decodedEvent = jsonDecode(event) as Map<String, dynamic>;
 
           if (decodedEvent["success"] == true) {
-            _sdkStateStream.emit(state: MonaSDKState.idle);
+            _updateState(MonaSDKState.idle);
+
             await closeCustomTabs();
           } else if (decodedEvent["event"] == "false") {
             _handleError("Web Payment Failed");
