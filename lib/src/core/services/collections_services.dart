@@ -18,7 +18,10 @@ class CollectionsService {
 
   final _apiService = ApiService();
 
-  final _merchantId = "67e41f884126830aded0b43c";
+  // final _merchantId = "67e41f884126830aded0b43c";
+
+  final _scrtK =
+      "4d85a2a80ea5247c4643692d267f179d9db35132b3299d46014f4350243a68d5";
 
   final _secureStorage = SecureStorage();
 
@@ -88,7 +91,7 @@ class CollectionsService {
     try {
       final response = await _apiService
           .post('/collections/consent', data: payload, headers: {
-        "x-merchant-Id": _merchantId,
+        "x-public-key": await getMerchantKey() ?? '',
         "x-client-type": "bioApp",
         if (monaKeyId != null) 'x-mona-key-id': monaKeyId,
         if (signature != null) 'x-mona-pay-auth': signature,
@@ -123,7 +126,7 @@ class CollectionsService {
           "timeFactor": timeFactor,
         },
         headers: {
-          "x-merchant-Id": merchantId,
+          "x-secret-key": _scrtK,
           'x-mona-key-id': monaKeyID,
         },
       );
@@ -269,7 +272,7 @@ class CollectionsService {
           "bankId": bankId,
         },
         headers: {
-          "x-merchant-Id": _merchantId,
+          "x-secret-key": _scrtK,
           'x-mona-key-id': monaKeyID,
         },
       );
