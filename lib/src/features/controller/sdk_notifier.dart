@@ -907,21 +907,22 @@ class MonaSDKNotifier extends ChangeNotifier {
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(String)? onError,
     void Function()? onSuccess,
+    required String scrtK,
   }) async {
     _updateState(MonaSDKState.loading);
     final (Map<String, dynamic>? success, failure) =
         await _collectionsService.validateCreateCollectionFields(
-      maximumAmount: maximumAmount,
-      expiryDate: expiryDate,
-      startDate: startDate,
-      monthlyLimit: monthlyLimit,
-      reference: reference,
-      type: type,
-      frequency: frequency,
-      amount: amount,
-      debitType: debitType,
-      scheduleEntries: scheduleEntries,
-    );
+            maximumAmount: maximumAmount,
+            expiryDate: expiryDate,
+            startDate: startDate,
+            monthlyLimit: monthlyLimit,
+            reference: reference,
+            type: type,
+            frequency: frequency,
+            amount: amount,
+            debitType: debitType,
+            scheduleEntries: scheduleEntries,
+            scrtK: scrtK);
 
     if (failure != null) {
       final errorMsg = failure.message;

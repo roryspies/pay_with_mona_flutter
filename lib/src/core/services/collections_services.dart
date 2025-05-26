@@ -41,6 +41,7 @@ class CollectionsService {
     required String? amount,
     required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
+    required String scrtK,
   }) async {
     final payload = {
       "maximumAmount": multiplyBy100(maximumAmount),
@@ -62,7 +63,7 @@ class CollectionsService {
         '/collections',
         data: payload,
         headers: {
-          "x-merchant-Id": _merchantId,
+          "x-secret-key": scrtK,
         },
       );
 
