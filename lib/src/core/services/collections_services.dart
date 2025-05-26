@@ -69,7 +69,7 @@ class CollectionsService {
         '/collections',
         data: payload,
         headers: {
-          "x-secret-key": scrtK,
+          "x-api-key": scrtK,
         },
       );
 
@@ -131,7 +131,7 @@ class CollectionsService {
           "timeFactor": timeFactor,
         },
         headers: {
-          "x-secret-key": _scrtK ?? '',
+          "x-api-key": _scrtK ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
@@ -277,7 +277,7 @@ class CollectionsService {
           "bankId": bankId,
         },
         headers: {
-          "x-secret-key": _scrtK ?? '',
+          "x-api-key": _scrtK ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
