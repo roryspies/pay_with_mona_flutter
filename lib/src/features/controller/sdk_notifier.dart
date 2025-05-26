@@ -283,37 +283,55 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Enhanced method with better error handling and type safety
   Future<void> updateMerchantPaymentSettingsWidget({
-    required MerchantPaymentSettingsEnum currentSetting,
+    required String currentSetting,
     required String merchantID,
     required Function(bool isSuccessful) onEvent,
     num? transactionAmountInKobo,
   }) async {
+    MerchantPaymentSettingsEnum? oldValue;
+
     try {
       _sdkStateStream.emit(state: MonaSDKState.loading);
-      final oldValue = _merchantPaymentSettingsEnum;
-      _merchantPaymentSettingsEnum = currentSetting;
-      notifyListeners();
 
-      if (transactionAmountInKobo == null && _monaCheckOut?.amount == null) {
-        _handleError("Transaction Amount cannot be null or empty");
-        return;
+      // Store old value for rollback
+      oldValue = _merchantPaymentSettingsEnum;
+
+      // Validate and convert string to enum
+      final newSetting = MerchantPaymentSettingsEnum.fromString(currentSetting);
+      if (newSetting == null) {
+        throw ArgumentError('Invalid payment setting: $currentSetting');
       }
 
+      _merchantPaymentSettingsEnum = newSetting;
+      notifyListeners();
+
+      // Validate transaction amount
+      final effectiveAmount = transactionAmountInKobo ?? _monaCheckOut?.amount;
+      if (effectiveAmount == null || effectiveAmount <= 0) {
+        throw ArgumentError("Transaction amount must be a positive number");
+      }
+
+      // Validate merchant key
+      final merchantKey = await _getMerchantKey();
+      if (merchantKey == null || merchantKey.isEmpty) {
+        throw StateError("Merchant key is required but not available");
+      }
+
+      // Initiate payment
       final (success, failure) = await _paymentsService.initiatePayment(
-        tnxAmountInKobo: transactionAmountInKobo ?? _monaCheckOut!.amount,
-        merchantKey: await _getMerchantKey() ?? "",
+        tnxAmountInKobo: effectiveAmount,
+        merchantKey: merchantKey,
         successRateType: _merchantPaymentSettingsEnum.paymentName,
       );
 
+      // Handle payment response
       if (failure != null) {
-        _handleError(failure.message);
-        _merchantPaymentSettingsEnum = oldValue;
-        onEvent(false);
-        notifyListeners();
-        return;
+        throw Exception(failure.message);
       }
 
+      // Success case
       onEvent(true);
 
       if (success != null) {
@@ -324,11 +342,28 @@ class MonaSDKNotifier extends ChangeNotifier {
       }
 
       _sdkStateStream.emit(state: MonaSDKState.idle);
-    } catch (error, trace) {
-      "updateMerchantPaymentSettingsWidget ::: ERROR ::: $error ::: TRACE ::: $trace"
-          .log();
+    } catch (error, stackTrace) {
+      // Log error with more context
+      final errorMessage = 'updateMerchantPaymentSettingsWidget failed: $error';
+      errorMessage.log();
 
+      // Log stack trace for debugging
+      'Stack trace: $stackTrace'.log();
+
+      // Rollback state if we have an old value
+      if (oldValue != null) {
+        _merchantPaymentSettingsEnum = oldValue;
+        notifyListeners();
+      }
+
+      // Notify caller of failure
+      onEvent(false);
+
+      // Handle error through your error handling system
       _handleError(error.toString());
+
+      // Always ensure we're not stuck in loading state
+      _sdkStateStream.emit(state: MonaSDKState.idle);
     }
   }
 
