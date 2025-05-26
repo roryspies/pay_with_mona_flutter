@@ -10,7 +10,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
   ///
   /// *** MARK: Custom Tabs and URL"s
   /// Builds the URL for the in-app payment custom tab.
-  String _buildURL({
+  Future<String> _buildURL({
     required String sessionID,
     PaymentMethod? method,
     String? bankOrCardId,
@@ -18,8 +18,9 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     bool isFromCollections = false,
     bool doDirectPayment = false,
     bool doDirectPaymentWithPossibleAuth = false,
-  }) {
-    final loginScope = Uri.encodeComponent("67e41f884126830aded0b43c");
+  }) async {
+    final merchantKey = await _getMerchantKey();
+    final loginScope = Uri.encodeComponent(merchantKey!);
     final encodedSessionID = Uri.encodeComponent(sessionID);
     final transactionID = _currentTransactionId ?? '';
     final encodedTransactionID = Uri.encodeComponent(transactionID);

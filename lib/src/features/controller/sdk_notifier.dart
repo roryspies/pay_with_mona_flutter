@@ -572,7 +572,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         isFromCollections: isFromCollections,
       );
 
-      final url = _buildURL(
+      final url = await _buildURL(
         isFromCollections: isFromCollections,
         withRedirect: withRedirect,
         sessionID: sessionID,
@@ -695,7 +695,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     final authCompleter = Completer<void>();
     await _listenForAuthEvents(sessionID, authCompleter);
 
-    final url = _buildURL(
+    final url = await _buildURL(
       doDirectPaymentWithPossibleAuth: await checkIfUserHasKeyID() == null,
       sessionID: sessionID,
       method: _selectedPaymentMethod,
