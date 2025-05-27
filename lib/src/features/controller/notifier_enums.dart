@@ -120,4 +120,15 @@ enum MerchantPaymentSettingsEnum {
         return "wallet_completed";
     }
   }
+
+  // Helper method to create enum from string
+  static MerchantPaymentSettingsEnum? fromString(String value) {
+    for (MerchantPaymentSettingsEnum setting
+        in MerchantPaymentSettingsEnum.values) {
+      if (setting.paymentName == value || setting.name == value) {
+        return setting;
+      }
+    }
+    return null;
+  }
 }
