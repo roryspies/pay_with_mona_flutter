@@ -2,6 +2,7 @@ import "dart:convert";
 import "dart:io";
 import "package:flutter/services.dart";
 import "package:pay_with_mona/src/core/api/api_endpoints.dart";
+import "package:pay_with_mona/src/core/api/api_exceptions.dart";
 import "package:pay_with_mona/src/core/api/api_headers.dart";
 import "package:pay_with_mona/src/core/api/api_service.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
@@ -118,11 +119,17 @@ class AuthService {
 
       return (jsonDecode(response.body) as Map<String, dynamic>)["data"]
           as Map<String, dynamic>;
+    } on APIException catch (e) {
+      print(e.message); // "User not found"
+      print(e.statusCode); // e.g., 404
+      print(e
+          .responseBody); // Full JSON: {"success": false, "message": "User not found"}
     } catch (error) {
       "$error".log();
 
       return null;
     }
+    return null;
   }
 
   Future<Map<String, dynamic>?> loginWithStrongAuth({

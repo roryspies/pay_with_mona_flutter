@@ -445,7 +445,11 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   /// *** MARK: -  Major Methods
+  /// *** MARK: -  Major Methods
   Future<void> validatePII({
+    String? firstName,
+    String? lastName,
+    String? middleName,
     String? phoneNumber,
     String? bvn,
     String? dob,
@@ -456,60 +460,79 @@ class MonaSDKNotifier extends ChangeNotifier {
       _updateState(MonaSDKState.loading);
     }
 
-    final userKeyID = await checkIfUserHasKeyID();
+    try {
+      final userKeyID = await checkIfUserHasKeyID();
 
-    'USER KEY ID IS: $userKeyID'.log();
+      'USER KEY ID IS: $userKeyID'.log();
 
-    if (userKeyID == null &&
-        phoneNumber == null &&
-        bvn == null &&
-        dob == null) {
-      return;
-    }
+      if (userKeyID == null &&
+          phoneNumber == null &&
+          bvn == null &&
+          dob == null) {
+        return;
+      }
 
-    final response = await _authService.validatePII(
-      phoneNumber: phoneNumber,
-      bvn: bvn,
-      dob: dob,
-      userKeyID: userKeyID,
-    );
+      final response = await _authService.validatePII(
+        phoneNumber: phoneNumber,
+        bvn: bvn,
+        dob: dob,
+        userKeyID: userKeyID,
+        firstAndLastName: switch (firstName != null && lastName != null) {
+          true => "$firstName $lastName",
+          false => null,
+        },
+      );
 
-    if (response == null) {
-      //_handleError("Failed to validate user PII - Experienced an Error");
-      onEffect?.call("Failed to validate user PII - Experienced an Error");
-      return;
-    }
+      if (response == null) {
+        onEffect?.call("User not found or invalid data");
+        return;
+      }
 
-    _updateState(MonaSDKState.idle);
-    switch (response["exists"] as bool) {
-      /// *** This is a Mona User
-      case true:
-        setPendingPaymentData(
-          pendingPayment: PendingPaymentResponseModel(
-            savedPaymentOptions: SavedPaymentOptions.fromJSON(
-              json: response["savedPaymentOptions"],
+      _updateState(MonaSDKState.idle);
+      switch (response["exists"] as bool) {
+        /// *** This is a Mona User
+        case true:
+          setPendingPaymentData(
+            pendingPayment: PendingPaymentResponseModel(
+              savedPaymentOptions: SavedPaymentOptions.fromJSON(
+                json: response["savedPaymentOptions"],
+              ),
             ),
-          ),
-        );
+          );
 
-        /// *** User has not done key exchange
-        if (await checkIfUserHasKeyID() == null) {
-          _authStream.emit(state: AuthState.loggedOut);
-          onEffect?.call('PII Auth Result - User has not done key exchange');
-          return;
-        }
+          /// *** User has not done key exchange
+          if (await checkIfUserHasKeyID() == null) {
+            _authStream.emit(state: AuthState.loggedOut);
+            onEffect?.call('PII Auth Result - User has not done key exchange');
+            return;
+          }
 
-        /// *** User has done key exchange
-        _authStream.emit(state: AuthState.loggedIn);
-        onEffect?.call(
-            'PII Auth Result - User logged in and has done key exchange');
-        break;
+          /// *** User has done key exchange
+          _authStream.emit(state: AuthState.loggedIn);
+          onEffect?.call(
+              'PII Auth Result - User logged in and has done key exchange');
+          break;
 
-      /// *** Non Mona User
-      default:
-        _authStream.emit(state: AuthState.notAMonaUser);
-        onEffect?.call('PII Auth Result - User is not a mona user');
-        break;
+        /// *** Non Mona User
+        default:
+          _authStream.emit(state: AuthState.notAMonaUser);
+          onEffect?.call('PII Auth Result - User is not a mona user');
+          break;
+      }
+    } on APIException catch (apiError) {
+      // Handle API errors - this will contain your server's error message
+      _updateState(MonaSDKState.idle);
+      onEffect?.call('API Error: ${apiError.message}');
+
+      // Optional: Log the full error for debugging
+      'API Error Details: ${apiError.toString()}'.log();
+    } catch (error) {
+      // Handle any other unexpected errors
+      _updateState(MonaSDKState.idle);
+      onEffect?.call('Unexpected error: ${error.toString()}');
+
+      // Log the error for debugging
+      'Unexpected Error in validatePII: ${error.toString()}'.log();
     }
   }
 
