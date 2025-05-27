@@ -5,4 +5,5 @@ class APIEndpoints {
   static const String pay = "/pay";
   static const String login = "/login";
   static const String commitKeys = "/keys/commit";
+  static const String merchantProfile = "/merchant/profile";
 }

@@ -286,9 +286,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   // Enhanced method with better error handling and type safety
   Future<void> updateMerchantPaymentSettingsWidget({
     required String currentSetting,
-    required String merchantID,
     required Function(bool isSuccessful) onEvent,
-    num? transactionAmountInKobo,
   }) async {
     MerchantPaymentSettingsEnum? oldValue;
 
@@ -307,39 +305,20 @@ class MonaSDKNotifier extends ChangeNotifier {
       _merchantPaymentSettingsEnum = newSetting;
       notifyListeners();
 
-      // Validate transaction amount
-      final effectiveAmount = transactionAmountInKobo ?? _monaCheckOut?.amount;
-      if (effectiveAmount == null || effectiveAmount <= 0) {
-        throw ArgumentError("Transaction amount must be a positive number");
-      }
-
-      // Validate merchant key
-      final merchantKey = await _getMerchantKey();
-      if (merchantKey == null || merchantKey.isEmpty) {
-        throw StateError("Merchant key is required but not available");
-      }
-
       // Initiate payment
-      final (success, failure) = await _paymentsService.initiatePayment(
-        tnxAmountInKobo: effectiveAmount,
-        merchantKey: merchantKey,
+      final response = await _authService.updateMerchantPaymentSettings(
+        merchantAPIKey:
+            "4d85a2a80ea5247c4643692d267f179d9db35132b3299d46014f4350243a68d5",
         successRateType: _merchantPaymentSettingsEnum.paymentName,
       );
 
       // Handle payment response
-      if (failure != null) {
-        throw Exception(failure.message);
+      if (response == null) {
+        throw Exception("Could not update merchant settings");
       }
 
       // Success case
       onEvent(true);
-
-      if (success != null) {
-        _handleTransactionId(
-          success["transactionId"],
-          friendlyID: success["friendlyID"],
-        );
-      }
 
       _sdkStateStream.emit(state: MonaSDKState.idle);
     } catch (error, stackTrace) {

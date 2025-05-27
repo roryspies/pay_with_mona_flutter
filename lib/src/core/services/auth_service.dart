@@ -48,6 +48,33 @@ class AuthService {
     }
   }
 
+  Future<MerchantBranding?> updateMerchantPaymentSettings({
+    required String merchantAPIKey,
+    required String successRateType,
+  }) async {
+    try {
+      final response = await _apiService.put(
+        APIEndpoints.merchantProfile,
+        headers: ApiHeaders.merchantPaymentSettingsHeaders(
+          merchantAPIKey: merchantAPIKey,
+        ),
+        data: {
+          "transactionConfig": {
+            "successRateType": successRateType,
+          }
+        },
+      );
+
+      return MerchantBranding.fromJSON(
+        json: (jsonDecode(response.body) as Map<String, dynamic>)["data"],
+      );
+    } catch (error) {
+      "$error".log();
+
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> validatePII({
     String? phoneNumber,
     String? bvn,
