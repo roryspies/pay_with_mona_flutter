@@ -64,7 +64,7 @@ class _MerchantPaymentSettingsBottomSheetContentState
                 return ListTile(
                   onTap: () async {
                     await _sdkNotifier.updateMerchantPaymentSettingsWidget(
-                      currentSetting: currentSetting,
+                      currentSetting: 'currentSetting',
                       merchantID: "",
                       transactionAmountInKobo: widget.transactionAmountInKobo,
                       onEvent: (bool isSuccessful) {

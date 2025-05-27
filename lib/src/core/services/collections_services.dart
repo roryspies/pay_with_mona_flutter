@@ -18,7 +18,9 @@ class CollectionsService {
 
   final _apiService = ApiService();
 
-  final _merchantId = "67e41f884126830aded0b43c";
+  // final _merchantId = "67e41f884126830aded0b43c";
+
+  String? _scrtK;
 
   final _secureStorage = SecureStorage();
 
@@ -26,6 +28,10 @@ class CollectionsService {
     return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,
     );
+  }
+
+  void setScrtk(String scrtK) {
+    _scrtK = scrtK;
   }
 
   FutureOutcome<Map<String, dynamic>> validateCreateCollectionFields({
@@ -41,6 +47,7 @@ class CollectionsService {
     required String? amount,
     required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
+    required String scrtK,
   }) async {
     final payload = {
       "maximumAmount": multiplyBy100(maximumAmount),
@@ -62,9 +69,11 @@ class CollectionsService {
         '/collections',
         data: payload,
         headers: {
-          "x-merchant-Id": _merchantId,
+          "x-api-key": scrtK,
         },
       );
+
+      setScrtk(scrtK);
 
       return right(
         jsonDecode(response.body) as Map<String, dynamic>,
@@ -87,7 +96,7 @@ class CollectionsService {
     try {
       final response = await _apiService
           .post('/collections/consent', data: payload, headers: {
-        "x-merchant-Id": _merchantId,
+        "x-public-key": await getMerchantKey() ?? '',
         "x-client-type": "bioApp",
         if (monaKeyId != null) 'x-mona-key-id': monaKeyId,
         if (signature != null) 'x-mona-pay-auth': signature,
@@ -122,7 +131,7 @@ class CollectionsService {
           "timeFactor": timeFactor,
         },
         headers: {
-          "x-merchant-Id": merchantId,
+          "x-api-key": _scrtK ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
@@ -268,7 +277,7 @@ class CollectionsService {
           "bankId": bankId,
         },
         headers: {
-          "x-merchant-Id": _merchantId,
+          "x-api-key": _scrtK ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
