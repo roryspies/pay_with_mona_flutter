@@ -19,10 +19,20 @@ abstract class ApiHeaders {
   ///
   /// *** MARK: Auth Service Headers
   ///
+  static Map<String, String> merchantPaymentSettingsHeaders({
+    required String merchantAPIKey,
+  }) {
+    return {
+      "x-client-type": _xClientType,
+      "x-api-key": merchantAPIKey,
+    };
+  }
+
   static Map<String, String> loginWithStrongAuth({
     required String strongAuthToken,
   }) {
     return {
+      "x-client-type": _xClientType,
       "x-strong-auth-token": strongAuthToken,
       "x-mona-key-exchange": "true",
     };
@@ -32,7 +42,7 @@ abstract class ApiHeaders {
     required String userKeyID,
   }) {
     return {
-      "x-client-type": "bioApp",
+      "x-client-type": _xClientType,
       "x-mona-key-id": userKeyID,
       "content-Type": "application/json",
     };
