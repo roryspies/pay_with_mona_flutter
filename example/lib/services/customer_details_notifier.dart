@@ -59,7 +59,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
     state = state.copyWith(phoneNumber: cleanedPhoneNumber);
 
     // Only initialize if valid
-    if (isValidNigerianNumber) {
+    /* if (isValidNigerianNumber) {
       state = state.copyWith(isLoading: true);
       final sdkNotifier = MonaSDKNotifier();
       await sdkNotifier.validatePII(
@@ -74,7 +74,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
         },
       );
       state = state.copyWith(isLoading: false);
-    }
+    } */
   }
 
   void updateDOB({
@@ -90,7 +90,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
 
     // Only initialize if valid
 
-    state = state.copyWith(isLoading: true);
+    /* state = state.copyWith(isLoading: true);
     final sdkNotifier = MonaSDKNotifier();
     await sdkNotifier.validatePII(
       dob: dateOFBirth,
@@ -103,7 +103,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
         );
       },
     );
-    state = state.copyWith(isLoading: false);
+    state = state.copyWith(isLoading: false); */
   }
 
   void updateBVN({
@@ -119,7 +119,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
 
     // Only initialize if valid
 
-    state = state.copyWith(isLoading: true);
+    /* state = state.copyWith(isLoading: true);
     final sdkNotifier = MonaSDKNotifier();
     await sdkNotifier.validatePII(
       bvn: bvn,
@@ -132,7 +132,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
         );
       },
     );
-    state = state.copyWith(isLoading: false);
+    state = state.copyWith(isLoading: false); */
   }
 
   String removeLeadingZero(String phoneNumber) {

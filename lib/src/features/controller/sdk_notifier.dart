@@ -242,6 +242,17 @@ class MonaSDKNotifier extends ChangeNotifier {
       _pendingPaymentResponseModel = null;
       return pendingPayment;
     }();
+
+    final banks = _pendingPaymentResponseModel?.savedPaymentOptions?.bank;
+    final banksHaveData = banks != null && banks.isNotEmpty;
+
+    if (banksHaveData) {
+      setSelectedPaymentMethod(method: PaymentMethod.savedBank);
+      _selectedBankOption = banks.firstWhere(
+        (bank) => bank.isPrimary == true,
+        orElse: () => banks.first,
+      );
+    }
     notifyListeners();
   }
 
@@ -436,7 +447,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     if (isLoggedIn != null) {
       _authStream.emit(state: AuthState.loggedIn);
-      await validatePII(isFromConfirmLoggedInUser: true);
+      //await validatePII(isFromConfirmLoggedInUser: true);
       return;
     } else {
       _authStream.emit(state: AuthState.loggedOut);
@@ -445,7 +456,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   /// *** MARK: -  Major Methods
-  Future<void> validatePII({
+  /* Future<void> validatePII({
     String? phoneNumber,
     String? bvn,
     String? dob,
@@ -503,6 +514,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         _authStream.emit(state: AuthState.loggedIn);
         onEffect?.call(
             'PII Auth Result - User logged in and has done key exchange');
+
         break;
 
       /// *** Non Mona User
@@ -511,7 +523,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         onEffect?.call('PII Auth Result - User is not a mona user');
         break;
     }
-  }
+  } */
 
   /// Starts the payment initiation process.
   ///
@@ -710,6 +722,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     await _listenForAuthEvents(sessionID, authCompleter);
 
     final url = await _buildURL(
+      doDirectPayment: await checkIfUserHasKeyID() != null,
       doDirectPaymentWithPossibleAuth: await checkIfUserHasKeyID() == null,
       sessionID: sessionID,
       method: _selectedPaymentMethod,
@@ -778,7 +791,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
             _updateState(MonaSDKState.success);
             _authStream.emit(state: AuthState.loggedIn);
-            validatePII();
+            //validatePII();
 
             if (!isFromCollections) {
               if (_callingBuildContext != null) {

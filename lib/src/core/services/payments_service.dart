@@ -314,7 +314,7 @@ class PaymentService {
     Map<String, dynamic> payload,
     String nonce,
     String timestamp,
-    String userCheckoutID,
+    String userKeyID,
   ) async {
     "$_repoName _signRequest".log();
 
@@ -327,7 +327,7 @@ class PaymentService {
       "params": base64Encode(utf8.encode(jsonEncode({}))),
       "nonce": base64Encode(utf8.encode(nonce)),
       "timestamp": base64Encode(utf8.encode(timestamp)),
-      "keyId": base64Encode(utf8.encode(userCheckoutID)),
+      "keyId": base64Encode(utf8.encode(userKeyID)),
     };
 
     final dataString = base64Encode(utf8.encode(json.encode(data)));

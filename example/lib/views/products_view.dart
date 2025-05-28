@@ -181,6 +181,9 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                         : context.w(335),
                                     onTap: () async {
                                       context.closeKeyboard();
+                                      if (isLoading) {
+                                        return;
+                                      }
                                       switch (product) {
                                         case Products.checkout:
                                           _sdkNotifier.setCallingBuildContext(
@@ -198,7 +201,7 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                                     ) *
                                                     100,
                                               ),
-                                              _sdkNotifier.validatePII()
+                                              //_sdkNotifier.validatePII()
                                             ],
                                           );
 

@@ -6,6 +6,7 @@ import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
@@ -33,7 +34,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   void initState() {
     super.initState();
     sdkNotifier
-      ..addListener(_onPaymentStateChange)
+      ..addListener(_onSDKStateChanged)
       ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut);
   }
 
@@ -41,12 +42,12 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   void dispose() {
     /// *** Considering we're using a singleton class for Payment Notifier
     /// *** Do not dispose the Notifier itself, so that instance isn't gone with the wind.
-    sdkNotifier.removeListener(_onPaymentStateChange);
+    sdkNotifier.removeListener(_onSDKStateChanged);
     super.dispose();
   }
 
   /// *** Rebuild UI when state changes
-  void _onPaymentStateChange() => setState(() {});
+  void _onSDKStateChanged() => mounted ? setState(() {}) : null;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +55,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.card;
+
+    "SAVED BANKS ::: ${savedBanks?.map((bank) => bank.toJson())}".log();
 
     return SafeArea(
       child: Container(
@@ -331,6 +334,10 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     ),
                 },
                 onTap: () async {
+                  if (sdkNotifier.state == MonaSDKState.loading) {
+                    return;
+                  }
+
                   if (sdkNotifier.selectedPaymentMethod == PaymentMethod.none) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

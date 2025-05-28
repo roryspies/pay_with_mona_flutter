@@ -56,9 +56,9 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   void initState() {
     super.initState();
     sdkNotifier.addListener(_onSdkStateChange);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    /* WidgetsBinding.instance.addPostFrameCallback((_) {
       sdkNotifier.validatePII();
-    });
+    }); */
   }
 
   void _onSdkStateChange() {

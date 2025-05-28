@@ -5,7 +5,6 @@ abstract class ApiHeaders {
     required String merchantKey,
   }) {
     return {
-      "x-client-type": _xClientType,
       "x-public-key": merchantKey,
     };
   }
@@ -32,7 +31,6 @@ abstract class ApiHeaders {
     required String strongAuthToken,
   }) {
     return {
-      "x-client-type": _xClientType,
       "x-strong-auth-token": strongAuthToken,
       "x-mona-key-exchange": "true",
     };
