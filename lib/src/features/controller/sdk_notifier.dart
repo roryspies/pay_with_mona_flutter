@@ -23,6 +23,7 @@ import 'package:pay_with_mona/src/models/merchant_branding.dart';
 import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
+import 'package:pay_with_mona/src/utils/type_defs.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
@@ -480,8 +481,10 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// 3. Handles failure or missing transaction ID.
   /// 4. Persists user UUID from secure storage.
   /// 5. Retrieves available payment methods.
-  Future<bool> initiatePayment({
+  Future<void> initiatePayment({
     required num tnxAmountInKobo,
+    required Function(String error) onError,
+    required VoidCallback onSuccess,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -500,14 +503,16 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       if (failure != null) {
         _handleError("Payment initiation failed. Please try again.");
-        throw (failure.message);
+        onError(failure.message);
+        return;
       }
 
       final txId = success?["transactionId"] as String?;
       final friendlyID = success?["friendlyID"] as String?;
       if (txId == null || friendlyID == null) {
         _handleError("Invalid response from payment service.");
-        return false;
+        onError("Invalid response from payment service.");
+        return;
       }
 
       _handleTransactionId(
@@ -528,11 +533,17 @@ class MonaSDKNotifier extends ChangeNotifier {
         );
       }
       _updateState(MonaSDKState.idle);
-      return true;
+      onSuccess();
+      return;
     } catch (error) {
       _updateState(MonaSDKState.idle);
-      "MonaSDKNotifier ::: initiatePayment ::: ERROR ::: $error".log();
-      return false;
+      _handleError(error.toString());
+      if (error is Failure) {
+        onError(error.message);
+      }
+      "MonaSDKNotifier ::: initiatePayment ::: ERROR ::: ${error.toString()}"
+          .log();
+      return;
     }
   }
 
@@ -603,11 +614,11 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** This is only for DEMO.
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
-    if (_currentTransactionId == null) {
+    /* if (_currentTransactionId == null) {
       await initiatePayment(
         tnxAmountInKobo: _monaCheckOut!.amount,
       );
-    }
+    } */
 
     _updateState(MonaSDKState.loading);
 

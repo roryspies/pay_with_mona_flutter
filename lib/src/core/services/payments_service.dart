@@ -45,6 +45,32 @@ class PaymentService {
     String? userKeyID,
   }) async {
     try {
+      if (merchantAPIKey.isEmpty) {
+        throw Failure(
+          "To initiate payment, API key cannot be empty",
+        );
+      }
+
+      final amountIsLessThan20Naira = (tnxAmountInKobo / 100) < 20;
+      if (amountIsLessThan20Naira) {
+        throw Failure(
+          "Cannot initiate payment for less than 20 Naira",
+        );
+      }
+
+      if (dob != null &&
+          (firstAndLastName == null || firstAndLastName.isEmpty)) {
+        throw Failure(
+          '`Name Value - First and Last` must not be null or empty when `dob` is provided.',
+        );
+      }
+
+      if (firstAndLastName != null && (dob == null || dob.isEmpty)) {
+        throw Failure(
+          '`DOB` must not be null when `Name Value - First and Last` is provided.',
+        );
+      }
+
       final response = await _apiService.post(
         APIEndpoints.demoCheckout,
         headers: ApiHeaders.initiatePaymentHeader(
@@ -68,6 +94,7 @@ class PaymentService {
     } catch (e) {
       final apiEx = APIException.fromHttpError(e);
       '❌ initiatePayment() Error: ${apiEx.message}'.log();
+
       return left(Failure(apiEx.message));
     }
   }

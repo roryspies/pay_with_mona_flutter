@@ -237,29 +237,25 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                               "",
                                         );
 
-                                        final initiateSuccessful =
-                                            await _sdkNotifier.initiatePayment(
+                                        await _sdkNotifier.initiatePayment(
                                           tnxAmountInKobo: num.parse(
                                                 _amountController.value.text
                                                     .trim(),
                                               ) *
                                               100,
+                                          onSuccess: () {
+                                            nav('');
+                                          },
+                                          onError: (errorMessage) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(errorMessage),
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                          },
                                         );
-
-                                        if (initiateSuccessful) {
-                                          nav('');
-                                          return;
-                                        }
-
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                                'Payment initiation failed. Please try again.'),
-                                            duration: Duration(seconds: 2),
-                                          ),
-                                        );
-
                                         break;
 
                                       case Products.collections:

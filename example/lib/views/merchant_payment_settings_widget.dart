@@ -137,13 +137,13 @@ class _MerchantPaymentSettingsWidgetState
 
                         CustomButton(
                           label: 'Save',
-                          onTap: () {
+                          onTap: () async {
                             if (_apiKeyController.text.isEmpty) {
                               showSnackBar("Please add an API Key");
                               return;
                             }
 
-                            appSecureStorage
+                            await appSecureStorage
                                 .write(
                               key: SecureStorageKeys.apiKey,
                               value: _apiKeyController.text,
@@ -163,11 +163,9 @@ class _MerchantPaymentSettingsWidgetState
                         ///
                         CustomButton(
                           label: 'Reset',
-                          onTap: () {
-                            final secureStorage = SecureStorage();
-
-                            secureStorage
-                                .write(key: SecureStorageKeys.apiKey, value: '')
+                          onTap: () async {
+                            await appSecureStorage
+                                .delete(key: SecureStorageKeys.apiKey)
                                 .then((_) {
                               _apiKeyController.clear();
                               showSnackBar("API Key deleted successfully!");

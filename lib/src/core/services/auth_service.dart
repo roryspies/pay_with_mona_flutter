@@ -75,56 +75,6 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>?> validatePII({
-    String? phoneNumber,
-    String? bvn,
-    String? dob,
-    String? firstAndLastName,
-    String? userKeyID,
-  }) async {
-    try {
-      final doNotUseBody = (phoneNumber == null && bvn == null && dob == null);
-
-      if (userKeyID == null && doNotUseBody) {
-        return null;
-      }
-
-      if (dob != null && firstAndLastName == null) {
-        throw ArgumentError(
-            '`Name Value - First and Last` must not be null when `dob` is provided.');
-      }
-
-      if (firstAndLastName != null && dob == null) {
-        throw ArgumentError(
-            '`dob` must not be null when `Name Value - First and Last` is provided.');
-      }
-
-      final response = await _apiService.post(
-        APIEndpoints.validatePII,
-        headers: (userKeyID != null && doNotUseBody)
-            ? ApiHeaders.validatePII(
-                userKeyID: userKeyID,
-              )
-            : null,
-        data: (phoneNumber == null && bvn == null && dob == null)
-            ? {"": ""}
-            : {
-                if (phoneNumber != null) "phoneNumber": phoneNumber,
-                if (bvn != null) "bvn": bvn,
-                if (dob != null) "dob": dob,
-                if (firstAndLastName != null) "name": firstAndLastName,
-              },
-      );
-
-      return (jsonDecode(response.body) as Map<String, dynamic>)["data"]
-          as Map<String, dynamic>;
-    } catch (error) {
-      "$error".log();
-
-      return null;
-    }
-  }
-
   Future<Map<String, dynamic>?> loginWithStrongAuth({
     required String strongAuthToken,
     required String phoneNumber,

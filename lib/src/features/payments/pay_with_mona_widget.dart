@@ -4,7 +4,6 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
@@ -50,8 +49,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.card;
-
-    "SAVED BANKS ::: ${savedBanks?.map((bank) => bank.toJson())}".log();
 
     return SafeArea(
       child: Container(
