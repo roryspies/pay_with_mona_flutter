@@ -55,10 +55,8 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
   @override
   void initState() {
     super.initState();
+    sdkNotifier.updateSdkStateToIdle();
     sdkNotifier.addListener(_onSdkStateChange);
-    /* WidgetsBinding.instance.addPostFrameCallback((_) {
-      sdkNotifier.validatePII();
-    }); */
   }
 
   void _onSdkStateChange() {
@@ -272,29 +270,35 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                           ),
                         ],
                         context.sbH(24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Icon(
-                                Icons.add,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                              Text(
-                                "Add an account",
-                                style: TextStyle(
-                                  fontSize: context.sp(15),
-                                  fontWeight: FontWeight.w500,
+                        InkWell(
+                          onTap: () {
+                            sdkNotifier.addBankAccountForCollections(
+                                collectionId: widget.accessRequestId);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Icon(
+                                  Icons.add,
                                   color: Colors.black,
+                                  size: 20,
                                 ),
-                              ),
-                              Icon(
-                                Icons.add,
-                                color: Colors.transparent,
-                              ),
-                            ],
+                                Text(
+                                  "Add an account",
+                                  style: TextStyle(
+                                    fontSize: context.sp(15),
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.add,
+                                  color: Colors.transparent,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         context.sbH(24),

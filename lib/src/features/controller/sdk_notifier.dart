@@ -997,6 +997,16 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.idle);
   }
 
+  void addBankAccountForCollections({required String collectionId}) async {
+    final url =
+        'https://pay.development.mona.ng/collections/enrollment?collectionId=$collectionId';
+    await _launchURL(url);
+  }
+
+  void updateSdkStateToIdle() {
+    _updateState(MonaSDKState.idle);
+  }
+
   void resetSDKState({
     bool clearMonaCheckout = true,
     bool clearPendingPaymentResponseModel = true,
