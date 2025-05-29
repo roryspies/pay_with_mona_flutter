@@ -1,9 +1,13 @@
-/* import 'package:flutter/material.dart';
+import 'package:example/services/secure_storage/secure_storage.dart';
+import 'package:example/services/secure_storage/secure_storage_keys.dart';
+import 'package:example/utils/custom_button.dart';
+import 'package:example/utils/custom_text_field.dart';
+import 'package:example/utils/mona_colors.dart';
+import 'package:example/utils/size_config.dart';
+import 'package:example/views/merchant_payment_settings_bottom_sheet_content.dart';
+import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
-import 'package:pay_with_mona/ui/utils/size_config.dart';
-import 'package:pay_with_mona/ui/widgets/merchant_payment_settings_bottom_sheet_content.dart';
 
 class MerchantPaymentSettingsWidget extends StatefulWidget {
   const MerchantPaymentSettingsWidget({
@@ -21,6 +25,39 @@ class MerchantPaymentSettingsWidget extends StatefulWidget {
 class _MerchantPaymentSettingsWidgetState
     extends State<MerchantPaymentSettingsWidget> {
   final isMerchantSettingsStatusOpen = ValueNotifier<bool>(false);
+  final _apiKeyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    appSecureStorage.read(key: SecureStorageKeys.apiKey).then(
+      (value) {
+        _apiKeyController.text = value ?? '';
+      },
+    ).catchError(
+      (error) {
+        ("Error reading API key: $error");
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    isMerchantSettingsStatusOpen.dispose();
+    _apiKeyController.dispose();
+    super.dispose();
+  }
+
+  void showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +124,62 @@ class _MerchantPaymentSettingsWidgetState
                   false => SizedBox.shrink(),
                   true => Column(
                       children: [
-                        context.sbH(8),
+                        context.sbH(8.0),
+
+                        ///
+                        CustomTextField(
+                          controller: _apiKeyController,
+                          title: "API Key",
+                          hintText: "Enter your API key",
+                        ),
+
+                        context.sbH(16),
+
+                        CustomButton(
+                          label: 'Save',
+                          onTap: () {
+                            if (_apiKeyController.text.isEmpty) {
+                              showSnackBar("Please add an API Key");
+                              return;
+                            }
+
+                            appSecureStorage
+                                .write(
+                              key: SecureStorageKeys.apiKey,
+                              value: _apiKeyController.text,
+                            )
+                                .then((_) {
+                              showSnackBar("API Key saved successfully!");
+                            }).catchError((error) {
+                              showSnackBar("Failed to save API Key.");
+                            });
+
+                            setState(() {});
+                          },
+                        ),
+
+                        context.sbH(16),
+
+                        ///
+                        CustomButton(
+                          label: 'Reset',
+                          onTap: () {
+                            final secureStorage = SecureStorage();
+
+                            secureStorage
+                                .write(key: SecureStorageKeys.apiKey, value: '')
+                                .then((_) {
+                              _apiKeyController.clear();
+                              showSnackBar("API Key deleted successfully!");
+                            }).catchError((error) {
+                              showSnackBar("Failed to delete API Key.");
+                            });
+
+                            setState(() {});
+                          },
+                        ),
+
+                        context.sbH(40),
 
                         //!
                         Align(
@@ -95,7 +187,7 @@ class _MerchantPaymentSettingsWidgetState
                           child: Text(
                             "Checkout success event",
                             style: TextStyle(
-                              fontSize: 12.0,
+                              fontSize: 14.0,
                             ),
                           ),
                         ),
@@ -122,8 +214,8 @@ class _MerchantPaymentSettingsWidgetState
 
                             await SDKUtils.showSDKModalBottomSheet(
                               callingContext: context,
-                              isDismissible: false,
-                              enableDrag: false,
+                              isDismissible: true,
+                              enableDrag: true,
                               child: MerchantPaymentSettingsBottomSheetContent(
                                 transactionAmountInKobo:
                                     widget.transactionAmountInKobo,
@@ -158,7 +250,7 @@ class _MerchantPaymentSettingsWidgetState
                                   backgroundColor: Colors.transparent,
                                   child: Icon(
                                     Icons.arrow_drop_down_circle_outlined,
-                                    color: MonaColors.primaryBlue,
+                                    color: MonaColors.primary,
                                   ),
                                 ),
                               ],
@@ -178,4 +270,3 @@ class _MerchantPaymentSettingsWidgetState
     );
   }
 }
- */

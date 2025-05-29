@@ -1,9 +1,8 @@
-/* // ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use
+import 'package:example/utils/mona_colors.dart';
+import 'package:example/utils/size_config.dart';
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/utils/mona_colors.dart';
-import 'package:pay_with_mona/ui/utils/size_config.dart';
 
 class MerchantPaymentSettingsBottomSheetContent extends StatefulWidget {
   const MerchantPaymentSettingsBottomSheetContent({
@@ -40,6 +39,7 @@ class _MerchantPaymentSettingsBottomSheetContentState
       padding: const EdgeInsets.all(16.0),
       child: SafeArea(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -58,15 +58,22 @@ class _MerchantPaymentSettingsBottomSheetContentState
             ///
             ...MerchantPaymentSettingsEnum.values.map(
               (currentSetting) {
-                final isCurrentOption = currentSetting ==
-                    _sdkNotifier.currentMerchantPaymentSettingsEnum;
+                final isCurrentOption = currentSetting.paymentName ==
+                    _sdkNotifier
+                        .currentMerchantPaymentSettingsEnum!.paymentName;
 
                 return ListTile(
                   onTap: () async {
                     await _sdkNotifier.updateMerchantPaymentSettingsWidget(
-                      currentSetting: currentSetting.paymentName,
+                      currentSetting: currentSetting.name,
+                      /* merchantID: "",
+                      transactionAmountInKobo: widget.transactionAmountInKobo, */
                       onEvent: (bool isSuccessful) {
                         Navigator.of(context).pop();
+
+                        if (isSuccessful) {
+                          return;
+                        }
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -96,14 +103,14 @@ class _MerchantPaymentSettingsBottomSheetContentState
                       child: switch (isCurrentOption) {
                         true => CircleAvatar(
                             backgroundColor:
-                                MonaColors.primaryBlue.withOpacity(0.1),
+                                MonaColors.primary.withOpacity(0.1),
                             child: Icon(
                               Icons.check,
                             ),
                           ),
                         false => CircleAvatar(
                             backgroundColor:
-                                MonaColors.primaryBlue.withOpacity(0.1),
+                                MonaColors.primary.withOpacity(0.1),
                             child: Transform.scale(
                               scale: 0.8,
                               child: CircleAvatar(
@@ -123,4 +130,36 @@ class _MerchantPaymentSettingsBottomSheetContentState
     );
   }
 }
- */
+
+enum MerchantPaymentSettingsEnum {
+  monaSuccess,
+  debitSuccess,
+  walletReceiveInProgress,
+  walletReceiveComplete;
+
+  String get displayName {
+    switch (this) {
+      case monaSuccess:
+        return "Mona success";
+      case debitSuccess:
+        return "Debit success";
+      case walletReceiveInProgress:
+        return "Wallet receive in progress";
+      case walletReceiveComplete:
+        return "Wallet receive completed";
+    }
+  }
+
+  String get paymentName {
+    switch (this) {
+      case monaSuccess:
+        return "mona_success";
+      case debitSuccess:
+        return "debit_success";
+      case walletReceiveInProgress:
+        return "wallet_received";
+      case walletReceiveComplete:
+        return "wallet_completed";
+    }
+  }
+}

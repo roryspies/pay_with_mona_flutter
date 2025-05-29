@@ -22,7 +22,7 @@ class CustomTextField extends StatefulWidget {
     this.initialValue,
     this.obscureText,
     this.enabled,
-    this.maxlines,
+    this.maxLines,
     this.icon,
     this.keyboardType,
     this.textInputAction,
@@ -87,7 +87,7 @@ class CustomTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final Widget? icon;
   final Widget? prefix;
-  final int? maxlines;
+  final int? maxLines;
   final int? maxLength;
   final Widget? prefixIcon;
   final BoxBorder? border;
@@ -122,16 +122,8 @@ class CustomTextField extends StatefulWidget {
   State<CustomTextField> createState() => _CustomTextFieldState();
 }
 
-class _CustomTextFieldState extends State<CustomTextField>
-// with ValidatorMixin
-{
+class _CustomTextFieldState extends State<CustomTextField> {
   String? _errorText;
-
-  // void _validateInput(String value) {
-  //   setState(() {
-  //     _errorText = validateIsEmpty(value, title: widget.title);
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +160,7 @@ class _CustomTextFieldState extends State<CustomTextField>
             onTap: widget.onTap,
             readOnly: widget.readOnly,
             enabled: widget.enabled,
-            maxLines: widget.maxlines ?? 1,
+            maxLines: widget.maxLines ?? 1,
             cursorColor: widget.cursorColor,
             textDirection: widget.textDirection ?? TextDirection.ltr,
             controller: widget.controller,
@@ -190,7 +182,6 @@ class _CustomTextFieldState extends State<CustomTextField>
                   fontWeight: widget.fontWeight ?? FontWeight.w400,
                   color: MonaColors.textHeading,
                   fontSize: widget.textFontSize ?? context.sp(14),
-                  // fontFamily: widget.useFontFamilyText ? Font.fontFamily : '',
                 ),
             decoration: InputDecoration(
               prefixText: widget.prefixText,
@@ -198,12 +189,13 @@ class _CustomTextFieldState extends State<CustomTextField>
               fillColor: widget.fillColor ?? MonaColors.textField,
               isDense: true,
               contentPadding: widget.contentPadding ??
-                  EdgeInsets.symmetric(horizontal: context.w(15))
-                      .copyWith(top: context.h(14)),
+                  EdgeInsets.symmetric(
+                    horizontal: context.w(15),
+                    vertical: 8.0,
+                  ),
               hintText: widget.hintText,
               hintStyle: widget.hintStyle ??
                   TextStyle(
-                    // fontFamily: widget.useFontFamilyHint ? Font.fontFamily : '',
                     color: MonaColors.hint,
                     fontSize: widget.hintFontSize ?? context.sp(14),
                   ),
@@ -218,7 +210,6 @@ class _CustomTextFieldState extends State<CustomTextField>
             ),
             onChanged: (value) {
               widget.onChanged?.call(value);
-              // _validateInput(value);
             },
             onTapOutside: (event) => context.closeKeyboard(),
           ),

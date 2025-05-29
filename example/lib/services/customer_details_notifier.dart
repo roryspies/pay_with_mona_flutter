@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 
 final customerDetailsNotifierProvider =
     NotifierProvider<CustomerDetailsNotifier, CustomerDetails>(() {
@@ -47,7 +46,6 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
     void Function()? onEffect,
     required BuildContext context,
   }) async {
-    // Validate first
     final isValidNigerianNumber = phoneNumber != null &&
         phoneNumber.length == 11 &&
         phoneNumber.startsWith('0');
@@ -55,26 +53,7 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
     final cleanedPhoneNumber =
         isValidNigerianNumber ? removeLeadingZero(phoneNumber) : phoneNumber;
 
-    // Update state
     state = state.copyWith(phoneNumber: cleanedPhoneNumber);
-
-    // Only initialize if valid
-    /* if (isValidNigerianNumber) {
-      state = state.copyWith(isLoading: true);
-      final sdkNotifier = MonaSDKNotifier();
-      await sdkNotifier.validatePII(
-        phoneNumber: cleanedPhoneNumber!,
-        onEffect: (message) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-      );
-      state = state.copyWith(isLoading: false);
-    } */
   }
 
   void updateDOB({
@@ -85,25 +64,8 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
     if (dateOFBirth == null || dateOFBirth.length < 10) {
       return;
     }
-    // Update state
+
     state = state.copyWith(dateOfBirth: dateOFBirth);
-
-    // Only initialize if valid
-
-    /* state = state.copyWith(isLoading: true);
-    final sdkNotifier = MonaSDKNotifier();
-    await sdkNotifier.validatePII(
-      dob: dateOFBirth,
-      onEffect: (message) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
-    );
-    state = state.copyWith(isLoading: false); */
   }
 
   void updateBVN({
@@ -114,25 +76,8 @@ class CustomerDetailsNotifier extends Notifier<CustomerDetails> {
     if (bvn == null || bvn.length < 10) {
       return;
     }
-    // Update state
+
     state = state.copyWith(dateOfBirth: bvn);
-
-    // Only initialize if valid
-
-    /* state = state.copyWith(isLoading: true);
-    final sdkNotifier = MonaSDKNotifier();
-    await sdkNotifier.validatePII(
-      bvn: bvn,
-      onEffect: (message) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
-    );
-    state = state.copyWith(isLoading: false); */
   }
 
   String removeLeadingZero(String phoneNumber) {

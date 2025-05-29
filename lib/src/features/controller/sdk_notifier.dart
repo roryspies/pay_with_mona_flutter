@@ -117,6 +117,8 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// Identifier of the most recent transaction.
   String? get currentTransactionId => _currentTransactionId;
 
+  MonaCheckOut? get monaCheckout => _monaCheckOut;
+
   PendingPaymentResponseModel? get currentPaymentResponseModel =>
       _pendingPaymentResponseModel;
 
@@ -370,6 +372,21 @@ class MonaSDKNotifier extends ChangeNotifier {
     );
   }
 
+  Future<void> setMerchantAPIKey({
+    required String merchantAPIKey,
+  }) async {
+    await _secureStorage.write(
+      key: SecureStorageKeys.merchantAPIKey,
+      value: merchantAPIKey,
+    );
+  }
+
+  Future<String?> _getMerchantAPIKey() async {
+    return await _secureStorage.read(
+      key: SecureStorageKeys.merchantAPIKey,
+    );
+  }
+
   Future<void> _setMerchantBranding({
     required MerchantBranding merchant,
   }) async {
@@ -456,75 +473,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   ///
   /// *** MARK: -  Major Methods
-  /* Future<void> validatePII({
-    String? phoneNumber,
-    String? bvn,
-    String? dob,
-    bool isFromConfirmLoggedInUser = false,
-    void Function(String)? onEffect,
-  }) async {
-    if (isFromConfirmLoggedInUser == false) {
-      _updateState(MonaSDKState.loading);
-    }
-
-    final userKeyID = await checkIfUserHasKeyID();
-
-    'USER KEY ID IS: $userKeyID'.log();
-
-    if (userKeyID == null &&
-        phoneNumber == null &&
-        bvn == null &&
-        dob == null) {
-      return;
-    }
-
-    final response = await _authService.validatePII(
-      phoneNumber: phoneNumber,
-      bvn: bvn,
-      dob: dob,
-      userKeyID: userKeyID,
-    );
-
-    if (response == null) {
-      //_handleError("Failed to validate user PII - Experienced an Error");
-      onEffect?.call("Failed to validate user PII - Experienced an Error");
-      return;
-    }
-
-    _updateState(MonaSDKState.idle);
-    switch (response["exists"] as bool) {
-      /// *** This is a Mona User
-      case true:
-        setPendingPaymentData(
-          pendingPayment: PendingPaymentResponseModel(
-            savedPaymentOptions: SavedPaymentOptions.fromJSON(
-              json: response["savedPaymentOptions"],
-            ),
-          ),
-        );
-
-        /// *** User has not done key exchange
-        if (await checkIfUserHasKeyID() == null) {
-          _authStream.emit(state: AuthState.loggedOut);
-          onEffect?.call('PII Auth Result - User has not done key exchange');
-          return;
-        }
-
-        /// *** User has done key exchange
-        _authStream.emit(state: AuthState.loggedIn);
-        onEffect?.call(
-            'PII Auth Result - User logged in and has done key exchange');
-
-        break;
-
-      /// *** Non Mona User
-      default:
-        _authStream.emit(state: AuthState.notAMonaUser);
-        onEffect?.call('PII Auth Result - User is not a mona user');
-        break;
-    }
-  } */
-
   /// Starts the payment initiation process.
   ///
   /// 1. Updates state to [MonaSDKState.loading].
@@ -540,18 +488,14 @@ class MonaSDKNotifier extends ChangeNotifier {
     try {
       final (Map<String, dynamic>? success, failure) =
           await _paymentsService.initiatePayment(
-        tnxAmountInKobo: tnxAmountInKobo,
         merchantKey: await _getMerchantKey() ?? "",
+        merchantAPIKey: await _getMerchantAPIKey() ?? "",
+        tnxAmountInKobo: tnxAmountInKobo,
+        successRateType: _merchantPaymentSettingsEnum.paymentName,
+
+        /// *** Optional Params
         userKeyID: await checkIfUserHasKeyID() ?? "",
         phoneNumber: _monaCheckOut?.phoneNumber,
-        successRateType: _merchantPaymentSettingsEnum.paymentName,
-        bvn: _monaCheckOut?.bvn,
-        dob: _monaCheckOut?.dateOfBirth.toLocal().toUtc().toIso8601String(),
-        firstAndLastName: switch (_monaCheckOut?.firstName != null &&
-            _monaCheckOut?.lastName != null) {
-          true => "${_monaCheckOut?.firstName} ${_monaCheckOut?.lastName}",
-          false => null,
-        },
       );
 
       if (failure != null) {
@@ -570,6 +514,19 @@ class MonaSDKNotifier extends ChangeNotifier {
         txId,
         friendlyID: friendlyID,
       );
+
+      final paymentMethodsExist = success?["savedPaymentOptions"] != null &&
+          (success!["savedPaymentOptions"] as Map<String, dynamic>).isNotEmpty;
+
+      if (paymentMethodsExist) {
+        setPendingPaymentData(
+          pendingPayment: PendingPaymentResponseModel(
+            savedPaymentOptions: SavedPaymentOptions.fromJSON(
+              json: success["savedPaymentOptions"],
+            ),
+          ),
+        );
+      }
       _updateState(MonaSDKState.idle);
       return true;
     } catch (error) {

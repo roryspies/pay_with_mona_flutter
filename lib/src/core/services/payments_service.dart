@@ -35,6 +35,7 @@ class PaymentService {
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> initiatePayment({
     required String merchantKey,
+    required String merchantAPIKey,
     required num tnxAmountInKobo,
     required String successRateType,
     String? phoneNumber,
@@ -47,13 +48,14 @@ class PaymentService {
       final response = await _apiService.post(
         APIEndpoints.demoCheckout,
         headers: ApiHeaders.initiatePaymentHeader(
+          merchantAPIKey: merchantAPIKey,
           merchantKey: merchantKey,
           userKeyID: userKeyID,
         ),
         data: {
           "amount": tnxAmountInKobo,
           'successRateType': successRateType,
-          if (phoneNumber != null) "phoneNumber": phoneNumber,
+          if (phoneNumber != null) "phone": phoneNumber,
           if (bvn != null) "bvn": bvn,
           if (dob != null) "dob": dob,
           if (firstAndLastName != null) "name": firstAndLastName,
