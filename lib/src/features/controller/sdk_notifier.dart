@@ -194,7 +194,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retains the [BuildContext] to calculate UI-dependent dimensions.
+  ///
+  /// Retains the [BuildContext] to calculate UI-dependent dimensions...
+  /// and pull up UI modals where necessary
   void setCallingBuildContext({
     required BuildContext context,
   }) {
@@ -761,7 +763,11 @@ class MonaSDKNotifier extends ChangeNotifier {
             _authStream.emit(state: AuthState.loggedIn);
             //validatePII();
 
-            if (!isFromCollections) {
+            if (_callingBuildContext != null) {
+              Navigator.of(_callingBuildContext!).pop();
+            }
+
+            /* if (!isFromCollections) {
               if (_callingBuildContext != null) {
                 Navigator.of(_callingBuildContext!).pop();
               }
@@ -774,7 +780,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                   transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
                 ),
               );
-            }
+            } */
 
             /// *** Close Modal
 
