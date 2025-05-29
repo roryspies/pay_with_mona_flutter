@@ -1,10 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
-import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
@@ -15,11 +13,10 @@ import 'package:pay_with_mona/src/widgets/payment_option_tile.dart';
 class PayWithMonaWidget extends StatefulWidget {
   const PayWithMonaWidget({
     super.key,
-    required this.monaCheckOut,
+    //required this.monaCheckOut,
     required this.callingContext,
   });
 
-  final MonaCheckOut monaCheckOut;
   final BuildContext callingContext;
 
   @override
@@ -32,21 +29,19 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
   @override
   void initState() {
     super.initState();
-    sdkNotifier
-      ..addListener(_onPaymentStateChange)
-      ..setMonaCheckOut(checkoutDetails: widget.monaCheckOut);
+    sdkNotifier.addListener(_onSDKStateChanged);
   }
 
   @override
   void dispose() {
     /// *** Considering we're using a singleton class for Payment Notifier
     /// *** Do not dispose the Notifier itself, so that instance isn't gone with the wind.
-    sdkNotifier.removeListener(_onPaymentStateChange);
+    sdkNotifier.removeListener(_onSDKStateChanged);
     super.dispose();
   }
 
   /// *** Rebuild UI when state changes
-  void _onPaymentStateChange() => setState(() {});
+  void _onSDKStateChanged() => mounted ? setState(() {}) : null;
 
   @override
   Widget build(BuildContext context) {
@@ -331,11 +326,28 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     ),
                 },
                 onTap: () async {
+                  if (sdkNotifier.state == MonaSDKState.loading) {
+                    return;
+                  }
+
                   if (sdkNotifier.selectedPaymentMethod == PaymentMethod.none) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           "Please select a payment method",
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (sdkNotifier.monaCheckout == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Please update Mona Checkout Details",
                         ),
                         behavior: SnackBarBehavior.floating,
                         duration: Duration(seconds: 2),
@@ -358,7 +370,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       child: ConfirmTransactionModal(
                         selectedPaymentMethod:
                             sdkNotifier.selectedPaymentMethod,
-                        transactionAmountInKobo: widget.monaCheckOut.amount,
+                        transactionAmountInKobo:
+                            sdkNotifier.monaCheckout!.amount,
                       ),
                     );
 

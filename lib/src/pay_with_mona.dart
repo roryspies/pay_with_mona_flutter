@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/features/data_share/widgets/data_share_sheet.dart';
 import 'package:pay_with_mona/src/features/payments/pay_with_mona_widget.dart';
-import 'package:pay_with_mona/ui/widgets/merchant_payment_settings_widget.dart';
 
 part "_pay_with_mona_impl.dart";
 
 abstract class PayWithMona {
   static PayWithMona? _instance;
 
-  /// Access the singleton instance
   static PayWithMona get instance {
     if (_instance == null) {
       throw Exception(
@@ -21,7 +19,6 @@ abstract class PayWithMona {
     return _instance!;
   }
 
-  /// Initialize the SDK with your merchant API key
   static Future<void> initialize({
     required String merchantKey,
   }) async {
@@ -32,11 +29,6 @@ abstract class PayWithMona {
 
   Widget payWidget({
     required BuildContext context,
-    required MonaCheckOut checkoutPayload,
-  });
-
-  Widget paymentUpdateSettingsWidget({
-    num? transactionAmountInKobo,
   });
 
   Future<void> showDataShareSheet({

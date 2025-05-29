@@ -14,18 +14,9 @@ class _MonaSDKImpl extends PayWithMona {
   @override
   Widget payWidget({
     required BuildContext context,
-    required MonaCheckOut checkoutPayload,
   }) {
     return PayWithMonaWidget(
-      monaCheckOut: checkoutPayload,
       callingContext: context,
-    );
-  }
-
-  @override
-  Widget paymentUpdateSettingsWidget({num? transactionAmountInKobo}) {
-    return MerchantPaymentSettingsWidget(
-      transactionAmountInKobo: transactionAmountInKobo,
     );
   }
 

@@ -35,6 +35,7 @@ class PaymentService {
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> initiatePayment({
     required String merchantKey,
+    required String merchantAPIKey,
     required num tnxAmountInKobo,
     required String successRateType,
     String? phoneNumber,
@@ -44,16 +45,43 @@ class PaymentService {
     String? userKeyID,
   }) async {
     try {
+      if (merchantAPIKey.isEmpty) {
+        throw Failure(
+          "To initiate payment, API key cannot be empty",
+        );
+      }
+
+      final amountIsLessThan20Naira = (tnxAmountInKobo / 100) < 20;
+      if (amountIsLessThan20Naira) {
+        throw Failure(
+          "Cannot initiate payment for less than 20 Naira",
+        );
+      }
+
+      if (dob != null &&
+          (firstAndLastName == null || firstAndLastName.isEmpty)) {
+        throw Failure(
+          '`Name Value - First and Last` must not be null or empty when `dob` is provided.',
+        );
+      }
+
+      if (firstAndLastName != null && (dob == null || dob.isEmpty)) {
+        throw Failure(
+          '`DOB` must not be null when `Name Value - First and Last` is provided.',
+        );
+      }
+
       final response = await _apiService.post(
         APIEndpoints.demoCheckout,
         headers: ApiHeaders.initiatePaymentHeader(
+          merchantAPIKey: merchantAPIKey,
           merchantKey: merchantKey,
           userKeyID: userKeyID,
         ),
         data: {
           "amount": tnxAmountInKobo,
           'successRateType': successRateType,
-          if (phoneNumber != null) "phoneNumber": phoneNumber,
+          if (phoneNumber != null) "phone": phoneNumber,
           if (bvn != null) "bvn": bvn,
           if (dob != null) "dob": dob,
           if (firstAndLastName != null) "name": firstAndLastName,
@@ -66,6 +94,7 @@ class PaymentService {
     } catch (e) {
       final apiEx = APIException.fromHttpError(e);
       '❌ initiatePayment() Error: ${apiEx.message}'.log();
+
       return left(Failure(apiEx.message));
     }
   }
@@ -314,7 +343,7 @@ class PaymentService {
     Map<String, dynamic> payload,
     String nonce,
     String timestamp,
-    String userCheckoutID,
+    String userKeyID,
   ) async {
     "$_repoName _signRequest".log();
 
@@ -327,7 +356,7 @@ class PaymentService {
       "params": base64Encode(utf8.encode(jsonEncode({}))),
       "nonce": base64Encode(utf8.encode(nonce)),
       "timestamp": base64Encode(utf8.encode(timestamp)),
-      "keyId": base64Encode(utf8.encode(userCheckoutID)),
+      "keyId": base64Encode(utf8.encode(userKeyID)),
     };
 
     final dataString = base64Encode(utf8.encode(json.encode(data)));

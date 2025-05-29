@@ -2,7 +2,6 @@ import "dart:convert";
 import "dart:io";
 import "package:flutter/services.dart";
 import "package:pay_with_mona/src/core/api/api_endpoints.dart";
-import "package:pay_with_mona/src/core/api/api_exceptions.dart";
 import "package:pay_with_mona/src/core/api/api_headers.dart";
 import "package:pay_with_mona/src/core/api/api_service.dart";
 import "package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart";
@@ -74,62 +73,6 @@ class AuthService {
 
       return null;
     }
-  }
-
-  Future<Map<String, dynamic>?> validatePII({
-    String? phoneNumber,
-    String? bvn,
-    String? dob,
-    String? firstAndLastName,
-    String? userKeyID,
-  }) async {
-    try {
-      final doNotUseBody = (phoneNumber == null && bvn == null && dob == null);
-
-      if (userKeyID == null && doNotUseBody) {
-        return null;
-      }
-
-      if (dob != null && firstAndLastName == null) {
-        throw ArgumentError(
-            '`Name Value - First and Last` must not be null when `dob` is provided.');
-      }
-
-      if (firstAndLastName != null && dob == null) {
-        throw ArgumentError(
-            '`dob` must not be null when `Name Value - First and Last` is provided.');
-      }
-
-      final response = await _apiService.post(
-        APIEndpoints.validatePII,
-        headers: (userKeyID != null && doNotUseBody)
-            ? ApiHeaders.validatePII(
-                userKeyID: userKeyID,
-              )
-            : null,
-        data: (phoneNumber == null && bvn == null && dob == null)
-            ? {"": ""}
-            : {
-                if (phoneNumber != null) "phoneNumber": phoneNumber,
-                if (bvn != null) "bvn": bvn,
-                if (dob != null) "dob": dob,
-                if (firstAndLastName != null) "name": firstAndLastName,
-              },
-      );
-
-      return (jsonDecode(response.body) as Map<String, dynamic>)["data"]
-          as Map<String, dynamic>;
-    } on APIException catch (e) {
-      print(e.message); // "User not found"
-      print(e.statusCode); // e.g., 404
-      print(e
-          .responseBody); // Full JSON: {"success": false, "message": "User not found"}
-    } catch (error) {
-      "$error".log();
-
-      return null;
-    }
-    return null;
   }
 
   Future<Map<String, dynamic>?> loginWithStrongAuth({

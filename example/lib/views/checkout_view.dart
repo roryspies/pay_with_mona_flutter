@@ -1,5 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-import 'package:example/services/customer_details_notifier.dart';
 import 'package:example/services/transaction_state_notifier.dart';
 import 'package:example/utils/extensions.dart';
 import 'package:example/utils/mona_colors.dart';
@@ -209,7 +208,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
               /// *** Main Pay Widget
               _payWithMona.payWidget(
                 context: context,
-                checkoutPayload: MonaCheckOut(
+                /* checkoutPayload: MonaCheckOut(
                   firstName: '',
                   lastName: '',
                   dateOfBirth: DateTime.now(),
@@ -220,7 +219,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView> {
                   phoneNumber:
                       ref.watch(customerDetailsNotifierProvider).phoneNumber,
                   amount: widget.amount,
-                ),
+                ), */
               ),
             ],
           ),
