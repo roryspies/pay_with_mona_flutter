@@ -30,7 +30,6 @@ import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
-import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
 import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
 
 part 'sdk_notifier.helpers.dart';
@@ -194,7 +193,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retains the [BuildContext] to calculate UI-dependent dimensions.
+  ///
+  /// Retains the [BuildContext] to calculate UI-dependent dimensions...
+  /// and pull up UI modals where necessary
   void setCallingBuildContext({
     required BuildContext context,
   }) {
@@ -614,11 +615,13 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** This is only for DEMO.
     /// *** Real world scenario, client would attach a transaction ID to this.
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
-    /* if (_currentTransactionId == null) {
+    if (_currentTransactionId == null) {
       await initiatePayment(
         tnxAmountInKobo: _monaCheckOut!.amount,
+        onError: (error) {},
+        onSuccess: () {},
       );
-    } */
+    }
 
     _updateState(MonaSDKState.loading);
 
@@ -761,7 +764,11 @@ class MonaSDKNotifier extends ChangeNotifier {
             _authStream.emit(state: AuthState.loggedIn);
             //validatePII();
 
-            if (!isFromCollections) {
+            if (_callingBuildContext != null) {
+              Navigator.of(_callingBuildContext!).pop();
+            }
+
+            /* if (!isFromCollections) {
               if (_callingBuildContext != null) {
                 Navigator.of(_callingBuildContext!).pop();
               }
@@ -774,7 +781,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                   transactionAmountInKobo: _monaCheckOut?.amount ?? 0,
                 ),
               );
-            }
+            } */
 
             /// *** Close Modal
 

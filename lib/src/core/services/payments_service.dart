@@ -35,7 +35,7 @@ class PaymentService {
   /// Initiates a checkout session.
   FutureOutcome<Map<String, dynamic>> initiatePayment({
     required String merchantKey,
-    required String merchantAPIKey,
+    String? merchantAPIKey,
     required num tnxAmountInKobo,
     required String successRateType,
     String? phoneNumber,
@@ -45,7 +45,7 @@ class PaymentService {
     String? userKeyID,
   }) async {
     try {
-      if (merchantAPIKey.isEmpty) {
+      if (merchantAPIKey == null || merchantAPIKey.isEmpty) {
         throw Failure(
           "To initiate payment, API key cannot be empty",
         );

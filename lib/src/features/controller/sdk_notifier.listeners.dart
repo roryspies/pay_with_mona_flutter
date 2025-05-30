@@ -105,6 +105,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
 
           if (decodedEvent["success"] == true) {
             _updateState(MonaSDKState.idle);
+            _txnStateStream.emit(state: TransactionStateNavToResult());
 
             await closeCustomTabs();
           } else if (decodedEvent["event"] == "false") {
