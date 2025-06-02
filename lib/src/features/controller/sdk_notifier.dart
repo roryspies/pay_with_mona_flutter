@@ -473,6 +473,58 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
+  Future<void> validatePII({
+    required String userKeyID,
+    bool isFromConfirmLoggedInUser = false,
+    void Function(String)? onEffect,
+  }) async {
+    if (isFromConfirmLoggedInUser == false) {
+      _updateState(MonaSDKState.loading);
+    }
+
+    final response = await _authService.validatePII(
+      userKeyID: userKeyID,
+    );
+
+    if (response == null) {
+      //_handleError("Failed to validate user PII - Experienced an Error");
+      onEffect?.call("Failed to validate user PII - Experienced an Error");
+      return;
+    }
+
+    _updateState(MonaSDKState.idle);
+    switch (response["exists"] as bool) {
+      /// *** This is a Mona User
+      case true:
+        setPendingPaymentData(
+          pendingPayment: PendingPaymentResponseModel(
+            savedPaymentOptions: SavedPaymentOptions.fromJSON(
+              json: response["savedPaymentOptions"],
+            ),
+          ),
+        );
+
+        /// *** User has not done key exchange
+        if (await checkIfUserHasKeyID() == null) {
+          _authStream.emit(state: AuthState.loggedOut);
+          onEffect?.call('PII Auth Result - User has not done key exchange');
+          return;
+        }
+
+        /// *** User has done key exchange
+        _authStream.emit(state: AuthState.loggedIn);
+        onEffect?.call(
+            'PII Auth Result - User logged in and has done key exchange');
+        break;
+
+      /// *** Non Mona User
+      default:
+        _authStream.emit(state: AuthState.notAMonaUser);
+        onEffect?.call('PII Auth Result - User is not a mona user');
+        break;
+    }
+  }
+
   ///
   /// *** MARK: -  Major Methods
   /// Starts the payment initiation process.
@@ -489,7 +541,21 @@ class MonaSDKNotifier extends ChangeNotifier {
   }) async {
     _updateState(MonaSDKState.loading);
 
+    final userKeyID = await checkIfUserHasKeyID();
+
     try {
+      if (userKeyID != null && userKeyID.isNotEmpty) {
+        await validatePII(
+          userKeyID: userKeyID,
+        );
+      }
+
+      final firstName = _monaCheckOut?.firstName;
+      final lastName = _monaCheckOut?.lastName;
+
+      final nameIsNotEmpty = (firstName != null && firstName.isNotEmpty) &&
+          (lastName != null && lastName.isNotEmpty);
+
       final (Map<String, dynamic>? success, failure) =
           await _paymentsService.initiatePayment(
         merchantKey: await _getMerchantKey() ?? "",
@@ -500,6 +566,11 @@ class MonaSDKNotifier extends ChangeNotifier {
         /// *** Optional Params
         userKeyID: await checkIfUserHasKeyID() ?? "",
         phoneNumber: _monaCheckOut?.phoneNumber,
+        bvn: _monaCheckOut?.bvn,
+        dob: _monaCheckOut?.dateOfBirth?.toLocal().toIso8601String(),
+        firstAndLastName: nameIsNotEmpty
+            ? "${_monaCheckOut?.firstName} ${_monaCheckOut?.lastName}"
+            : null,
       );
 
       if (failure != null) {
@@ -607,7 +678,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     // Initialize SSE listener for real-time events
     _firebaseSSE.initialize();
 
-    if ((_monaCheckOut!.amount / 100) < 20) {
+    if ((_monaCheckOut?.amount ?? 0) / 100 < 20) {
       _handleError("Transaction amount cannot be less than 20");
       return;
     }
@@ -617,7 +688,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** For now - Check if we have an initiated Transaction ID else do a demo one
     if (_currentTransactionId == null) {
       await initiatePayment(
-        tnxAmountInKobo: _monaCheckOut!.amount,
+        tnxAmountInKobo: _monaCheckOut!.amount!,
         onError: (error) {},
         onSuccess: () {},
       );

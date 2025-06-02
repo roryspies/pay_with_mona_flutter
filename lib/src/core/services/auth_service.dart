@@ -48,6 +48,26 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>?> validatePII({
+    required String userKeyID,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        APIEndpoints.validatePII,
+        headers: ApiHeaders.validatePII(
+          userKeyID: userKeyID,
+        ),
+      );
+
+      return (jsonDecode(response.body) as Map<String, dynamic>)["data"]
+          as Map<String, dynamic>;
+    } catch (error) {
+      "$error".log();
+
+      return null;
+    }
+  }
+
   Future<MerchantBranding?> updateMerchantPaymentSettings({
     required String merchantAPIKey,
     required String successRateType,

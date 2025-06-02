@@ -36,6 +36,15 @@ abstract class ApiHeaders {
     };
   }
 
+  static Map<String, String> validatePII({
+    required String userKeyID,
+  }) {
+    return {
+      "x-mona-key-id": userKeyID,
+      "content-Type": "application json",
+    };
+  }
+
   ///
   /// *** MARK: Payment Service Headers
   static Map<String, String> initiatePaymentHeader({

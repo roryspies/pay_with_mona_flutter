@@ -371,7 +371,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         selectedPaymentMethod:
                             sdkNotifier.selectedPaymentMethod,
                         transactionAmountInKobo:
-                            sdkNotifier.monaCheckout!.amount,
+                            sdkNotifier.monaCheckout!.amount!,
                       ),
                     );
 

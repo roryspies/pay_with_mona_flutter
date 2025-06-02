@@ -450,42 +450,39 @@ class PaymentStageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40.0,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          context.sbH(16),
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: isCurrentStage
-                ? MonaColors.successColour
-                : MonaColors.successColour.withOpacity(0.2),
-            child: AnimatedSwitcher(
-              duration: Duration(
-                milliseconds: 300,
-              ),
-              child: isCurrentStage
-                  ? SvgPicture.asset(
-                      "mona_tick".svg,
-                      height: 12,
-                    )
-                  : null,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        context.sbH(16),
+        CircleAvatar(
+          radius: 12,
+          backgroundColor: isCurrentStage
+              ? MonaColors.successColour
+              : MonaColors.successColour.withOpacity(0.2),
+          child: AnimatedSwitcher(
+            duration: Duration(
+              milliseconds: 300,
             ),
+            child: isCurrentStage
+                ? SvgPicture.asset(
+                    "mona_tick".svg,
+                    height: 12,
+                  )
+                : null,
           ),
+        ),
 
-          //
-          context.sbH(4),
+        //
+        context.sbH(4),
 
-          //
-          Text(
-            stageText,
-            style: TextStyle(
-              fontSize: 10.0,
-            ),
+        //
+        Text(
+          stageText,
+          style: TextStyle(
+            fontSize: 10.0,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
