@@ -6,6 +6,7 @@ import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/events/auth_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/firebase_sse_listener.dart';
+import 'package:pay_with_mona/src/core/events/host_lifecycle_observer.dart';
 import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
@@ -30,13 +31,13 @@ import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
+import 'package:pay_with_mona/ui/widgets/custom_web_view_widget.dart';
 import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
 
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
 
 /// Manages the entire payment workflow, from initiation to completion,
-/// including real-time event listening and strong authentication.
 ///
 /// Implements a singleton pattern to ensure a single source of truth
 /// throughout the app lifecycle.
@@ -81,6 +82,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   /// Listener for Firebase Server-Sent Events.
   final FirebaseSSEListener _firebaseSSE = FirebaseSSEListener();
+
+  late final AppLifecycleMonitor _lifecycleMonitor;
 
   String? _errorMessage;
   String? _currentTransactionId;
@@ -444,6 +447,18 @@ class MonaSDKNotifier extends ChangeNotifier {
 
         if (succeeded) notifyListeners();
       }
+
+      _lifecycleMonitor = AppLifecycleMonitor(
+        onStateChanged: (state) {
+          if (state == AppLifecycleState.resumed) {
+            ("HOST App is in foreground").log();
+            // Handle resume
+          } else if (state == AppLifecycleState.paused) {
+            ("App is in background").log();
+            // Handle background
+          }
+        },
+      );
     } catch (e, st) {
       _handleError("Init SDK error $e ::: Stack Trace $st");
     }
@@ -738,6 +753,13 @@ class MonaSDKNotifier extends ChangeNotifier {
 
               _currentTransactionFriendlyID = res["friendlyID"];
               _sdkStateStream.emit(state: MonaSDKState.transactionInitiated);
+              _txnStateStream.emit(
+                state: TransactionStateInitiated(
+                  transactionID: res["transactionRef"],
+                  friendlyID: _currentTransactionFriendlyID,
+                  amount: _monaCheckOut?.amount,
+                ),
+              );
             },
           );
 

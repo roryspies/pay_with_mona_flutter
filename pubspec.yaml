@@ -20,6 +20,8 @@ dependencies:
   local_auth_signature: ^1.0.12
   crypto: ^3.0.6
   otp_pin_field: ^1.4.1
+  webview_flutter: ^4.13.0
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

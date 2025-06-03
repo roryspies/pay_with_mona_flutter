@@ -93,10 +93,22 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     final screenWidth = _callingBuildContext!.screenWidth;
 
     try {
-      await launchUrl(
-        uri,
-        customTabsOptions: CustomTabsOptions.partial(
+      /* SDKUtils.showSDKModalBottomSheet(
+        callingContext: _callingBuildContext!,
+        isDismissible: false,
+        enableDrag: false,
+        isForCustomTab: true,
+        onCancelButtonTap: () {
+          _updateState(MonaSDKState.idle);
+          Navigator.of(_callingBuildContext!).pop();
+        },
+        child: CustomWebView(
+          initialUrl: url,
+        ),
+      ); */
+      /* CustomTabsOptions.partial(
           showTitle: true,
+          closeButton: CustomTabsCloseButton(),
           configuration: PartialCustomTabsConfiguration(
             initialHeight: screenHeight * 0.9,
             initialWidth: screenWidth,
@@ -107,7 +119,23 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
                 CustomTabsActivitySideSheetRoundedCornersPosition.top,
             cornerRadius: 16,
           ),
-        ),
+        ), */
+      await launchUrl(
+        uri,
+        customTabsOptions: CustomTabsOptions.partial(
+          showTitle: true,
+          closeButton: CustomTabsCloseButton(),
+          configuration: PartialCustomTabsConfiguration(
+            initialHeight: screenHeight * 0.9,
+            initialWidth: screenWidth,
+            activitySideSheetMaximizationEnabled: true,
+            activitySideSheetDecorationType:
+                CustomTabsActivitySideSheetDecorationType.shadow,
+            activitySideSheetRoundedCornersPosition:
+                CustomTabsActivitySideSheetRoundedCornersPosition.top,
+            cornerRadius: 16,
+          ),
+        ), //CustomTabsOptions(),
         safariVCOptions: SafariViewControllerOptions.pageSheet(
           configuration: const SheetPresentationControllerConfiguration(
             detents: {

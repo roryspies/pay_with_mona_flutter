@@ -73,19 +73,19 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     ).animate(_thirdProgressController);
 
     _firstProgressController.addListener(() {
-      setState(() {});
+      if (mounted) setState(() {});
     });
 
     _secondProgressController.addListener(() {
-      setState(() {});
+      if (mounted) setState(() {});
     });
 
     _thirdProgressController.addListener(() {
-      setState(() {});
+      if (mounted) setState(() {});
     });
 
     _firstProgressController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
+      if (status == AnimationStatus.completed && mounted) {
         setState(() {
           _currentStage = 1; // Sent stage
         });
@@ -93,7 +93,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     });
 
     _secondProgressController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
+      if (status == AnimationStatus.completed && mounted) {
         setState(() {
           _currentStage = 2;
         });
@@ -160,9 +160,11 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     _firstProgressController.reset();
     _secondProgressController.reset();
     _thirdProgressController.reset();
-    setState(() {
-      _currentStage = 0;
-    });
+    if (mounted) {
+      setState(() {
+        _currentStage = 0;
+      });
+    }
   }
 
   void _completeAllAnimations({
@@ -171,7 +173,9 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     Future.delayed(
       const Duration(milliseconds: 500),
       () {
-        setState(() => _currentStage = 1);
+        if (mounted) {
+          setState(() => _currentStage = 1);
+        }
 
         _secondProgressController.forward(
           from: _secondProgressController.value,
@@ -180,9 +184,11 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
         Future.delayed(
           const Duration(milliseconds: 1500),
           () async {
-            setState(() {
-              _currentStage = 2;
-            });
+            if (mounted) {
+              setState(() {
+                _currentStage = 2;
+              });
+            }
 
             _thirdProgressController.forward(
               from: _thirdProgressController.value,
@@ -190,7 +196,11 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
             await Future.delayed(Duration(milliseconds: 500));
 
-            showPaymentSuccessfulOrFailed = true;
+            if (mounted) {
+              setState(() {
+                showPaymentSuccessfulOrFailed = true;
+              });
+            }
 
             await Future.delayed(Duration(seconds: 2));
 

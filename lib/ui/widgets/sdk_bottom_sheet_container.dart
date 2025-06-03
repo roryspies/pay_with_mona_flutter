@@ -7,9 +7,11 @@ class SdkBottomSheetWrapper extends StatelessWidget {
     required this.child,
     this.showCancelButton = true,
     this.onCancelButtonTap,
+    this.isForCustomTab = false,
   });
 
   final bool showCancelButton;
+  final bool isForCustomTab;
   final Function()? onCancelButtonTap;
 
   final Widget child;
@@ -35,6 +37,7 @@ class SdkBottomSheetWrapper extends StatelessWidget {
       child: Wrap(
         children: [
           BottomSheetTopHeader(
+            isForCustomTab: isForCustomTab,
             showCancelButton: showCancelButton,
             onCancelButtonTap: onCancelButtonTap,
           ),

@@ -9,10 +9,12 @@ class BottomSheetTopHeader extends StatefulWidget {
   const BottomSheetTopHeader({
     super.key,
     this.showCancelButton = true,
+    this.isForCustomTab = false,
     this.onCancelButtonTap,
   });
 
   final bool showCancelButton;
+  final bool isForCustomTab;
   final Function()? onCancelButtonTap;
 
   @override
@@ -34,8 +36,11 @@ class _BottomSheetTopHeaderState extends State<BottomSheetTopHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final showCancelButton =
-        sdkNotifier.showCancelButton == false ? false : widget.showCancelButton;
+    final showCancelButton = widget.isForCustomTab
+        ? true
+        : sdkNotifier.showCancelButton == false
+            ? false
+            : widget.showCancelButton;
 
     return Container(
       height: context.h(40),
