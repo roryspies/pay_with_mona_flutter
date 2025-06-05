@@ -291,7 +291,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                             clearMonaCheckout: false,
                             clearPendingPaymentResponseModel: false,
                           );
-                          Navigator.of(context).pop();
+                          SDKUtils.popMultiple(context, 2);
                           return;
                         }
 

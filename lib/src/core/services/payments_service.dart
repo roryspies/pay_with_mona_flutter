@@ -134,7 +134,11 @@ class PaymentService {
   }) async {
     final paymentNotifier = MonaSDKNotifier();
     final secureStorage = SecureStorage();
-    final payload = await paymentNotifier.buildBankPaymentPayload();
+    final payload = switch (paymentType) {
+      TransactionPaymentTypes.card =>
+        await paymentNotifier.buildCardPaymentPayload(),
+      _ => await paymentNotifier.buildBankPaymentPayload(),
+    };
     final monaKeyID = await secureStorage.read(
           key: SecureStorageKeys.keyID,
         ) ??

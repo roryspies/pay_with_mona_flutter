@@ -25,13 +25,13 @@ import 'package:pay_with_mona/src/models/mona_checkout.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';
+import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
-import 'package:pay_with_mona/ui/widgets/custom_web_view_widget.dart';
 import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
 
 part 'sdk_notifier.helpers.dart';
@@ -82,8 +82,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   /// Listener for Firebase Server-Sent Events.
   final FirebaseSSEListener _firebaseSSE = FirebaseSSEListener();
-
-  late final AppLifecycleMonitor _lifecycleMonitor;
 
   String? _errorMessage;
   String? _currentTransactionId;
@@ -446,19 +444,9 @@ class MonaSDKNotifier extends ChangeNotifier {
         }
 
         if (succeeded) notifyListeners();
-      }
 
-      _lifecycleMonitor = AppLifecycleMonitor(
-        onStateChanged: (state) {
-          if (state == AppLifecycleState.resumed) {
-            ("HOST App is in foreground").log();
-            // Handle resume
-          } else if (state == AppLifecycleState.paused) {
-            ("App is in background").log();
-            // Handle background
-          }
-        },
-      );
+        initSDKHostAppLifeCycleListener();
+      }
     } catch (e, st) {
       _handleError("Init SDK error $e ::: Stack Trace $st");
     }
@@ -468,6 +456,26 @@ class MonaSDKNotifier extends ChangeNotifier {
         merchantBrandingColours: _merchantBrandingDetails!.colors,
       );
     }
+  }
+
+  Future<void> initSDKHostAppLifeCycleListener() async {
+    AppLifecycleMonitor(
+      onStateChanged: (state) async {
+        /// *** Here, it is assumed, that the only reason the app has come back to foreground is because custom tabs was open and now it has closed.
+        /// *** To check if the custom tabs was closed
+        if (state == AppLifecycleState.resumed) {
+          "HOST App is in foreground".log();
+          _updateState(MonaSDKState.idle);
+          //await sdkCloseCustomTabs();
+        } else {
+          "HOST App is in background".log();
+        }
+      },
+    );
+  }
+
+  Future<void> sdkCloseCustomTabs() async {
+    await closeCustomTabs();
   }
 
   Future<String?> checkIfUserHasKeyID() async => await _secureStorage.read(
@@ -748,7 +756,7 @@ class MonaSDKNotifier extends ChangeNotifier {
             paymentType: _selectedPaymentMethod == PaymentMethod.savedBank
                 ? null
                 : TransactionPaymentTypes.card,
-            onPayComplete: (res, payload) {
+            onPayComplete: (res, payload) async {
               "Payment Notifier ::: Make Payment Request Complete".log();
 
               _currentTransactionFriendlyID = res["friendlyID"];
@@ -760,6 +768,20 @@ class MonaSDKNotifier extends ChangeNotifier {
                   amount: _monaCheckOut?.amount,
                 ),
               );
+
+              if (doKeyExchange) {
+                await SDKUtils.showSDKModalBottomSheet(
+                  isDismissible: false,
+                  enableDrag: false,
+                  callingContext: _callingBuildContext!,
+                  child: ConfirmTransactionModal(
+                    selectedPaymentMethod: _selectedPaymentMethod,
+                    transactionAmountInKobo: _monaCheckOut!.amount!,
+                  ),
+                );
+
+                return;
+              }
             },
           );
 
