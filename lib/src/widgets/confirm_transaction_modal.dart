@@ -16,10 +16,12 @@ class ConfirmTransactionModal extends StatefulWidget {
     super.key,
     required this.transactionAmountInKobo,
     required this.selectedPaymentMethod,
+    this.showTransactionStatusIndicator = false,
   });
 
   final num transactionAmountInKobo;
   final PaymentMethod selectedPaymentMethod;
+  final bool showTransactionStatusIndicator;
 
   @override
   State<ConfirmTransactionModal> createState() =>
@@ -46,6 +48,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       default:
         break;
     }
+    showTransactionStatusIndicator = widget.showTransactionStatusIndicator;
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
