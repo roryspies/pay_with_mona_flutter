@@ -223,6 +223,7 @@ class PaymentService {
 
     if (failure != null) {
       "$_repoName submitPaymentRequest FAILED ::: ${failure.message}".log();
+      MonaSDKNotifier().resetPinAndOTP();
       return;
     }
 
@@ -252,12 +253,13 @@ class PaymentService {
           );
         } else {
           final monaSDK = MonaSDKNotifier();
+          monaSDK.resetPinAndOTP();
 
           switch (task["fieldType"].toString().toLowerCase()) {
             case "pin":
               final pin = await monaSDK.triggerPinOrOTPFlow(
-                pinOrOTP: PaymentTaskType.pin,
-                pinOrOTPTask: TransactionTaskModel.fromJSON(
+                pinOrOtpType: PaymentTaskType.pin,
+                taskModel: TransactionTaskModel.fromJSON(
                   json: task,
                 ),
               );
@@ -277,8 +279,8 @@ class PaymentService {
 
             case "otp":
               final otp = await monaSDK.triggerPinOrOTPFlow(
-                pinOrOTP: PaymentTaskType.otp,
-                pinOrOTPTask: TransactionTaskModel.fromJSON(
+                pinOrOtpType: PaymentTaskType.otp,
+                taskModel: TransactionTaskModel.fromJSON(
                   json: task,
                 ),
               );

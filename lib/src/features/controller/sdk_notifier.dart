@@ -11,6 +11,7 @@ import 'package:pay_with_mona/src/core/events/models/transaction_task_model.dart
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
+import 'package:pay_with_mona/src/core/security/payment_encryption/payment_encryption_service.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
@@ -90,6 +91,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _transactionOTP;
   String? _transactionPIN;
   bool showCancelButton = true;
+  bool changeSDKStateOnHostAppInForeground = true;
   String? _cachedMerchantKey;
   MerchantBranding? _merchantBrandingDetails;
   MerchantPaymentSettingsEnum _merchantPaymentSettingsEnum =
@@ -281,6 +283,12 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void resetPinAndOTP() {
+    _transactionPIN = null;
+    _transactionOTP = null;
+    notifyListeners();
+  }
+
   void handleNavToConfirmationScreen() {
     _txnStateStream.emit(
       state: TransactionStateNavToResult(
@@ -466,7 +474,6 @@ class MonaSDKNotifier extends ChangeNotifier {
         if (state == AppLifecycleState.resumed) {
           "HOST App is in foreground".log();
           _updateState(MonaSDKState.idle);
-          //await sdkCloseCustomTabs();
         } else {
           "HOST App is in background".log();
         }
