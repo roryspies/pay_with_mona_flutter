@@ -3,7 +3,6 @@ import 'package:otp_pin_field/otp_pin_field.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
-import 'package:pay_with_mona/ui/utils/size_config.dart';
 
 class OtpOrPinModalContent extends StatelessWidget {
   const OtpOrPinModalContent({
@@ -23,24 +22,23 @@ class OtpOrPinModalContent extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        spacing: 16,
         children: [
-          context.sbH(16.0),
-
           //!
           Text(
             "${task.task.taskDescription}",
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 24,
+              fontSize: 16,
             ),
           ),
-
-          context.sbH(16.0),
 
           //!
           SizedBox(
             width: double.infinity,
             child: OtpPinField(
+              fieldWidth: 40.0,
+              fieldHeight: 40.0,
               key: controller,
               maxLength: task.task.fieldLength ?? 4,
               otpPinFieldDecoration:
@@ -55,8 +53,6 @@ class OtpOrPinModalContent extends StatelessWidget {
               },
             ),
           ),
-
-          context.sbH(16.0),
 
           CustomButton(
             label: "Close",

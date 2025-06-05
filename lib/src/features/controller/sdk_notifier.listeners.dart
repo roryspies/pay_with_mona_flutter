@@ -107,7 +107,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
             _updateState(MonaSDKState.idle);
             _txnStateStream.emit(state: TransactionStateNavToResult());
 
-            await closeCustomTabs();
+            await sdkCloseCustomTabs();
           } else if (decodedEvent["event"] == "false") {
             _handleError("Web Payment Failed");
           }
@@ -138,7 +138,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
               _strongAuthToken = (jsonDecode(event)
                   as Map<String, dynamic>)["strongAuthToken"];
               _authStream.emit(state: AuthState.performingLogin);
-              await closeCustomTabs();
+              await sdkCloseCustomTabs();
               _sdkStateStream.emit(state: MonaSDKState.loading);
 
               await loginWithStrongAuth(isFromCollections: isFromCollections);

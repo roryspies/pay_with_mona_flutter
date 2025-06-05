@@ -134,7 +134,11 @@ class PaymentService {
   }) async {
     final paymentNotifier = MonaSDKNotifier();
     final secureStorage = SecureStorage();
-    final payload = await paymentNotifier.buildBankPaymentPayload();
+    final payload = switch (paymentType) {
+      TransactionPaymentTypes.card =>
+        await paymentNotifier.buildCardPaymentPayload(),
+      _ => await paymentNotifier.buildBankPaymentPayload(),
+    };
     final monaKeyID = await secureStorage.read(
           key: SecureStorageKeys.keyID,
         ) ??
@@ -219,11 +223,11 @@ class PaymentService {
 
     if (failure != null) {
       "$_repoName submitPaymentRequest FAILED ::: ${failure.message}".log();
+      MonaSDKNotifier().resetPinAndOTP();
       return;
     }
 
     if (res!["success"] == true) {
-      "Payment Successful".log();
       if (onPayComplete != null) {
         onPayComplete(res, payload);
       }
@@ -249,12 +253,13 @@ class PaymentService {
           );
         } else {
           final monaSDK = MonaSDKNotifier();
+          monaSDK.resetPinAndOTP();
 
           switch (task["fieldType"].toString().toLowerCase()) {
             case "pin":
               final pin = await monaSDK.triggerPinOrOTPFlow(
-                pinOrOTP: PaymentTaskType.pin,
-                pinOrOTPTask: TransactionTaskModel.fromJSON(
+                pinOrOtpType: PaymentTaskType.pin,
+                taskModel: TransactionTaskModel.fromJSON(
                   json: task,
                 ),
               );
@@ -274,8 +279,8 @@ class PaymentService {
 
             case "otp":
               final otp = await monaSDK.triggerPinOrOTPFlow(
-                pinOrOTP: PaymentTaskType.otp,
-                pinOrOTPTask: TransactionTaskModel.fromJSON(
+                pinOrOtpType: PaymentTaskType.otp,
+                taskModel: TransactionTaskModel.fromJSON(
                   json: task,
                 ),
               );

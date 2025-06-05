@@ -20,6 +20,7 @@ abstract class SDKUtils {
     bool isDismissible = true,
     bool enableDrag = true,
     bool showCancelButton = true,
+    bool isForCustomTab = false,
     final Function()? onCancelButtonTap,
   }) async {
     final result = await showModalBottomSheet<bool>(
@@ -35,6 +36,7 @@ abstract class SDKUtils {
       ),
       builder: (context) {
         return SdkBottomSheetWrapper(
+          isForCustomTab: isForCustomTab,
           showCancelButton: showCancelButton,
           onCancelButtonTap: onCancelButtonTap,
           child: child,

@@ -97,6 +97,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
         uri,
         customTabsOptions: CustomTabsOptions.partial(
           showTitle: true,
+          closeButton: CustomTabsCloseButton(),
           configuration: PartialCustomTabsConfiguration(
             initialHeight: screenHeight * 0.9,
             initialWidth: screenWidth,
@@ -107,7 +108,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
                 CustomTabsActivitySideSheetRoundedCornersPosition.top,
             cornerRadius: 16,
           ),
-        ),
+        ), //CustomTabsOptions(),
         safariVCOptions: SafariViewControllerOptions.pageSheet(
           configuration: const SheetPresentationControllerConfiguration(
             detents: {
@@ -152,6 +153,99 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     };
   }
 
+  /// Triggers either a PIN or OTP flow, showing a bottom-sheet modal and
+  /// returning the user-entered (and optionally encrypted) PIN/OTP.
+  ///
+  /// - [pinOrOtpType] determines whether we request a PIN or OTP.
+  /// - [taskModel] contains metadata about the transaction task (e.g., whether to encrypt).
+  ///
+  /// Returns a Future that completes with the (possibly encrypted) PIN/OTP string.
+  Future<String?> triggerPinOrOTPFlow({
+    required PaymentTaskType pinOrOtpType,
+    required TransactionTaskModel taskModel,
+  }) {
+    // Create a new completer for this flow:
+    _pinOrOTPCompleter = Completer<String>();
+    final controller = GlobalKey<OtpPinFieldState>();
+
+    // Emit the appropriate transaction state so listeners know whether
+    // we're asking for a PIN vs. an OTP:
+    final emittedState = (pinOrOtpType == PaymentTaskType.pin)
+        ? TransactionStateRequestPINTask(task: taskModel)
+        : TransactionStateRequestOTPTask(task: taskModel);
+    _txnStateStream.emit(state: emittedState);
+
+    // Show the same modal widget for both PIN and OTP; we configure
+    // its "task" parameter based on pinOrOtpType:
+    SDKUtils.showSDKModalBottomSheet(
+      callingContext: _callingBuildContext!,
+      child: OtpOrPinModalContent(
+        controller: controller,
+        // When the user taps "Submit", we encrypt if needed and call
+        // the shared handler below:
+        onDone: (userInput) async {
+          final payload = taskModel.encrypted ?? true
+              ? await CryptoUtil.encryptWithPublicKey(data: userInput)
+              : userInput;
+
+          _completePinOrOtpFlow(
+            pinOrOtpType: pinOrOtpType,
+            encryptedInput: payload,
+          );
+        },
+        task: TransactionStateRequestOTPTask(
+          task: taskModel,
+        ),
+      ),
+    );
+
+    return _pinOrOTPCompleter!.future;
+  }
+
+  /// Completes the PIN/OTP flow by filling the completer and emitting a loading state.
+  /// Internally routes to either sendPINToServer or sendOTPToServer for clarity.
+  void _completePinOrOtpFlow({
+    required PaymentTaskType pinOrOtpType,
+    required String encryptedInput,
+  }) {
+    if (_pinOrOTPCompleter == null || _pinOrOTPCompleter!.isCompleted) return;
+
+    // Complete the future so that whoever awaited triggerPinOrOtpFlow()
+    // now gets the value:
+    _pinOrOTPCompleter!.complete(encryptedInput);
+
+    // Emit a loading state so that UI (or any global listener) knows
+    // we're in a "waiting for server response" phase:
+    _sdkStateStream.emit(state: MonaSDKState.loading);
+
+    // Route to the appropriate downstream call if you still need to call
+    // separate server methods. If both methods do the same thing under the hood,
+    // you can consolidate them into one. Here, we assume they are distinct.
+    if (pinOrOtpType == PaymentTaskType.pin) {
+      sendPINToServer(pinOrOtp: encryptedInput);
+    } else {
+      sendOTPToServer(pinOrOtp: encryptedInput);
+    }
+  }
+
+  /// Call this from your mobile app side when user-entered OTP arrives.
+  void sendOTPToServer({required String pinOrOtp}) {
+    // Note: we guard against multiple completions by re-checking `.isCompleted`.
+    if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
+      _pinOrOTPCompleter!.complete(pinOrOtp);
+      _sdkStateStream.emit(state: MonaSDKState.loading);
+    }
+  }
+
+  /// Call this from your mobile app side when user-entered PIN arrives.
+  void sendPINToServer({required String pinOrOtp}) {
+    if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
+      _pinOrOTPCompleter!.complete(pinOrOtp);
+      _sdkStateStream.emit(state: MonaSDKState.loading);
+    }
+  }
+
+/* 
   Future<String?> triggerPinOrOTPFlow({
     required PaymentTaskType pinOrOTP,
     required TransactionTaskModel pinOrOTPTask,
@@ -165,13 +259,45 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
           task: pinOrOTPTask,
         ),
       );
+      SDKUtils.showSDKModalBottomSheet(
+        callingContext: _callingBuildContext!,
+        child: OtpOrPinModalContent(
+          controller: otpPinFieldController,
+          onDone: (pinOrOTP) async {
+            String pinOrOTPToBeSent;
+            if (pinOrOTPTask.encrypted == true) {
+              pinOrOTPToBeSent =
+                  await CryptoUtil.encryptWithPublicKey(data: pinOrOTP);
+            } else {
+              pinOrOTPToBeSent = pinOrOTP;
+            }
+
+            sendPINToServer(
+              pinOrOTP: pinOrOTPToBeSent,
+            );
+          },
+          task: TransactionStateRequestOTPTask(
+            task: pinOrOTPTask,
+          ),
+        ),
+      );
     } else if (pinOrOTP == PaymentTaskType.otp) {
       SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
         child: OtpOrPinModalContent(
           controller: otpPinFieldController,
-          onDone: (pinOrOTP) {
-            sendOTPToServer(pinOrOTP: pinOrOTP);
+          onDone: (pinOrOTP) async {
+            String pinOrOTPToBeSent;
+            if (pinOrOTPTask.encrypted == true) {
+              pinOrOTPToBeSent =
+                  await CryptoUtil.encryptWithPublicKey(data: pinOrOTP);
+            } else {
+              pinOrOTPToBeSent = pinOrOTP;
+            }
+
+            sendOTPToServer(
+              pinOrOTP: pinOrOTPToBeSent,
+            );
           },
           task: TransactionStateRequestOTPTask(
             task: pinOrOTPTask,
@@ -193,6 +319,16 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     }
   }
 
+  /// Call this from your mobile app side when user enters OTP/PIN
+  void sendPINToServer({
+    required String pinOrOTP,
+  }) {
+    if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {
+      _pinOrOTPCompleter!.complete(pinOrOTP);
+      _sdkStateStream.emit(state: MonaSDKState.loading);
+    }
+  }
+ */
   /// Optionally allow cancelling the flow (user cancelled)
   void cancelOtpFlow() {
     if (_pinOrOTPCompleter != null && !_pinOrOTPCompleter!.isCompleted) {

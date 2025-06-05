@@ -3,52 +3,53 @@
 import 'package:flutter/material.dart';
 
 class MonaCheckOut {
-  final String firstName;
+  final String? firstName;
   final String? middleName;
-  final String lastName;
-  final DateTime dateOfBirth;
+  final String? lastName;
+  final DateTime? dateOfBirth;
   final String? bvn;
-  final String transactionId;
-  final String merchantName;
-  final String phoneNumber;
-  final Color primaryColor;
-  final Color secondaryColor;
-  final num amount;
+  final String? transactionId;
+  final String? merchantName;
+  final String? phoneNumber;
+  final Color? primaryColor;
+  final Color? secondaryColor;
+  final num? amount;
 
   MonaCheckOut({
-    required this.firstName,
+    this.firstName,
     this.middleName,
-    required this.lastName,
-    required this.dateOfBirth,
+    this.lastName,
+    this.dateOfBirth,
     this.bvn,
-    required this.transactionId,
-    required this.merchantName,
-    required this.phoneNumber,
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.amount,
+    this.transactionId,
+    this.merchantName,
+    this.phoneNumber,
+    this.primaryColor,
+    this.secondaryColor,
+    this.amount,
   });
 
   factory MonaCheckOut.fromJSON({
     required Map<String, dynamic> json,
   }) {
     return MonaCheckOut(
-      firstName: json['first_name'] as String? ?? '',
+      firstName: json['first_name'] as String?,
       middleName: json['middle_name'] as String?,
-      lastName: json['last_name'] as String? ?? '',
-      dateOfBirth:
-          DateTime.tryParse(json['date_of_birth'] ?? '') ?? DateTime.now(),
+      lastName: json['last_name'] as String?,
+      dateOfBirth: json['date_of_birth'] != null
+          ? DateTime.tryParse(json['date_of_birth'])
+          : null,
       bvn: json['bvn'] as String?,
-      transactionId: json['transaction_id'] as String? ?? '',
-      merchantName: json['merchant_name'] as String? ?? '',
-      phoneNumber: json['phone'] as String? ?? '',
+      transactionId: json['transaction_id'] as String?,
+      merchantName: json['merchant_name'] as String?,
+      phoneNumber: json['phone'] as String?,
       primaryColor: json['primary_color'] != null
           ? Color(json['primary_color'] as int)
-          : Colors.black,
+          : null,
       secondaryColor: json['secondary_color'] != null
           ? Color(json['secondary_color'] as int)
-          : Colors.black,
-      amount: json['amount'] as num? ?? 0,
+          : null,
+      amount: json['amount'] as num?,
     );
   }
 
@@ -57,13 +58,13 @@ class MonaCheckOut {
       "first_name": firstName,
       "middle_name": middleName,
       "last_name": lastName,
-      "date_of_birth": dateOfBirth.toIso8601String(),
+      "date_of_birth": dateOfBirth?.toIso8601String(),
       "bvn": bvn,
       "transaction_id": transactionId,
       "merchant_name": merchantName,
       "phone": phoneNumber,
-      "primary_color": primaryColor.value,
-      "secondary_color": secondaryColor.value,
+      "primary_color": primaryColor?.value,
+      "secondary_color": secondaryColor?.value,
       "amount": amount,
     };
   }
