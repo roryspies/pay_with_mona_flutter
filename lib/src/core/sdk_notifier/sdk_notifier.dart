@@ -17,7 +17,7 @@ import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_ke
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';

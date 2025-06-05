@@ -9,8 +9,8 @@ import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.da
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/sdk_notifier.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/type_defs.dart';

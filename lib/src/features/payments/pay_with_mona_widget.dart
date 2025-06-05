@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
-import 'package:pay_with_mona/src/features/controller/sdk_notifier.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/sdk_notifier.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
