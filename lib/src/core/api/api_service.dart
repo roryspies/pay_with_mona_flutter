@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
-import 'package:pay_with_mona/src/core/api/api_logger.dart';
+import 'package:pay_with_mona/src/core/api/api_remote_logger.dart';
 import 'package:pay_with_mona/src/core/api/api_response.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'api_config.dart';
@@ -38,14 +38,13 @@ class ApiService {
     this.logCurlCommands = true,
     this.prettyPrintJson = true,
     this.jsonIndent = 2,
-    String discordWebhookUrl =
-        "https://discord.com/api/webhooks/1380653241108402286/6gtxWFMANN84LQt04lc6lj9tIdEF7PaG6DY2wOZV-5jRhOGHe20Z2Dx8m7JrAHQ4jaeb",
-    bool enableDiscordLogging = true,
+    String loggerWebHookURL = APIConfig.loggerWebHook,
+    bool enableRemoteLogger = true,
   })  : baseUrl = (baseUrl ?? _defaultBaseUrl),
-        _apiServiceRemoteLogger = (enableDiscordLogging)
+        _apiServiceRemoteLogger = (enableRemoteLogger)
             ? APIServiceRemoteLogger(
-                webhookUrl: discordWebhookUrl,
-                enabled: enableDiscordLogging,
+                webhookUrl: loggerWebHookURL,
+                enabled: enableRemoteLogger,
               )
             : null;
 
@@ -57,7 +56,7 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$baseUrl$endpoint');
 
-    // Discord logging - log request
+    // Logging - log request
     await _apiServiceRemoteLogger?.logRequest(
       method: 'POST',
       uri: uri,
@@ -93,7 +92,7 @@ class ApiService {
 
       final body = await response.transform(utf8.decoder).join();
 
-      // Discord logging - log response
+      // Logging - log response
       await _apiServiceRemoteLogger?.logResponse(
         statusCode: response.statusCode,
         statusMessage: response.reasonPhrase,
@@ -135,7 +134,7 @@ class ApiService {
       if (!apiResponse.isSuccess) {
         final errorMessage = extractErrorMessage(response.statusCode, body);
 
-        // Discord logging - log error for unsuccessful responses
+        // Logging - log error for unsuccessful responses
         await _apiServiceRemoteLogger?.logError(
           errorType: 'HTTP Error',
           errorMessage: errorMessage,
@@ -157,7 +156,7 @@ class ApiService {
     } catch (e) {
       final apiEx = APIException.fromHttpError(e, uri: uri, method: 'POST');
 
-      // Discord logging - log error
+      // Logging - log error
       await _apiServiceRemoteLogger?.logError(
         errorType: e.runtimeType.toString(),
         errorMessage: apiEx.message,
@@ -180,7 +179,7 @@ class ApiService {
     final uri =
         Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
 
-    // Discord logging - log request
+    // Logging - log request
     await _apiServiceRemoteLogger?.logRequest(
       method: 'GET',
       uri: uri,
@@ -207,7 +206,7 @@ class ApiService {
 
       final body = await response.transform(utf8.decoder).join();
 
-      // Discord logging - log response
+      // Logging - log response
       await _apiServiceRemoteLogger?.logResponse(
         statusCode: response.statusCode,
         statusMessage: response.reasonPhrase,
@@ -249,7 +248,7 @@ class ApiService {
       if (!apiResponse.isSuccess) {
         final errorMessage = extractErrorMessage(response.statusCode, body);
 
-        // Discord logging - log error for unsuccessful responses
+        // Logging - log error for unsuccessful responses
         await _apiServiceRemoteLogger?.logError(
           errorType: 'HTTP Error',
           errorMessage: errorMessage,
@@ -271,7 +270,7 @@ class ApiService {
     } catch (e) {
       final apiEx = APIException.fromHttpError(e, uri: uri, method: 'GET');
 
-      // Discord logging - log error
+      // Logging - log error
       await _apiServiceRemoteLogger?.logError(
         errorType: e.runtimeType.toString(),
         errorMessage: apiEx.message,
@@ -293,7 +292,7 @@ class ApiService {
   }) async {
     final uri = Uri.parse('$baseUrl$endpoint');
 
-    // Discord logging - log request
+    // Logging - log request
     await _apiServiceRemoteLogger?.logRequest(
       method: 'PUT',
       uri: uri,
@@ -329,7 +328,7 @@ class ApiService {
 
       final body = await response.transform(utf8.decoder).join();
 
-      // Discord logging - log response
+      // Logging - log response
       await _apiServiceRemoteLogger?.logResponse(
         statusCode: response.statusCode,
         statusMessage: response.reasonPhrase,
@@ -371,7 +370,7 @@ class ApiService {
       if (!apiResponse.isSuccess) {
         final errorMessage = extractErrorMessage(response.statusCode, body);
 
-        // Discord logging - log error for unsuccessful responses
+        // Logging - log error for unsuccessful responses
         await _apiServiceRemoteLogger?.logError(
           errorType: 'HTTP Error',
           errorMessage: errorMessage,
@@ -394,7 +393,7 @@ class ApiService {
       final apiEx = APIException.fromHttpError(e,
           uri: uri, method: 'PUT'); // Fixed: was showing POST
 
-      // Discord logging - log error
+      // Logging - log error
       await _apiServiceRemoteLogger?.logError(
         errorType: e.runtimeType.toString(),
         errorMessage: apiEx.message,
