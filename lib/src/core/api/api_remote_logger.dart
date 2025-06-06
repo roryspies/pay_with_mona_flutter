@@ -7,7 +7,7 @@ import 'package:pay_with_mona/ui/utils/extensions.dart';
 
 class APIServiceRemoteLogger {
   final String webhookUrl;
-  final HttpClient _discordClient = HttpClient();
+  final _remoteLoggerClient = HttpClient();
   final bool enabled;
 
   APIServiceRemoteLogger({
@@ -34,7 +34,7 @@ class APIServiceRemoteLogger {
           "📆 Time: `${toReadableDateAndTime(dateAndTime: DateTime.now())}`",
     };
 
-    await _sendToDiscord(payload);
+    await _sendToRemoteLogger(payload);
   }
 
   Future<void> logResponse({
@@ -55,10 +55,10 @@ class APIServiceRemoteLogger {
           "📆 Time: `${toReadableDateAndTime(dateAndTime: DateTime.now())}`",
     };
 
-    await _sendToDiscord(payload);
+    await _sendToRemoteLogger(payload);
   }
 
-  /// Log error information to Discord
+  /// Log error information to Remote Logger
   Future<void> logError({
     required String errorType,
     required String errorMessage,
@@ -80,14 +80,14 @@ class APIServiceRemoteLogger {
           "📆 Time: `${toReadableDateAndTime(dateAndTime: DateTime.now())}`",
     };
 
-    await _sendToDiscord(payload);
+    await _sendToRemoteLogger(payload);
   }
 
-  /// Send payload to Discord webhook
-  Future<void> _sendToDiscord(Map<String, dynamic> payload) async {
+  /// Send payload to Remote Logger webhook
+  Future<void> _sendToRemoteLogger(Map<String, dynamic> payload) async {
     try {
       final uri = Uri.parse(webhookUrl);
-      final request = await _discordClient.openUrl('POST', uri);
+      final request = await _remoteLoggerClient.openUrl('POST', uri);
 
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
       request.add(utf8.encode(jsonEncode(payload)));
@@ -95,13 +95,40 @@ class APIServiceRemoteLogger {
       final response = await request.close().timeout(
             const Duration(seconds: 10),
             onTimeout: () => throw TimeoutException(
-                'Discord webhook timeout', const Duration(seconds: 10)),
+                'REMOTE LOGGER webhook timeout', const Duration(seconds: 10)),
           );
 
-      // Consume the response to avoid memory leaks
       await response.drain();
     } catch (error) {
-      "🔔 ERROR SENDING DISCORD MESSAGE ==>> $error".log();
+      "🔔  ERROR SENDING REMOTE LOGGER MESSAGE ==>> $error".log();
+    }
+  }
+
+  Future<void> reportCrash({
+    required Object error,
+    required StackTrace trace,
+  }) async {
+    final uri = Uri.parse(webhookUrl);
+    final request = await _remoteLoggerClient.openUrl('POST', uri);
+
+    final payload = {
+      "content":
+          "😰 ERROR```${error.toString()}```\n📆⏳ DATE AND TIME:```${toReadableDateAndTime(dateAndTime: DateTime.now())}```\n📚STACK TRACE \n${shorten(text: trace.toString())}",
+    };
+
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+    request.add(utf8.encode(jsonEncode(payload)));
+
+    try {
+      final response = await request.close().timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw TimeoutException(
+                'REMOTE LOGGER webhook timeout', const Duration(seconds: 10)),
+          );
+
+      await response.drain();
+    } catch (error) {
+      "🔔  ERROR SENDING REMOTE LOGGER MESSAGE ==>> $error".log();
     }
   }
 
@@ -117,7 +144,7 @@ class APIServiceRemoteLogger {
     return shorten(text: data.toString());
   }
 
-  /// Shorten text to prevent Discord message limits
+  /// Shorten text to prevent  message limits
   String shorten({
     required String text,
     int maxLength = 1000,
@@ -138,6 +165,6 @@ class APIServiceRemoteLogger {
 
   /// Dispose of resources
   void dispose() {
-    _discordClient.close();
+    _remoteLoggerClient.close();
   }
 }

@@ -15,6 +15,7 @@ import 'package:pay_with_mona/src/core/security/payment_encryption/payment_encry
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
+import 'package:pay_with_mona/src/core/services/crash_monitoring_service.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
 import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
@@ -429,6 +430,9 @@ class MonaSDKNotifier extends ChangeNotifier {
     required String merchantKey,
   }) async {
     bool succeeded = false;
+
+    // Initialize crash monitoring first
+    await CrashMonitoringService.instance.initialize();
 
     try {
       if (_cachedMerchantKey == merchantKey &&
