@@ -17,7 +17,7 @@ import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_ke
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
 import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_checkout_sheet.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/services/auth_service.dart';
 import 'package:pay_with_mona/src/core/services/payments_service.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
@@ -255,7 +255,12 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     if (banksHaveData) {
       setSelectedPaymentMethod(method: PaymentMethod.savedBank);
-      _selectedBankOption = banks.firstWhere(
+      if (_selectedBankOption != null) {
+        notifyListeners();
+        return;
+      }
+
+      _selectedBankOption ??= banks.firstWhere(
         (bank) => bank.isPrimary == true,
         orElse: () => banks.first,
       );
@@ -777,7 +782,19 @@ class MonaSDKNotifier extends ChangeNotifier {
               );
 
               if (doKeyExchange) {
+                //handleNavToConfirmationScreen();
                 await SDKUtils.showSDKModalBottomSheet(
+                  isDismissible: false,
+                  enableDrag: false,
+                  callingContext: _callingBuildContext!,
+                  child: ConfirmTransactionModal(
+                    showTransactionStatusIndicator: true,
+                    selectedPaymentMethod: _selectedPaymentMethod,
+                    transactionAmountInKobo: _monaCheckOut!.amount!,
+                  ),
+                );
+                //return;
+                /* await SDKUtils.showSDKModalBottomSheet(
                   isDismissible: false,
                   enableDrag: false,
                   callingContext: _callingBuildContext!,
@@ -785,9 +802,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                     selectedPaymentMethod: _selectedPaymentMethod,
                     transactionAmountInKobo: _monaCheckOut!.amount!,
                   ),
-                );
-
-                return;
+                ); */
               }
             },
           );

@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/features/controller/notifier_enums.dart';
+import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
 import 'package:pay_with_mona/src/models/pending_payment_response_model.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
@@ -16,10 +16,12 @@ class ConfirmTransactionModal extends StatefulWidget {
     super.key,
     required this.transactionAmountInKobo,
     required this.selectedPaymentMethod,
+    this.showTransactionStatusIndicator = false,
   });
 
   final num transactionAmountInKobo;
   final PaymentMethod selectedPaymentMethod;
+  final bool showTransactionStatusIndicator;
 
   @override
   State<ConfirmTransactionModal> createState() =>
@@ -46,6 +48,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       default:
         break;
     }
+    showTransactionStatusIndicator = widget.showTransactionStatusIndicator;
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {

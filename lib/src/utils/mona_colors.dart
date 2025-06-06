@@ -17,6 +17,7 @@ class MonaColors {
   static const Color _defaultTextField = Color(0xFFF7F7F8);
   static const Color _defaultHint = Color(0xFF999999);
   static const Color _defaultSuccess = Color(0xFF0F973D);
+  static const Color _defaultError = Color(0xFFDE102A);
 
   static Color get bgGrey => _defaultBgGrey;
   static Color get neutralWhite => _defaultNeutralWhite;
@@ -25,6 +26,7 @@ class MonaColors {
   static Color get textField => _defaultTextField;
   static Color get hint => _defaultHint;
   static Color get successColour => _defaultSuccess;
+  static Color get errorColour => _defaultError;
 
   static Color get primaryBlue =>
       _merchantBrandingColours?.primaryColour ?? _defaultPrimaryBlue;

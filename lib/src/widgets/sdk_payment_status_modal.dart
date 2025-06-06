@@ -32,7 +32,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   late Animation<Color?> _thirdProgressColorAnimation;
 
   bool showPaymentSuccessfulOrFailed = false;
-  bool isPaymentSuccessful = false;
+  bool? isPaymentSuccessful;
 
   // Track current payment stage 0: not started, 1: sent, 2: received
   int _currentStage = 0;
@@ -62,15 +62,27 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       end: MonaColors.successColour,
     ).animate(_firstProgressController);
 
-    _secondProgressColorAnimation = ColorTween(
-      begin: MonaColors.successColour.withOpacity(0.1),
-      end: MonaColors.successColour,
-    ).animate(_secondProgressController);
+    _secondProgressColorAnimation = (isPaymentSuccessful ?? false
+            ? ColorTween(
+                begin: MonaColors.successColour.withOpacity(0.1),
+                end: MonaColors.successColour,
+              )
+            : ColorTween(
+                begin: MonaColors.errorColour.withOpacity(0.1),
+                end: MonaColors.errorColour,
+              ))
+        .animate(_secondProgressController);
 
-    _thirdProgressColorAnimation = ColorTween(
-      begin: MonaColors.successColour.withOpacity(0.1),
-      end: MonaColors.successColour,
-    ).animate(_thirdProgressController);
+    _thirdProgressColorAnimation = (isPaymentSuccessful ?? false
+            ? ColorTween(
+                begin: MonaColors.successColour.withOpacity(0.1),
+                end: MonaColors.successColour,
+              )
+            : ColorTween(
+                begin: MonaColors.errorColour.withOpacity(0.1),
+                end: MonaColors.errorColour,
+              ))
+        .animate(_thirdProgressController);
 
     _firstProgressController.addListener(() {
       if (mounted) setState(() {});
@@ -116,6 +128,8 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                     .log();
 
                 _transactionAmount = amount ?? 0;
+                isPaymentSuccessful = false;
+                setState(() {});
                 _completeAllAnimations(
                   isCompletedTransaction: false,
                 );
@@ -130,6 +144,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
                 _transactionAmount = amount ?? 0;
                 isPaymentSuccessful = true;
+                setState(() {});
                 _completeAllAnimations();
                 break;
 
@@ -245,20 +260,24 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                       CircleAvatar(
                         radius: 24,
                         backgroundColor: Colors.transparent,
-                        child: SvgPicture.asset(
-                          switch (isPaymentSuccessful) {
-                            true => "sdk_transaction_successful_icon",
-                            false => "sdk_transaction_failed_icon",
-                          }
-                              .svg,
-                        ),
+                        child: switch (isPaymentSuccessful) {
+                          true => SvgPicture.asset(
+                              "sdk_transaction_successful_icon".svg),
+                          false =>
+                            SvgPicture.asset("sdk_transaction_failed_icon".svg),
+                          null => SizedBox.shrink(),
+                        },
                       ),
 
                       context.sbH(8),
 
                       ///
                       Text(
-                        isPaymentSuccessful
+                        // Since this branch only runs when showPaymentSuccessfulOrFailed == true,
+                        // we know isPaymentSuccessful is non-null here, but the compiler still
+                        // wants us to treat it as nullable. So we can use the null-coalescing
+                        // operator to default to “false” if somehow it’s still null.
+                        (isPaymentSuccessful ?? false)
                             ? "Payment Successful!"
                             : "Payment Failed!",
                         textAlign: TextAlign.center,
@@ -271,7 +290,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                       context.sbH(8),
 
                       Text(
-                        isPaymentSuccessful
+                        (isPaymentSuccessful ?? false)
                             ? "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} was successful. Mona has sent you a transaction receipt!"
                             : "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} failed! \nPlease try again or use a different payment method.",
                         textAlign: TextAlign.center,
@@ -285,7 +304,9 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                       context.sbH(8),
 
                       CustomButton(
-                        label: isPaymentSuccessful ? "Return" : "Try Again",
+                        label: (isPaymentSuccessful ?? false)
+                            ? "Return"
+                            : "Try Again",
                         onTap: () {
                           if (isPaymentSuccessful == false) {
                             _resetAnimations();
@@ -293,7 +314,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                               clearMonaCheckout: false,
                               clearPendingPaymentResponseModel: false,
                             );
-                            SDKUtils.popMultiple(context, 2);
+                            Navigator.of(context).pop();
                             return;
                           }
 
@@ -346,6 +367,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
                           // Sent icon
                           PaymentStageWidget(
+                            isPaymentSuccessful: true,
                             isCurrentStage: _currentStage >= 1,
                             stageText: "Sent",
                           ),
@@ -356,10 +378,18 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                             flex: 3,
                             child: _currentStage == 1
                                 ? FlowingProgressBar(
-                                    //flowAnimation: _flowAnimation,
-                                    baseColor: MonaColors.successColour
-                                        .withOpacity(0.1),
-                                    flowColor: MonaColors.successColour,
+                                    baseColor: switch (
+                                        isPaymentSuccessful ?? true) {
+                                      true => MonaColors.successColour
+                                          .withOpacity(0.1),
+                                      false =>
+                                        MonaColors.errorColour.withOpacity(0.1),
+                                    },
+                                    flowColor: switch (
+                                        isPaymentSuccessful ?? true) {
+                                      true => MonaColors.successColour,
+                                      false => MonaColors.errorColour,
+                                    },
                                   )
                                 : AnimatedProgressBar(
                                     isCurrentStage: _currentStage >= 1,
@@ -372,6 +402,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                           context.sbW(4),
 
                           PaymentStageWidget(
+                            isPaymentSuccessful: isPaymentSuccessful,
                             isCurrentStage: _currentStage >= 2,
                             stageText: "Received",
                           ),
@@ -454,44 +485,51 @@ class PaymentStageWidget extends StatelessWidget {
     super.key,
     required this.isCurrentStage,
     required this.stageText,
+    this.isPaymentSuccessful,
   });
 
   final bool isCurrentStage;
+  final bool? isPaymentSuccessful;
   final String stageText;
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = switch ((isPaymentSuccessful, isCurrentStage)) {
+      (false, _) => MonaColors.errorColour,
+      (true, true) => MonaColors.successColour,
+      (_, true) => MonaColors.successColour.withOpacity(0.2),
+      _ => MonaColors.successColour.withOpacity(0.1),
+    };
+
+    final icon = switch ((isPaymentSuccessful, isCurrentStage)) {
+      (true, true) => SvgPicture.asset(
+          "mona_tick".svg,
+          height: 12,
+        ),
+      (false, true) => SvgPicture.asset(
+          "close".svg,
+          height: 12,
+        ),
+      _ => null,
+    };
+
     return Column(
+      spacing: 8.0,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        context.sbH(16),
         CircleAvatar(
           radius: 12,
-          backgroundColor: isCurrentStage
-              ? MonaColors.successColour
-              : MonaColors.successColour.withOpacity(0.2),
+          backgroundColor: backgroundColor,
           child: AnimatedSwitcher(
-            duration: Duration(
-              milliseconds: 300,
-            ),
-            child: isCurrentStage
-                ? SvgPicture.asset(
-                    "mona_tick".svg,
-                    height: 12,
-                  )
-                : null,
+            duration: Duration(milliseconds: 300),
+            child: icon,
           ),
         ),
 
-        //
-        context.sbH(4),
-
-        //
+        ///
         Text(
           stageText,
-          style: TextStyle(
-            fontSize: 10.0,
-          ),
+          style: TextStyle(fontSize: 10.0),
         ),
       ],
     );
