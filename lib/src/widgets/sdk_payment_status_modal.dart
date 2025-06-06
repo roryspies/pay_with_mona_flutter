@@ -62,10 +62,16 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       end: MonaColors.successColour,
     ).animate(_firstProgressController);
 
-    _secondProgressColorAnimation = ColorTween(
-      begin: MonaColors.successColour.withOpacity(0.1),
-      end: MonaColors.successColour,
-    ).animate(_secondProgressController);
+    _secondProgressColorAnimation = (isPaymentSuccessful ?? false
+            ? ColorTween(
+                begin: MonaColors.successColour.withOpacity(0.1),
+                end: MonaColors.successColour,
+              )
+            : ColorTween(
+                begin: MonaColors.errorColour.withOpacity(0.1),
+                end: MonaColors.errorColour,
+              ))
+        .animate(_secondProgressController);
 
     _thirdProgressColorAnimation = (isPaymentSuccessful ?? false
             ? ColorTween(
@@ -372,10 +378,18 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                             flex: 3,
                             child: _currentStage == 1
                                 ? FlowingProgressBar(
-                                    //flowAnimation: _flowAnimation,
-                                    baseColor: MonaColors.successColour
-                                        .withOpacity(0.1),
-                                    flowColor: MonaColors.successColour,
+                                    baseColor: switch (
+                                        isPaymentSuccessful ?? true) {
+                                      true => MonaColors.successColour
+                                          .withOpacity(0.1),
+                                      false =>
+                                        MonaColors.errorColour.withOpacity(0.1),
+                                    },
+                                    flowColor: switch (
+                                        isPaymentSuccessful ?? true) {
+                                      true => MonaColors.successColour,
+                                      false => MonaColors.errorColour,
+                                    },
                                   )
                                 : AnimatedProgressBar(
                                     isCurrentStage: _currentStage >= 1,
@@ -500,7 +514,7 @@ class PaymentStageWidget extends StatelessWidget {
     };
 
     return Column(
-      spacing: 16.0,
+      spacing: 8.0,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         CircleAvatar(
