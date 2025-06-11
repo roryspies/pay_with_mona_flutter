@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, deprecated_member_use
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -55,15 +55,19 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   bool _showSuccessState = false;
 
   void showSuccess() {
-    setState(() {
-      _showSuccessState = true;
-    });
+    if (mounted) {
+      setState(() {
+        _showSuccessState = true;
+      });
+    }
   }
 
   void showSuccessFromOutside() {
-    setState(() {
-      _showSuccessState = widget.showSuccess;
-    });
+    if (mounted) {
+      setState(() {
+        _showSuccessState = widget.showSuccess;
+      });
+    }
   }
 
   String formatDate(String? iso) {
@@ -76,7 +80,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   void initState() {
     super.initState();
     showSuccessFromOutside();
-    sdkNotifier.addListener(_onSdktateChange);
+    sdkNotifier.addListener(_onSDKStateChange);
   }
 
   @override
@@ -85,14 +89,18 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
     super.dispose();
   }
 
-  void _onSdktateChange() => setState(() {});
+  void _onSDKStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void showPopupMessage(String message,
       {Duration duration = const Duration(seconds: 2)}) {
-    setState(() {
-      _popupMessage = message;
-      _showPopup = true;
-    });
+    if (mounted) {
+      setState(() {
+        _popupMessage = message;
+        _showPopup = true;
+      });
+    }
 
     // Auto-hide after duration
     _popupTimer?.cancel();

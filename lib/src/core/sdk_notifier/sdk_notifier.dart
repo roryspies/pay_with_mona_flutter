@@ -1140,6 +1140,15 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
     }
 
+    /// *** Hold up to ensure that user saved methods have been set in the SDK.
+    await Future.delayed(Duration(seconds: 1));
+
+    final userKeyID = await checkIfUserHasKeyID();
+
+    if (userKeyID != null) {
+      await validatePII(userKeyID: userKeyID);
+    }
+
     onKeyExchange?.call();
 
     _updateState(MonaSDKState.idle);
