@@ -125,11 +125,14 @@ class SSEConnection {
   /// Start heartbeat for background mode
   void startBackgroundHeartbeat() {
     heartbeatTimer?.cancel();
-    heartbeatTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      if (isInBackground && isActive) {
-        _sendHeartbeat();
-      }
-    });
+    heartbeatTimer = Timer.periodic(
+      Duration(seconds: 10),
+      (timer) {
+        if (isInBackground && isActive) {
+          _sendHeartbeat();
+        }
+      },
+    );
   }
 
   /// Stop heartbeat
@@ -140,6 +143,10 @@ class SSEConnection {
 
   /// Send heartbeat to keep connection alive
   void _sendHeartbeat() {
+    SSEBackgroundManager.instance._logBackgroundMessage(
+      "SSEConnection ::: SENDING HEARTBEAT ::: ",
+    );
+
     // This is a lightweight ping to keep the connection active
     // The actual implementation would depend on your server setup
     lastEventReceived = DateTime.now();
@@ -237,7 +244,7 @@ class SSEBackgroundManager {
     switch (newState) {
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
-        _handleAppBackgrounded();
+        _handleAppInBackground();
         break;
       case AppLifecycleState.resumed:
         _handleAppForegrounded();
@@ -252,8 +259,10 @@ class SSEBackgroundManager {
   }
 
   /// Handle when app goes to background
-  void _handleAppBackgrounded() {
-    _logBackgroundMessage('App backgrounded - switching to background mode');
+  void _handleAppInBackground() {
+    _logBackgroundMessage(
+      'App is in background - switching to background mode',
+    );
     _startBackgroundMaintenance();
   }
 
