@@ -1,3 +1,415 @@
+/* import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/widgets.dart';
+// ignore: depend_on_referenced_packages
+import 'package:http/http.dart' as http;
+import 'package:pay_with_mona/src/core/api/api_config.dart';
+import 'package:pay_with_mona/src/core/events/host_lifecycle_observer.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
+
+/// Enum to represent different states of the SSE connection.
+enum SSEConnectionState {
+  disconnected,
+  connecting,
+  connected,
+  error,
+}
+
+/// Enum to represent different types of SSE listeners.
+enum SSEListenerType {
+  paymentUpdates,
+  transactionMessages,
+  customTabs,
+  authenticationEvents,
+}
+
+/// Configuration for an SSE listener.
+class SSEListenerConfig {
+  final SSEListenerType type;
+  final String? identifier;
+  final Function(String)? onDataChange;
+  final Function(Object)? onError;
+  final bool autoReconnect;
+
+  const SSEListenerConfig({
+    required this.type,
+    this.identifier,
+    this.onDataChange,
+    this.onError,
+    this.autoReconnect = true,
+  });
+
+  String get key => '${type.name}_${identifier ?? 'global'}';
+
+  String getPath() {
+    switch (type) {
+      case SSEListenerType.paymentUpdates:
+        return '/public/paymentUpdate/$identifier.json';
+      case SSEListenerType.transactionMessages:
+        return '/public/transaction-messages/$identifier.json';
+      case SSEListenerType.customTabs:
+        return '/public/close_tab.json';
+      case SSEListenerType.authenticationEvents:
+        return '/public/login_success/authn_$identifier.json';
+    }
+  }
+
+  String get displayName => type.name;
+}
+
+/// A wrapper for an individual SSE connection.
+class SSEConnection {
+  final SSEListenerConfig config;
+  final Uri uri;
+  StreamSubscription<String>? subscription;
+  SSEConnectionState state = SSEConnectionState.disconnected;
+  Timer? reconnectTimer;
+  DateTime? lastEventReceived;
+  int consecutiveErrors = 0;
+
+  SSEConnection({required this.config, required this.uri});
+
+  bool get isActive => subscription != null;
+  bool get isHealthy => consecutiveErrors < 5; // Increased threshold
+
+  void resetErrorCount() => consecutiveErrors = 0;
+  void incrementErrorCount() => consecutiveErrors++;
+
+  Future<void> dispose() async {
+    reconnectTimer?.cancel();
+    reconnectTimer = null;
+    await subscription?.cancel();
+    subscription = null;
+    state = SSEConnectionState.disconnected;
+  }
+}
+
+/// Enhanced Firebase SSE Listener aware of the application lifecycle.
+class FirebaseSSEListener {
+  FirebaseSSEListener._() {
+    // Initialize and start the lifecycle monitor
+    _lifecycleMonitor = AppLifecycleMonitor(
+      onStateChanged: _handleAppLifecycleChange,
+    );
+
+    _lifecycleMonitor.start();
+  }
+  static final FirebaseSSEListener _instance = FirebaseSSEListener._();
+  factory FirebaseSSEListener() => _instance;
+
+  // --- Properties ---
+  late final http.Client _httpClient;
+  final _databaseUrl = APIConfig.firebaseDbURL;
+  final Map<String, SSEConnection> _activeConnections = {};
+  late final StreamController<Map<String, SSEConnectionState>> _stateController;
+  late final AppLifecycleMonitor _lifecycleMonitor;
+  Timer? _healthCheckTimer;
+  bool _isInitialized = false;
+  AppLifecycleState _currentLifecycleState = AppLifecycleState.resumed;
+
+  // --- Public Getters ---
+  Map<String, SSEConnectionState> get connectionStates => Map.fromEntries(
+      _activeConnections.entries.map((e) => MapEntry(e.key, e.value.state)));
+  Stream<Map<String, SSEConnectionState>> get connectionStateStream =>
+      _stateController.stream;
+  bool get hasActiveListeners => _activeConnections.isNotEmpty;
+  bool get isAppInBackground =>
+      _currentLifecycleState != AppLifecycleState.resumed;
+
+  // --- Initialization and Lifecycle ---
+
+  /// Ensures the listener is properly initialized.
+  void _ensureInitialized() {
+    if (!_isInitialized) {
+      _httpClient = http.Client();
+      _stateController =
+          StreamController<Map<String, SSEConnectionState>>.broadcast();
+      _startHealthCheckTimer();
+      _isInitialized = true;
+      _logMessage('Initialized and ready.');
+    }
+  }
+
+  /// Handles app lifecycle state changes.
+  void _handleAppLifecycleChange(AppLifecycleState newState) {
+    if (_currentLifecycleState == newState) return;
+    _logMessage('App lifecycle state changed: $newState');
+    _currentLifecycleState = newState;
+
+    if (newState == AppLifecycleState.resumed) {
+      _logMessage('App resumed. Performing immediate health check.');
+      // Give a slight delay to allow network to settle
+      Future.delayed(const Duration(seconds: 1), _performHealthCheck);
+    } else {
+      _logMessage(
+          'App is in background. Connections are at risk of being closed by the OS.');
+      // When backgrounded, we don't do anything special.
+      // The health check and reconnect logic will handle any disconnections
+      // upon resuming.
+    }
+  }
+
+  // --- Health and Reconnection ---
+
+  void _startHealthCheckTimer() {
+    _healthCheckTimer?.cancel();
+    _healthCheckTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
+      if (!isAppInBackground) {
+        // Only run health checks when app is in foreground
+        _performHealthCheck();
+      }
+    });
+  }
+
+  /// Performs a health check on all active connections.
+  void _performHealthCheck() {
+    if (_activeConnections.isEmpty) return;
+    _logMessage(
+        'Performing health check on ${_activeConnections.length} connections...');
+
+    final now = DateTime.now();
+    for (final entry in _activeConnections.entries) {
+      final connection = entry.value;
+
+      // If a connection is not marked as connected, try to reconnect it.
+      if (connection.state != SSEConnectionState.connected) {
+        _logMessage(
+            'Health Check: Reconnecting inactive listener: ${connection.config.displayName}');
+        _scheduleReconnect(
+            connection.config.key, connection.config, connection.uri);
+        continue;
+      }
+
+      // Check for stale connections (no events received).
+      if (connection.lastEventReceived != null) {
+        final timeSinceLastEvent =
+            now.difference(connection.lastEventReceived!);
+        if (timeSinceLastEvent.inMinutes >= 3) {
+          _logMessage(
+              'Connection ${connection.config.key} appears stale. Reconnecting.');
+          _scheduleReconnect(
+              connection.config.key, connection.config, connection.uri);
+        }
+      }
+    }
+  }
+
+  /// Schedules a reconnection attempt with exponential backoff.
+  void _scheduleReconnect(String key, SSEListenerConfig config, Uri uri) {
+    final connection = _activeConnections[key];
+    if (connection == null || connection.reconnectTimer != null) {
+      return; // Already scheduled
+    }
+
+    final backoffSeconds = (5 * (connection.consecutiveErrors + 1)).clamp(
+      5,
+      60,
+    );
+
+    _logMessage(
+      'Scheduling reconnect for ${config.displayName} in $backoffSeconds seconds...',
+    );
+
+    connection.reconnectTimer = Timer(Duration(seconds: backoffSeconds), () {
+      connection.reconnectTimer = null; // Clear timer before attempting
+      if (_activeConnections.containsKey(key)) {
+        _logMessage('Attempting scheduled reconnect for ${config.displayName}');
+        _establishConnection(config, uri);
+      }
+    });
+  }
+
+  /// *** --- Public Methods ---
+  /// Start listening to an event stream with a given configuration.
+  Future<void> startListening(
+    SSEListenerConfig config,
+  ) async {
+    _ensureInitialized();
+    if (_databaseUrl.isEmpty || _databaseUrl == 'YOUR_FIREBASE_DB_URL_HERE') {
+      _logMessage(
+        'ERROR: Firebase Database URL is not set.',
+        emoji: '🚨',
+      );
+
+      throw StateError(
+        'FirebaseSSEListener not initialized with a valid database URL.',
+      );
+    }
+
+    final key = config.key;
+    if (_activeConnections.containsKey(key) &&
+        _activeConnections[key]!.isActive) {
+      _logMessage(
+        'Already listening to ${config.displayName}: ${config.identifier}',
+      );
+      return;
+    }
+
+    await _stopConnection(key); // Ensure any old connection is gone
+    final uri = Uri.parse(
+      '$_databaseUrl${config.getPath()}',
+    );
+    _logMessage(
+      'Starting listener for: ${config.displayName}',
+    );
+
+    await _establishConnection(config, uri);
+  }
+
+  /// Stop listening for a specific type and identifier.
+  Future<void> stopListening({
+    required SSEListenerType type,
+    String? identifier,
+  }) async {
+    final key = '${type.name}_${identifier ?? 'global'}';
+    await _stopConnection(key);
+  }
+
+  /// Stop all active listeners.
+  Future<void> stopAllListening() async {
+    _logMessage(
+      'Stopping all active listeners...',
+    );
+
+    final keys = List<String>.from(_activeConnections.keys);
+    for (final key in keys) {
+      await _stopConnection(key);
+    }
+  }
+
+  /// *** --- Core Logic ---
+  Future<void> _establishConnection(
+    SSEListenerConfig config,
+    Uri uri,
+  ) async {
+    final key = config.key;
+    final connection = SSEConnection(config: config, uri: uri);
+    _activeConnections[key] = connection;
+
+    try {
+      final request = http.Request('GET', uri)
+        ..headers['Accept'] = 'text/event-stream'
+        ..headers['Cache-Control'] = 'no-cache'
+        ..headers['Connection'] = 'keep-alive';
+
+      _updateConnectionState(key, SSEConnectionState.connecting);
+      final response =
+          await _httpClient.send(request).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        throw HttpException(
+          'Failed to connect: HTTP ${response.statusCode}',
+        );
+      }
+
+      _logMessage('${config.displayName} connection established.', emoji: '✅');
+      connection.resetErrorCount();
+      _updateConnectionState(key, SSEConnectionState.connected);
+
+      connection.subscription = response.stream.transform(utf8.decoder).listen(
+        (event) {
+          connection.lastEventReceived = DateTime.now();
+          _processEvent(event, config);
+        },
+        onError: (error) {
+          connection.incrementErrorCount();
+          _logMessage('Connection error for ${config.displayName}: $error',
+              emoji: '❌');
+          _handleConnectionError(key, error, config.onError);
+          if (config.autoReconnect) _scheduleReconnect(key, config, uri);
+        },
+        onDone: () {
+          _logMessage('Connection closed for ${config.displayName}.',
+              emoji: '🔌');
+          _updateConnectionState(key, SSEConnectionState.disconnected);
+          if (config.autoReconnect) _scheduleReconnect(key, config, uri);
+        },
+        cancelOnError: false, // Let the stream continue for reconnection logic
+      );
+    } catch (e) {
+      connection.incrementErrorCount();
+      _logMessage(
+          'Failed to establish connection for ${config.displayName}: $e',
+          emoji: '❌');
+      _handleConnectionError(key, e, config.onError);
+      if (config.autoReconnect) _scheduleReconnect(key, config, uri);
+    }
+  }
+
+  void _processEvent(String event, SSEListenerConfig config) {
+    // Process event data here...
+    try {
+      final lines = event.split('\n');
+      for (var line in lines) {
+        if (line.startsWith('data: ')) {
+          final jsonData = line.substring(6).trim();
+          if (jsonData.isNotEmpty && jsonData != 'null') {
+            // This is a valid data event
+            config.onDataChange?.call(jsonData);
+          }
+        } else if (line.startsWith('event: keep-alive')) {
+          // This is a firebase keep-alive event, we can just log it.
+          _logMessage(
+            'Received keep-alive for ${config.displayName}',
+            emoji: '❤️',
+          );
+        }
+      }
+    } catch (e) {
+      _logMessage('Event processing error: $e', emoji: '❌');
+      config.onError?.call(e);
+    }
+  }
+
+  // --- State and Cleanup ---
+
+  Future<void> _stopConnection(String key) async {
+    final connection = _activeConnections.remove(key);
+    if (connection != null) {
+      _logMessage('Stopping connection: $key', emoji: '🛑');
+      await connection.dispose();
+      _updateConnectionState(key, SSEConnectionState.disconnected,
+          broadcast: true);
+    }
+  }
+
+  void _handleConnectionError(
+      String key, Object error, Function(Object)? onError) {
+    _updateConnectionState(key, SSEConnectionState.error);
+    onError?.call(error);
+  }
+
+  void _updateConnectionState(String key, SSEConnectionState newState,
+      {bool broadcast = true}) {
+    final connection = _activeConnections[key];
+    if (connection != null) {
+      connection.state = newState;
+    }
+
+    if (broadcast && _isInitialized && !_stateController.isClosed) {
+      _stateController.add(connectionStates);
+    }
+  }
+
+  void dispose() {
+    _logMessage('Disposing FirebaseSSEListener.', emoji: '🛑');
+    _healthCheckTimer?.cancel();
+    _lifecycleMonitor.dispose();
+    stopAllListening();
+    _stateController.close();
+    _httpClient.close();
+    _isInitialized = false;
+  }
+
+  void _logMessage(String message, {String? emoji}) {
+    // Simplified logger for clarity
+    final prefix = emoji ?? 'ℹ️';
+    '$prefix [SSEListener] $message'.log();
+  }
+}
+ */
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -686,7 +1098,7 @@ class FirebaseSSEListener {
       final request = http.Request('GET', uri)
         ..headers['Accept'] = 'text/event-stream'
         ..headers['Cache-Control'] = 'no-cache'
-        ..headers['Connection'] = 'keep-alive'; // Explicit keep-alive
+        ..headers['Connection'] = 'keep-alive';
 
       _updateConnectionState(key, SSEConnectionState.connecting);
 

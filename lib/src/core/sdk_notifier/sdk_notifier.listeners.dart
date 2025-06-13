@@ -143,6 +143,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
 
               await loginWithStrongAuth(isFromCollections: isFromCollections);
               authCompleter.complete();
+              resetPaymentWithPossibleKeyExchange();
             }
           } catch (error, stackTrace) {
             "_listenForAuthEvents error: $error".log();

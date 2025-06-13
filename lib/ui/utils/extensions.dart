@@ -19,6 +19,16 @@ extension ValueNotifierExtension<T> on T {
   }
 }
 
+extension IgnorePointerExtension on Widget {
+  ignorePointer({
+    required bool isLoading,
+  }) =>
+      IgnorePointer(
+        ignoring: isLoading,
+        child: this,
+      );
+}
+
 /// extension for listening to ValueNotifier instances.
 extension ValueNotifierBuilderExtension<T> on ValueNotifier<T> {
   Widget sync({

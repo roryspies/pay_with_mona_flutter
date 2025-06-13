@@ -37,17 +37,6 @@ flutter:
     - assets/images/
 
   fonts:
-    - family: General Sans
+    - family: Neue Montreal
       fonts:
-        - asset: assets/fonts/GeneralSans-Light.otf
-          weight: 300
-        - asset: assets/fonts/GeneralSans-Regular.otf
-          weight: 400
-        - asset: assets/fonts/GeneralSans-Medium.otf
-          weight: 500
-        - asset: assets/fonts/GeneralSans-SemiBold.otf
-          weight: 600
-        - asset: assets/fonts/GeneralSans-Bold.otf
-          weight: 700
-        - asset: assets/fonts/GeneralSans-Bold.otf
-          weight: 800
+        - asset: assets/fonts/NeueMontreal-Regular.otf

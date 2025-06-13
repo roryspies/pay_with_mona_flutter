@@ -35,7 +35,7 @@ import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
 import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
-
+import 'dart:ui' as dart_app_life_cycle show AppLifecycleState;
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
 
@@ -93,6 +93,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _transactionPIN;
   bool showCancelButton = true;
   bool changeSDKStateOnHostAppInForeground = true;
+  bool paymentWithPossibleKeyExchange = false;
   String? _cachedMerchantKey;
   MerchantBranding? _merchantBrandingDetails;
   MerchantPaymentSettingsEnum _merchantPaymentSettingsEnum =
@@ -262,8 +263,11 @@ class MonaSDKNotifier extends ChangeNotifier {
       }
 
       _selectedBankOption ??= banks.firstWhere(
-        (bank) => bank.isPrimary == true,
-        orElse: () => banks.first,
+        (bank) => bank.isPrimary == true && bank.activeIn == null,
+        orElse: () => banks.firstWhere(
+          (bank) => bank.isPrimary == false,
+          orElse: () => banks.first,
+        ),
       );
     }
     notifyListeners();
@@ -311,6 +315,17 @@ class MonaSDKNotifier extends ChangeNotifier {
   }) {
     this.showCancelButton = showCancelButton;
     notifyListeners();
+  }
+
+  void setPaymentWithPossibleKeyExchange({
+    required bool paymentWithPossibleKeyExchange,
+  }) {
+    this.paymentWithPossibleKeyExchange = paymentWithPossibleKeyExchange;
+    notifyListeners();
+  }
+
+  void resetPaymentWithPossibleKeyExchange() {
+    paymentWithPossibleKeyExchange = false;
   }
 
   // Enhanced method with better error handling and type safety
@@ -480,8 +495,13 @@ class MonaSDKNotifier extends ChangeNotifier {
       onStateChanged: (state) async {
         /// *** Here, it is assumed, that the only reason the app has come back to foreground is because custom tabs was open and now it has closed.
         /// *** To check if the custom tabs was closed
-        if (state == AppLifecycleState.resumed) {
+        if (state == dart_app_life_cycle.AppLifecycleState.resumed) {
           "HOST App is in foreground".log();
+          if (paymentWithPossibleKeyExchange) {
+            _updateState(MonaSDKState.loading);
+            return;
+          }
+
           _updateState(MonaSDKState.idle);
         } else {
           "HOST App is in background".log();
@@ -786,7 +806,6 @@ class MonaSDKNotifier extends ChangeNotifier {
               );
 
               if (doKeyExchange) {
-                //handleNavToConfirmationScreen();
                 await SDKUtils.showSDKModalBottomSheet(
                   isDismissible: false,
                   enableDrag: false,
@@ -797,16 +816,6 @@ class MonaSDKNotifier extends ChangeNotifier {
                     transactionAmountInKobo: _monaCheckOut!.amount!,
                   ),
                 );
-                //return;
-                /* await SDKUtils.showSDKModalBottomSheet(
-                  isDismissible: false,
-                  enableDrag: false,
-                  callingContext: _callingBuildContext!,
-                  child: ConfirmTransactionModal(
-                    selectedPaymentMethod: _selectedPaymentMethod,
-                    transactionAmountInKobo: _monaCheckOut!.amount!,
-                  ),
-                ); */
               }
             },
           );
@@ -842,6 +851,12 @@ class MonaSDKNotifier extends ChangeNotifier {
           ? _selectedBankOption?.bankId
           : _selectedCardOption?.bankId,
     );
+
+    if (url.toString().contains("sessionId")) {
+      setPaymentWithPossibleKeyExchange(
+        paymentWithPossibleKeyExchange: true,
+      );
+    }
 
     await _launchURL(url);
   }
@@ -901,13 +916,14 @@ class MonaSDKNotifier extends ChangeNotifier {
               return;
             }
 
-            _updateState(MonaSDKState.success);
-            _authStream.emit(state: AuthState.loggedIn);
-            //validatePII();
-
             if (_callingBuildContext != null) {
-              Navigator.of(_callingBuildContext!).pop();
+              /// *** TODO: Remove this and use the previous version.
+              SDKUtils.popMultiple(_callingBuildContext!, 2);
+              //Navigator.of(_callingBuildContext!).pop();
             }
+            _authStream.emit(state: AuthState.loggedIn);
+            _updateState(MonaSDKState.success);
+            /* await validatePII(); */
 
             /* if (!isFromCollections) {
               if (_callingBuildContext != null) {
