@@ -43,9 +43,11 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
   void initState() {
     super.initState();
     sdkNotifier.addListener(_onSdkStateChange);
-    /* WidgetsBinding.instance.addPostFrameCallback((_) {
-      sdkNotifier.validatePII();
-    }); */
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await sdkNotifier.validatePII(
+        userKeyID: await sdkNotifier.checkIfUserHasKeyID() ?? "",
+      );
+    });
   }
 
   void _onSdkStateChange() {
