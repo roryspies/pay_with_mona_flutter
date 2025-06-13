@@ -126,7 +126,8 @@ enum MerchantPaymentSettingsEnum {
       case debitSuccess:
         return "debit_success";
       case walletReceiveInProgress:
-        return "wallet_received";
+        //return "wallet_received";
+        return "wallet_progress";
       case walletReceiveComplete:
         return "wallet_completed";
     }
