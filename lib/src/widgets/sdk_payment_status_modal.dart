@@ -62,7 +62,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       end: MonaColors.successColour,
     ).animate(_firstProgressController);
 
-    _secondProgressColorAnimation = (isPaymentSuccessful ?? false
+    _secondProgressColorAnimation = (isPaymentSuccessful ?? true
             ? ColorTween(
                 begin: MonaColors.successColour.withOpacity(0.1),
                 end: MonaColors.successColour,
@@ -366,16 +366,18 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                           context.sbW(4),
 
                           // Sent icon
-                          PaymentStageWidget(
-                            isPaymentSuccessful: true,
-                            isCurrentStage: _currentStage >= 1,
-                            stageText: "Sent",
+                          Expanded(
+                            child: PaymentStageWidget(
+                              isPaymentSuccessful: true,
+                              isCurrentStage: _currentStage >= 1,
+                              stageText: "Sent",
+                            ),
                           ),
 
                           context.sbW(4),
 
                           Expanded(
-                            flex: 3,
+                            flex: 4,
                             child: _currentStage == 1
                                 ? FlowingProgressBar(
                                     baseColor: switch (
@@ -401,10 +403,12 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
                           context.sbW(4),
 
-                          PaymentStageWidget(
-                            isPaymentSuccessful: isPaymentSuccessful,
-                            isCurrentStage: _currentStage >= 2,
-                            stageText: "Received",
+                          Expanded(
+                            child: PaymentStageWidget(
+                              isPaymentSuccessful: isPaymentSuccessful,
+                              isCurrentStage: _currentStage >= 2,
+                              stageText: "Received",
+                            ),
                           ),
 
                           context.sbW(4),

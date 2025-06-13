@@ -551,7 +551,6 @@ class MonaSDKNotifier extends ChangeNotifier {
       return;
     }
 
-    _updateState(MonaSDKState.idle);
     switch (response["exists"] as bool) {
       /// *** This is a Mona User
       case true:
@@ -608,6 +607,8 @@ class MonaSDKNotifier extends ChangeNotifier {
           userKeyID: userKeyID,
         );
       }
+
+      _updateState(MonaSDKState.loading);
 
       final firstName = _monaCheckOut?.firstName;
       final lastName = _monaCheckOut?.lastName;
@@ -918,8 +919,8 @@ class MonaSDKNotifier extends ChangeNotifier {
 
             if (_callingBuildContext != null) {
               /// *** TODO: Remove this and use the previous version.
-              SDKUtils.popMultiple(_callingBuildContext!, 2);
-              //Navigator.of(_callingBuildContext!).pop();
+              //SDKUtils.popMultiple(_callingBuildContext!, 1);
+              Navigator.of(_callingBuildContext!).pop();
             }
             _authStream.emit(state: AuthState.loggedIn);
             _updateState(MonaSDKState.success);
