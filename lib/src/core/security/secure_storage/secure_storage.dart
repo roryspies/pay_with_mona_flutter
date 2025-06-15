@@ -125,17 +125,12 @@ class SecureStorage {
   /// It works by reading the key, deleting everything, and then writing it back.
   Future<void> clearAllExceptMerchantAPIKey() async {
     try {
-      // 1. Read the value of the key we want to keep before deleting anything.
       final merchantAPIKey = await read(
         key: SecureStorageKeys.merchantAPIKey,
       );
 
-      // 2. Delete everything currently in secure storage.
-      // We are reusing your existing method for this.
       await permanentlyClearAllKeys();
 
-      // 3. If the merchantAPIKey existed before, write it back to storage.
-      // If it was null, we don't need to do anything.
       if (merchantAPIKey != null) {
         await write(
           key: SecureStorageKeys.merchantAPIKey,
@@ -143,9 +138,9 @@ class SecureStorage {
         );
       }
     } catch (e, stackTrace) {
-      // Throw a specific error to make debugging easier.
       throw Exception(
-          'Failed to clear storage while preserving merchantAPIKey: $e\n$stackTrace');
+        'Failed to clear storage while preserving merchantAPIKey: $e\n$stackTrace',
+      );
     }
   }
 }

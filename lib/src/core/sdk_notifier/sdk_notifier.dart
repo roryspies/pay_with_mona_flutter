@@ -413,7 +413,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     );
   }
 
-  Future<String?> _getMerchantAPIKey() async {
+  Future<String?> getMerchantAPIKey() async {
     return await _secureStorage.read(
       key: SecureStorageKeys.merchantAPIKey,
     );
@@ -619,7 +619,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       final (Map<String, dynamic>? success, failure) =
           await _paymentsService.initiatePayment(
         merchantKey: await _getMerchantKey() ?? "",
-        merchantAPIKey: await _getMerchantAPIKey() ?? "",
+        merchantAPIKey: await getMerchantAPIKey() ?? "",
         tnxAmountInKobo: tnxAmountInKobo,
         successRateType: _merchantPaymentSettingsEnum.paymentName,
 
@@ -1181,10 +1181,10 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.idle);
   }
 
-  void resetSDKState({
+  Future<void> resetSDKState({
     bool clearMonaCheckout = true,
     bool clearPendingPaymentResponseModel = true,
-  }) {
+  }) async {
     _errorMessage = null;
     _currentTransactionId = null;
     _strongAuthToken = null;
