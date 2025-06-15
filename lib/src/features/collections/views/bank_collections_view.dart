@@ -93,12 +93,18 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
     return NumberFormat("#,##0", "en_NG").format(value);
   }
 
-  void showPopupMessage(String message,
-      {Duration duration = const Duration(seconds: 2)}) {
-    setState(() {
-      _popupMessage = message;
-      _showPopup = true;
-    });
+  void showPopupMessage(
+    String message, {
+    Duration duration = const Duration(
+      seconds: 2,
+    ),
+  }) {
+    setState(
+      () {
+        _popupMessage = message;
+        _showPopup = true;
+      },
+    );
 
     // Auto-hide after duration
     _popupTimer?.cancel();

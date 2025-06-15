@@ -1,10 +1,12 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 
-/// A secure storage utility for the `pay_with_mona` SDK.
+/// A secure singleton wrapper for FlutterSecureStorage.
 ///
-/// Wraps `FlutterSecureStorage` to provide a simple API for storing
-/// and retrieving sensitive key-value data across Android and iOS,
-/// using platform-specific encryption and access controls.
+/// Provides type-safe, platform-aware methods for handling sensitive data
+/// like API keys, tokens, and other credentials. It uses EncryptedSharedPreferences
+/// on Android and the Keychain service on iOS for optimal security.
 class SecureStorage {
   /// Singleton instance of [SecureStorage].
   static final SecureStorage _instance = SecureStorage._internal();
@@ -99,11 +101,12 @@ class SecureStorage {
 
   /// Deletes all entries in secure storage for this app.
   ///
-  /// Use with caution, as this will remove all persisted sensitive data.
+  /// Use with caution, as this will remove ALL persisted sensitive data,
+  /// including the merchant API key.
   ///
   /// Throws:
   /// - [PlatformException] if the operation fails.
-  Future<void> permanentlyClearKeys() async {
+  Future<void> permanentlyClearAllKeys() async {
     try {
       await _storage.deleteAll(
         aOptions: _androidOptions,
@@ -111,6 +114,38 @@ class SecureStorage {
       );
     } catch (e, stackTrace) {
       throw Exception('Failed to clear secure storage: $e\n$stackTrace');
+    }
+  }
+
+  // --- NEW METHOD ---
+  /// Deletes all entries EXCEPT for the `merchantAPIKey`.
+  ///
+  /// This method is ideal for logging a user out or clearing session data
+  /// without forcing them to re-enter their permanent merchant API key.
+  /// It works by reading the key, deleting everything, and then writing it back.
+  Future<void> clearAllExceptMerchantAPIKey() async {
+    try {
+      // 1. Read the value of the key we want to keep before deleting anything.
+      final merchantAPIKey = await read(
+        key: SecureStorageKeys.merchantAPIKey,
+      );
+
+      // 2. Delete everything currently in secure storage.
+      // We are reusing your existing method for this.
+      await permanentlyClearAllKeys();
+
+      // 3. If the merchantAPIKey existed before, write it back to storage.
+      // If it was null, we don't need to do anything.
+      if (merchantAPIKey != null) {
+        await write(
+          key: SecureStorageKeys.merchantAPIKey,
+          value: merchantAPIKey,
+        );
+      }
+    } catch (e, stackTrace) {
+      // Throw a specific error to make debugging easier.
+      throw Exception(
+          'Failed to clear storage while preserving merchantAPIKey: $e\n$stackTrace');
     }
   }
 }
