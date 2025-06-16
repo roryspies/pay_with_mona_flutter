@@ -137,8 +137,12 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                 height: context.h(22)),
                             CircleAvatar(
                               radius: context.w(24),
-                              backgroundColor:
-                                  MonaColors.primaryBlue.withOpacity(0.1),
+                              backgroundColor: (sdkNotifier
+                                          .merchantBrandingDetails
+                                          ?.colors
+                                          .primaryColour ??
+                                      MonaColors.primaryBlue)
+                                  .withOpacity(0.1),
                               backgroundImage: switch (
                                   sdkNotifier.merchantBrandingDetails != null &&
                                       sdkNotifier.merchantBrandingDetails!.image
@@ -158,7 +162,11 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                     style: TextStyle(
                                       fontSize: context.sp(25),
                                       fontWeight: FontWeight.w600,
-                                      color: MonaColors.primaryBlue,
+                                      color: (sdkNotifier
+                                              .merchantBrandingDetails
+                                              ?.colors
+                                              .primaryColour ??
+                                          MonaColors.primaryBlue),
                                     ),
                                   ),
                               },
@@ -251,7 +259,11 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                       border: Border.all(
                                         width: 1.5,
                                         color: (selectedBank == bank)
-                                            ? MonaColors.primaryBlue
+                                            ? (sdkNotifier
+                                                    .merchantBrandingDetails
+                                                    ?.colors
+                                                    .primaryColour ??
+                                                MonaColors.primaryBlue)
                                             : MonaColors.bgGrey,
                                       ),
                                     ),
@@ -259,7 +271,11 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                                       child: CircleAvatar(
                                         radius: context.w(6),
                                         backgroundColor: (selectedBank == bank)
-                                            ? MonaColors.primaryBlue
+                                            ? (sdkNotifier
+                                                    .merchantBrandingDetails
+                                                    ?.colors
+                                                    .primaryColour ??
+                                                MonaColors.primaryBlue)
                                             : Colors.transparent,
                                       ),
                                     ),
@@ -304,88 +320,80 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                         context.sbH(24),
                         Builder(
                           builder: (context) {
-                            return sdkNotifier.state == MonaSDKState.loading
-                                ? Align(
-                                    alignment: Alignment.center,
-                                    child: CircularProgressIndicator(
-                                      color: MonaColors.primaryBlue,
-                                    ),
-                                  )
-                                : CustomButton(
-                                    label: 'Approve debiting',
-                                    onTap: () {
-                                      if (selectedBank == null) {
-                                        showPopupMessage(
-                                            'Please select a bank');
-                                        return;
-                                      }
-                                      sdkNotifier.setCallingBuildContext(
-                                          context: context);
-                                      sdkNotifier.createCollections(
-                                        bankId: selectedBank?.bankId ??
-                                            '680f5d983bccd31f1312645d',
-                                        accessRequestId: widget.accessRequestId,
-                                        onSuccess: (successMap) {
-                                          Navigator.of(context).pop();
-                                          showModalBottomSheet(
-                                            context: context,
-                                            isScrollControlled: true,
-                                            builder: (_) => Wrap(
-                                              children: [
-                                                CollectionsCheckoutSheet(
-                                                  accessRequestId:
-                                                      widget.accessRequestId,
-                                                  debitType: widget.debitType,
-                                                  selectedBank: selectedBank,
-                                                  successMap: successMap,
-                                                  showSuccess: true,
-                                                  scheduleEntries:
-                                                      widget.scheduleEntries,
-                                                  method: widget.method,
-                                                  details: Collection(
-                                                    maxAmount: widget
-                                                        .details!.maxAmount,
-                                                    expiryDate: widget
-                                                        .details!.expiryDate,
-                                                    startDate: widget
-                                                        .details!.startDate,
-                                                    monthlyLimit: widget
-                                                        .details!.monthlyLimit,
-                                                    schedule: Schedule(
-                                                      frequency:
-                                                          schedule.frequency,
-                                                      type: schedule.type,
-                                                      entries: schedule.entries,
-                                                      amount: schedule.amount,
-                                                    ),
-                                                    reference: widget
-                                                        .details!.reference,
-                                                    status: '',
-                                                    nextCollectionAt: '',
-                                                  ),
-                                                  merchantName:
-                                                      widget.merchantName,
-                                                ),
-                                              ],
+                            return CustomButton(
+                              isLoading:
+                                  sdkNotifier.state == MonaSDKState.loading,
+                              label: 'Approve debiting',
+                              onTap: () {
+                                if (selectedBank == null) {
+                                  showPopupMessage('Please select a bank');
+                                  return;
+                                }
+                                sdkNotifier.setCallingBuildContext(
+                                    context: context);
+                                sdkNotifier.createCollections(
+                                  bankId: selectedBank?.bankId ??
+                                      '680f5d983bccd31f1312645d',
+                                  accessRequestId: widget.accessRequestId,
+                                  onSuccess: (successMap) {
+                                    Navigator.of(context).pop();
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      builder: (_) => Wrap(
+                                        children: [
+                                          CollectionsCheckoutSheet(
+                                            accessRequestId:
+                                                widget.accessRequestId,
+                                            debitType: widget.debitType,
+                                            selectedBank: selectedBank,
+                                            successMap: successMap,
+                                            showSuccess: true,
+                                            scheduleEntries:
+                                                widget.scheduleEntries,
+                                            method: widget.method,
+                                            details: Collection(
+                                              maxAmount:
+                                                  widget.details!.maxAmount,
+                                              expiryDate:
+                                                  widget.details!.expiryDate,
+                                              startDate:
+                                                  widget.details!.startDate,
+                                              monthlyLimit:
+                                                  widget.details!.monthlyLimit,
+                                              schedule: Schedule(
+                                                frequency: schedule.frequency,
+                                                type: schedule.type,
+                                                entries: schedule.entries,
+                                                amount: schedule.amount,
+                                              ),
+                                              reference:
+                                                  widget.details!.reference,
+                                              status: '',
+                                              nextCollectionAt: '',
                                             ),
-                                          );
-                                        },
-                                        onFailure: () {
-                                          showPopupMessage('An error occurred');
-                                        },
-                                      );
-                                      // sdkNotifier
-                                      //   ..setCallingBuildContext(
-                                      //       context: context)
-                                      //   ..triggerCollection(
-                                      //     merchantId:
-                                      //         '67e41f884126830aded0b43c',
-                                      //     onSuccess: (p0) {
-                                      //       Navigator.of(context).pop();
-                                      //     },
-                                      //   );
-                                    },
-                                  );
+                                            merchantName: widget.merchantName,
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  onFailure: () {
+                                    showPopupMessage('An error occurred');
+                                  },
+                                );
+                                // sdkNotifier
+                                //   ..setCallingBuildContext(
+                                //       context: context)
+                                //   ..triggerCollection(
+                                //     merchantId:
+                                //         '67e41f884126830aded0b43c',
+                                //     onSuccess: (p0) {
+                                //       Navigator.of(context).pop();
+                                //     },
+                                //   );
+                              },
+                            );
                           },
                         )
                       ],
@@ -464,6 +472,8 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
               ),
             ),
           ],
+        ).ignorePointer(
+          isLoading: sdkNotifier.state == MonaSDKState.loading,
         ),
       ),
     );

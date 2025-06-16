@@ -129,7 +129,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                               color: (sdkNotifier.selectedPaymentMethod ==
                                           PaymentMethod.savedCard &&
                                       selectedCardID == card.bankId)
-                                  ? MonaColors.primaryBlue
+                                  ? (sdkNotifier.merchantBrandingDetails?.colors
+                                          .primaryColour ??
+                                      MonaColors.primaryBlue)
                                   : MonaColors.bgGrey,
                             ),
                           ),
@@ -140,7 +142,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                   (sdkNotifier.selectedPaymentMethod ==
                                               PaymentMethod.savedCard &&
                                           selectedCardID == card.bankId)
-                                      ? MonaColors.primaryBlue
+                                      ? (sdkNotifier.merchantBrandingDetails
+                                              ?.colors.primaryColour ??
+                                          MonaColors.primaryBlue)
                                       : Colors.transparent,
                             ),
                           ),
@@ -158,8 +162,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     (bank) {
                       final selectedBankID =
                           sdkNotifier.selectedBankOption?.bankId;
-
-                      "Selected Bank ID: $selectedBankID";
 
                       if (bank.activeIn != null && bank.activeIn! > 0) {
                         return Padding(
@@ -292,7 +294,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                     color: (sdkNotifier.selectedPaymentMethod ==
                                                 PaymentMethod.savedBank &&
                                             selectedBankID == bank.bankId)
-                                        ? MonaColors.primaryBlue
+                                        ? (sdkNotifier.merchantBrandingDetails
+                                                ?.colors.primaryColour ??
+                                            MonaColors.primaryBlue)
                                         : MonaColors.bgGrey,
                                   ),
                                 ),
@@ -303,7 +307,11 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                         (sdkNotifier.selectedPaymentMethod ==
                                                     PaymentMethod.savedBank &&
                                                 selectedBankID == bank.bankId)
-                                            ? MonaColors.primaryBlue
+                                            ? (sdkNotifier
+                                                    .merchantBrandingDetails
+                                                    ?.colors
+                                                    .primaryColour ??
+                                                MonaColors.primaryBlue)
                                             : Colors.transparent,
                                   ),
                                 ),
@@ -351,8 +359,13 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 label: "",
                 isLoading: sdkNotifier.state == MonaSDKState.loading,
                 color: (sdkNotifier.selectedPaymentMethod == PaymentMethod.none)
-                    ? MonaColors.primaryBlue.withAlpha(100)
-                    : MonaColors.primaryBlue,
+                    ? (sdkNotifier.merchantBrandingDetails?.colors
+                                .primaryColour ??
+                            MonaColors.primaryBlue)
+                        .withAlpha(100)
+                    : (sdkNotifier
+                            .merchantBrandingDetails?.colors.primaryColour ??
+                        MonaColors.primaryBlue),
                 child: switch ([
                   PaymentMethod.none,
                   PaymentMethod.card,
@@ -381,7 +394,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         //!
                         CircleAvatar(
                           radius: 12,
-                          backgroundColor: MonaColors.primaryBlue,
+                          backgroundColor: (sdkNotifier.merchantBrandingDetails
+                                  ?.colors.primaryColour ??
+                              MonaColors.primaryBlue),
                           backgroundImage: switch (
                               sdkNotifier.selectedPaymentMethod ==
                                   PaymentMethod.savedBank) {

@@ -17,11 +17,13 @@ class ConfirmTransactionModal extends StatefulWidget {
     required this.transactionAmountInKobo,
     required this.selectedPaymentMethod,
     this.showTransactionStatusIndicator = false,
+    this.performedKeyExchange = false,
   });
 
   final num transactionAmountInKobo;
   final PaymentMethod selectedPaymentMethod;
   final bool showTransactionStatusIndicator;
+  final bool performedKeyExchange;
 
   @override
   State<ConfirmTransactionModal> createState() =>
@@ -124,7 +126,9 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
             AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
               child: switch (showTransactionStatusIndicator) {
-                true => SdkPaymentStatusModal(),
+                true => SdkPaymentStatusModal(
+                    performedKeyExchange: widget.performedKeyExchange,
+                  ),
                 false => Column(
                     children: [
                       Container(
@@ -199,8 +203,12 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                                     ),
                                   ),
                                 _ => CircleAvatar(
-                                    backgroundColor:
-                                        MonaColors.primaryBlue.withOpacity(
+                                    backgroundColor: (_sdkNotifier
+                                                .merchantBrandingDetails
+                                                ?.colors
+                                                .primaryColour ??
+                                            MonaColors.primaryBlue)
+                                        .withOpacity(
                                       0.1,
                                     ),
                                     child:
@@ -249,13 +257,19 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                                     style: TextStyle(
                                       fontSize: 14.0,
                                       fontWeight: FontWeight.w600,
-                                      color: MonaColors.primaryBlue,
+                                      color: (_sdkNotifier
+                                              .merchantBrandingDetails
+                                              ?.colors
+                                              .primaryColour ??
+                                          MonaColors.primaryBlue),
                                     ),
                                   ),
                                   Icon(
                                     Icons.arrow_forward_ios_rounded,
                                     size: 14,
-                                    color: MonaColors.primaryBlue,
+                                    color: (_sdkNotifier.merchantBrandingDetails
+                                            ?.colors.primaryColour ??
+                                        MonaColors.primaryBlue),
                                   ),
                                 ],
                               ),

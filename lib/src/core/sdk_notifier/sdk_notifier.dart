@@ -398,6 +398,14 @@ class MonaSDKNotifier extends ChangeNotifier {
     );
   }
 
+  /// *** Make Shift Fix - TODO: @Serticode Implement the merchant public key better
+  Future<void> setMerchantKey({required String merchantKey}) async {
+    await _secureStorage.write(
+      key: SecureStorageKeys.merchantKey,
+      value: merchantKey,
+    );
+  }
+
   Future<String?> _getMerchantKey() async {
     return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,
@@ -535,6 +543,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> validatePII({
     required String userKeyID,
     bool isFromConfirmLoggedInUser = false,
+    bool isFromBankCollectionsView = false,
     void Function(String)? onEffect,
   }) async {
     if (isFromConfirmLoggedInUser == false) {
@@ -580,6 +589,10 @@ class MonaSDKNotifier extends ChangeNotifier {
         _authStream.emit(state: AuthState.notAMonaUser);
         onEffect?.call('PII Auth Result - User is not a mona user');
         break;
+    }
+
+    if (isFromBankCollectionsView) {
+      _updateState(MonaSDKState.idle);
     }
   }
 
@@ -789,6 +802,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     switch (_selectedPaymentMethod) {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
+          _updateState(MonaSDKState.loading);
           await _paymentsService.makePaymentRequest(
             paymentType: _selectedPaymentMethod == PaymentMethod.savedBank
                 ? null
@@ -812,6 +826,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                   enableDrag: false,
                   callingContext: _callingBuildContext!,
                   child: ConfirmTransactionModal(
+                    performedKeyExchange: true,
                     showTransactionStatusIndicator: true,
                     selectedPaymentMethod: _selectedPaymentMethod,
                     transactionAmountInKobo: _monaCheckOut!.amount!,
@@ -904,6 +919,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       final canEnrollKeys = await canEnrollKeysCompleter.future;
 
       if (canEnrollKeys) {
+        _updateState(MonaSDKState.loading);
         "USER ALLOWED TO ENROLL KEYS".log();
         return await _authService.signAndCommitAuthKeys(
           deviceAuth: response["deviceAuth"],
@@ -1066,7 +1082,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(String)? onError,
     void Function()? onSuccess,
-    required String scrtK,
+    required String secretKey,
   }) async {
     _updateState(MonaSDKState.loading);
     final (Map<String, dynamic>? success, failure) =
@@ -1081,7 +1097,7 @@ class MonaSDKNotifier extends ChangeNotifier {
             amount: amount,
             debitType: debitType,
             scheduleEntries: scheduleEntries,
-            scrtK: scrtK);
+            secretKey: secretKey);
 
     if (failure != null) {
       final errorMsg = failure.message;
