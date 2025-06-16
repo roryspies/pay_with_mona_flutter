@@ -62,5 +62,10 @@ class TransactionStateNavToResult extends TransactionStateWithInfo {
     super.transactionID,
     super.friendlyID,
     super.amount,
+    //this.currentTransactionState,
   });
+
+  //final TransactionStateNavToResultEnum? currentTransactionState;
 }
+
+//enum TransactionStateNavToResultEnum { completed, initiated, failed }

@@ -59,9 +59,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
             (state) async {
               switch (state) {
                 case TransactionStateInitiated():
-                  ('🔄 ConfirmTransactionModal ==>> Transaction Initiated')
-                      .log();
-
                   showTransactionStatusIndicator = true;
                   _sdkNotifier.setShowCancelButton(showCancelButton: false);
 
@@ -78,8 +75,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
             (state) async {
               switch (state) {
                 case MonaSDKState.loading:
-                  ('🔄 CheckoutView ==>>  SDK is Loading').log();
-
                   if (mounted) setState(() => isLoading = true);
 
                   break;
@@ -186,6 +181,9 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
 
                             ListTile(
                               onTap: () {
+                                if (isLoading) {
+                                  return;
+                                }
                                 Navigator.of(context).pop();
                               },
                               contentPadding: EdgeInsets.zero,
