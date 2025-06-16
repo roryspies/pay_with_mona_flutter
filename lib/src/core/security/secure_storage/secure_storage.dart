@@ -128,6 +128,9 @@ class SecureStorage {
       final merchantAPIKey = await read(
         key: SecureStorageKeys.merchantAPIKey,
       );
+      final merchantPublicKey = await read(
+        key: SecureStorageKeys.merchantKey,
+      );
 
       await permanentlyClearAllKeys();
 
@@ -135,6 +138,12 @@ class SecureStorage {
         await write(
           key: SecureStorageKeys.merchantAPIKey,
           value: merchantAPIKey,
+        );
+      }
+      if (merchantPublicKey != null) {
+        await write(
+          key: SecureStorageKeys.merchantKey,
+          value: merchantPublicKey,
         );
       }
     } catch (e, stackTrace) {

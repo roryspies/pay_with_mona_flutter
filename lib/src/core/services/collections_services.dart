@@ -20,7 +20,7 @@ class CollectionsService {
 
   // final _merchantId = "67e41f884126830aded0b43c";
 
-  String? _scrtK;
+  String? _secretKey;
 
   final _secureStorage = SecureStorage();
 
@@ -30,8 +30,8 @@ class CollectionsService {
     );
   }
 
-  void setScrtk(String scrtK) {
-    _scrtK = scrtK;
+  void setSecretKey(String secretKey) {
+    _secretKey = secretKey;
   }
 
   FutureOutcome<Map<String, dynamic>> validateCreateCollectionFields({
@@ -47,7 +47,7 @@ class CollectionsService {
     required String? amount,
     required String debitType,
     required List<Map<String, dynamic>> scheduleEntries,
-    required String scrtK,
+    required String secretKey,
   }) async {
     final payload = {
       "maximumAmount": multiplyBy100(maximumAmount),
@@ -69,11 +69,11 @@ class CollectionsService {
         '/collections',
         data: payload,
         headers: {
-          "x-api-key": scrtK,
+          "x-api-key": secretKey,
         },
       );
 
-      setScrtk(scrtK);
+      setSecretKey(secretKey);
 
       return right(
         jsonDecode(response.body) as Map<String, dynamic>,
@@ -94,15 +94,18 @@ class CollectionsService {
     String? timestamp,
   }) async {
     try {
-      final response = await _apiService
-          .post('/collections/consent', data: payload, headers: {
-        "x-public-key": await getMerchantKey() ?? '',
-        "x-client-type": "bioApp",
-        if (monaKeyId != null) 'x-mona-key-id': monaKeyId,
-        if (signature != null) 'x-mona-pay-auth': signature,
-        if (nonce != null) 'x-mona-nonce': nonce,
-        if (timestamp != null) 'x-mona-timestamp': timestamp,
-      });
+      final response = await _apiService.post(
+        '/collections/consent',
+        data: payload,
+        headers: {
+          "x-public-key": await getMerchantKey() ?? '',
+          "x-client-type": "bioApp",
+          if (monaKeyId != null) 'x-mona-key-id': monaKeyId,
+          if (signature != null) 'x-mona-pay-auth': signature,
+          if (nonce != null) 'x-mona-nonce': nonce,
+          if (timestamp != null) 'x-mona-timestamp': timestamp,
+        },
+      );
 
       return right(
         jsonDecode(response.body) as Map<String, dynamic>,
@@ -131,7 +134,7 @@ class CollectionsService {
           "timeFactor": timeFactor,
         },
         headers: {
-          "x-api-key": _scrtK ?? '',
+          "x-api-key": _secretKey ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );
@@ -277,7 +280,7 @@ class CollectionsService {
           "bankId": bankId,
         },
         headers: {
-          "x-api-key": _scrtK ?? '',
+          "x-api-key": _secretKey ?? '',
           'x-mona-key-id': monaKeyID,
         },
       );

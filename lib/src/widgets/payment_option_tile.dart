@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:pay_with_mona/pay_with_mona_sdk.dart';
 import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
@@ -23,6 +24,7 @@ class PaymentOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sdkNotifier = MonaSDKNotifier();
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -32,7 +34,10 @@ class PaymentOptionTile extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: MonaColors.primaryBlue.withOpacity(
+              backgroundColor:
+                  (sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
+                          MonaColors.primaryBlue)
+                      .withOpacity(
                 0.1,
               ),
               child: SvgPicture.asset(
@@ -79,7 +84,9 @@ class PaymentOptionTile extends StatelessWidget {
                 border: Border.all(
                   width: 1.5,
                   color: paymentMethod == selectedPaymentMethod
-                      ? MonaColors.primaryBlue
+                      ? (sdkNotifier
+                              .merchantBrandingDetails?.colors.primaryColour ??
+                          MonaColors.primaryBlue)
                       : MonaColors.bgGrey,
                 ),
               ),
@@ -87,7 +94,9 @@ class PaymentOptionTile extends StatelessWidget {
                 child: CircleAvatar(
                   radius: context.w(6),
                   backgroundColor: paymentMethod == selectedPaymentMethod
-                      ? MonaColors.primaryBlue
+                      ? (sdkNotifier
+                              .merchantBrandingDetails?.colors.primaryColour ??
+                          MonaColors.primaryBlue)
                       : Colors.transparent,
                 ),
               ),
