@@ -121,56 +121,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       child: SafeArea(
         child: Column(
           children: [
-            /* SizedBox(
-              height: 40,
-              width: double.infinity,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                  color: MonaColors.primaryBlue,
-                ),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.asset(
-                        "lagos_city".png,
-                        fit: BoxFit.fitWidth,
-                      ),
-                    ),
-
-                    ///
-                    if (showTransactionStatusIndicator == false) ...[
-                      Positioned(
-                        right: 16,
-                        top: 0,
-                        bottom: 0,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: CircleAvatar(
-                            backgroundColor:
-                                MonaColors.neutralWhite.withOpacity(0.2),
-                            radius: 12,
-                            child: Icon(
-                              Icons.close,
-                              color: MonaColors.textHeading,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
- */
-            ///
-            //context.sbH(8.0),
-
             AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
               child: switch (showTransactionStatusIndicator) {
@@ -221,7 +171,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                               child: Text(
                                 "Payment Method",
                                 style: TextStyle(
-                                  fontSize: 21.0,
+                                  fontSize: 16.0,
                                   fontWeight: FontWeight.w700,
                                   color: MonaColors.textHeading,
                                 ),
@@ -319,6 +269,10 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                               label: "Pay",
                               isLoading: isLoading,
                               onTap: () {
+                                if (isLoading) {
+                                  return;
+                                }
+
                                 _sdkNotifier
                                   ..setCallingBuildContext(context: context)
                                   ..makePayment();

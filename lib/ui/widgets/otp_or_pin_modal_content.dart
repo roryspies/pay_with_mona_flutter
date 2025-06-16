@@ -43,6 +43,7 @@ class OtpOrPinModalContent extends StatelessWidget {
               maxLength: task.task.fieldLength ?? 4,
               otpPinFieldDecoration:
                   OtpPinFieldDecoration.defaultPinBoxDecoration,
+              otpPinFieldInputType: OtpPinFieldInputType.password,
               onSubmit: (String text) {
                 "onSubmit OTP $text".log();
                 Navigator.of(context).pop();
