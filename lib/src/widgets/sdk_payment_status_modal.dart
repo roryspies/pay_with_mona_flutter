@@ -101,6 +101,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
       }
     });
 
+    /// *** SDK TXN STATE STREAM LISTENER
     sdkNotifier.txnStateStream.listen(
       (state) async {
         switch (state) {
@@ -157,7 +158,9 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
 
     await Future.delayed(const Duration(seconds: 2));
     if (isCompletedTransaction) {
-      sdkNotifier.handleNavToConfirmationScreen();
+      sdkNotifier.handleNavToConfirmationScreen(
+          //currentTransactionState: TransactionStateNavToResultEnum.completed,
+          );
     }
   }
 

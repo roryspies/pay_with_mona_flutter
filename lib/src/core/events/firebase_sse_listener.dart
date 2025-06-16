@@ -959,7 +959,7 @@ class FirebaseSSEListener {
   /// [onDataChange] Callback for received data
   /// [onError] Callback for handling errors
   /// [autoReconnect] Whether to automatically reconnect on failure (default: true)
-  Future<void> listenForPaymentUpdates({
+  /* Future<void> listenForPaymentUpdates({
     required String transactionId,
     Function(String)? onDataChange,
     Function(Object)? onError,
@@ -974,7 +974,7 @@ class FirebaseSSEListener {
     );
 
     await _startListening(config);
-  }
+  } */
 
   /// Start listening to SSE events for transaction messages
   ///

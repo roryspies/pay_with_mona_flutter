@@ -12,6 +12,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/security/payment_encryption/payment_encryption_service.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/mona_sdk_merchant_key_cache.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
@@ -82,8 +83,10 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// Secure storage for persisting user identifiers.
   late SecureStorage _secureStorage;
 
+  final _merchantKeyCache = MonaSdkMerchantKeyCache();
+
   /// Listener for Firebase Server-Sent Events.
-  final FirebaseSSEListener _firebaseSSE = FirebaseSSEListener();
+  final _firebaseSSE = FirebaseSSEListener();
 
   String? _errorMessage;
   String? _currentTransactionId;
@@ -299,12 +302,17 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void handleNavToConfirmationScreen() {
+  void handleNavToConfirmationScreen(
+      /* {
+    required TransactionStateNavToResultEnum currentTransactionState,
+  } */
+      ) {
     _txnStateStream.emit(
       state: TransactionStateNavToResult(
         transactionID: _currentTransactionId,
         friendlyID: _currentTransactionFriendlyID,
         amount: _monaCheckOut?.amount,
+        //currentTransactionState: currentTransactionState,
       ),
     );
     notifyListeners();
@@ -392,38 +400,44 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<void> _setMerchantKey({required String merchantKey}) async {
-    await _secureStorage.write(
+    /* await _secureStorage.write(
       key: SecureStorageKeys.merchantKey,
       value: merchantKey,
-    );
-  }
+    ); */
 
-  /// *** Make Shift Fix - TODO: @Serticode Implement the merchant public key better
-  Future<void> setMerchantKey({required String merchantKey}) async {
-    await _secureStorage.write(
-      key: SecureStorageKeys.merchantKey,
-      value: merchantKey,
-    );
+    await _merchantKeyCache.save({
+      SecureStorageKeys.merchantKey: merchantKey,
+    });
   }
 
   Future<String?> _getMerchantKey() async {
-    return await _secureStorage.read(
+    /* return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,
+    ); */
+
+    return await _merchantKeyCache.getValue(
+      SecureStorageKeys.merchantKey,
     );
   }
 
   Future<void> setMerchantAPIKey({
     required String merchantAPIKey,
   }) async {
-    await _secureStorage.write(
+    /* await _secureStorage.write(
       key: SecureStorageKeys.merchantAPIKey,
       value: merchantAPIKey,
-    );
+    ); */
+    await _merchantKeyCache.save({
+      SecureStorageKeys.merchantAPIKey: merchantAPIKey,
+    });
   }
 
   Future<String?> getMerchantAPIKey() async {
-    return await _secureStorage.read(
+    /*  return await _secureStorage.read(
       key: SecureStorageKeys.merchantAPIKey,
+    ); */
+    return await _merchantKeyCache.getValue(
+      SecureStorageKeys.merchantAPIKey,
     );
   }
 
@@ -773,7 +787,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     try {
       await Future.wait(
         [
-          _listenForPaymentUpdates(),
+          //_listenForPaymentUpdates(),
           _listenForTransactionUpdateEvents(),
           _listenForCustomTabEvents()
         ],

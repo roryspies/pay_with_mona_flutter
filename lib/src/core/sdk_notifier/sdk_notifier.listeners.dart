@@ -46,7 +46,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
 
   ///
   /// *** MARK: Event Listeners
-  Future<void> _listenForPaymentUpdates() async {
+  /* Future<void> _listenForPaymentUpdates() async {
     try {
       await _firebaseSSE.listenForPaymentUpdates(
         transactionId: _currentTransactionId ?? "",
@@ -69,7 +69,7 @@ extension SDKNotifierListeners on MonaSDKNotifier {
       "_listenForPaymentUpdates error: $error".log();
       rethrow;
     }
-  }
+  } */
 
   Future<void> _listenForTransactionUpdateEvents() async {
     try {
