@@ -106,8 +106,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                     children: [
                       CircleAvatar(
                         radius: 32,
-                        backgroundColor:
-                            MonaColors.primaryBlue.withOpacity(0.1),
+                        backgroundColor: (_sdkNotifier.merchantBrandingDetails
+                                    ?.colors.primaryColour ??
+                                MonaColors.primaryBlue)
+                            .withOpacity(0.1),
                         child: Image.asset(
                           "logo".png,
                         ),
@@ -119,8 +121,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                       context.sbW(16.0),
                       CircleAvatar(
                         radius: 32,
-                        backgroundColor:
-                            MonaColors.primaryBlue.withOpacity(0.1),
+                        backgroundColor: (_sdkNotifier.merchantBrandingDetails
+                                    ?.colors.primaryColour ??
+                                MonaColors.primaryBlue)
+                            .withOpacity(0.1),
                         backgroundImage: AssetImage(
                           "ng_deals_logo".png,
                         ),
@@ -156,7 +160,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                   Container(
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: MonaColors.primaryBlue.withOpacity(
+                      color: (_sdkNotifier.merchantBrandingDetails?.colors
+                                  .primaryColour ??
+                              MonaColors.primaryBlue)
+                          .withOpacity(
                         0.1,
                       ),
                       borderRadius: BorderRadius.circular(8),
@@ -175,7 +182,9 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                             "This is to make sure that you are the only one who can authorize payments.",
                             style: TextStyle(
                               fontSize: 12,
-                              color: MonaColors.primaryBlue,
+                              color: (_sdkNotifier.merchantBrandingDetails
+                                      ?.colors.primaryColour ??
+                                  MonaColors.primaryBlue),
                             ),
                           ),
                         )
@@ -189,7 +198,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
                   ///
                   CustomButton(
                     label: "Set Up",
+                    isLoading: isLoading,
                     onTap: () => widget.onUserDecision(true),
+                  ).ignorePointer(
+                    isLoading: isLoading,
                   ),
                 ],
               ),

@@ -45,6 +45,17 @@ enum PaymentMethod {
     }
   }
 
+  String get paymentOptionIconURL {
+    switch (this) {
+      case PaymentMethod.card:
+        return "pay_by_card_icon";
+      case PaymentMethod.transfer:
+        return "pay_by_transfer_icon";
+      default:
+        return "";
+    }
+  }
+
   String get title {
     switch (this) {
       case PaymentMethod.card:
@@ -115,7 +126,8 @@ enum MerchantPaymentSettingsEnum {
       case debitSuccess:
         return "debit_success";
       case walletReceiveInProgress:
-        return "wallet_received";
+        //return "wallet_received";
+        return "wallet_progress";
       case walletReceiveComplete:
         return "wallet_completed";
     }

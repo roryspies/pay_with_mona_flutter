@@ -146,9 +146,7 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
         onPopInvokedWithResult: (didPop, result) {},
         child: Scaffold(
           backgroundColor: MonaColors.bgGrey,
-          body: SizedBox(
-            height: MediaQuery.of(context).size.height,
-            width: MediaQuery.of(context).size.width,
+          body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
                 children: [
@@ -164,7 +162,7 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            MonaSDKNotifier().resetSDKState();
+                            sdkNotifier.resetSDKState();
 
                             Navigator.of(context)
                                 .popUntil((route) => route.isFirst);
@@ -306,8 +304,11 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                               ? Align(
                                   alignment: Alignment.center,
                                   child: CircularProgressIndicator(
-                                    color: MonaColors.primaryBlue,
-                                  ),
+                                      color: (sdkNotifier
+                                              .merchantBrandingDetails
+                                              ?.colors
+                                              .primaryColour ??
+                                          MonaColors.primaryBlue)),
                                 )
                               : CustomButton(
                                   onTap: () {

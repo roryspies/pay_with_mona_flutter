@@ -1,13 +1,11 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, deprecated_member_use
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_bank_sheet.dart';
 import 'package:pay_with_mona/src/features/collections/widgets/collections_trigger_view.dart';
 import 'package:pay_with_mona/src/models/collection_response.dart';
@@ -55,15 +53,19 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   bool _showSuccessState = false;
 
   void showSuccess() {
-    setState(() {
-      _showSuccessState = true;
-    });
+    if (mounted) {
+      setState(() {
+        _showSuccessState = true;
+      });
+    }
   }
 
   void showSuccessFromOutside() {
-    setState(() {
-      _showSuccessState = widget.showSuccess;
-    });
+    if (mounted) {
+      setState(() {
+        _showSuccessState = widget.showSuccess;
+      });
+    }
   }
 
   String formatDate(String? iso) {
@@ -76,7 +78,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
   void initState() {
     super.initState();
     showSuccessFromOutside();
-    sdkNotifier.addListener(_onSdktateChange);
+    sdkNotifier.addListener(_onSDKStateChange);
   }
 
   @override
@@ -85,14 +87,18 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
     super.dispose();
   }
 
-  void _onSdktateChange() => setState(() {});
+  void _onSDKStateChange() {
+    if (mounted) setState(() {});
+  }
 
   void showPopupMessage(String message,
       {Duration duration = const Duration(seconds: 2)}) {
-    setState(() {
-      _popupMessage = message;
-      _showPopup = true;
-    });
+    if (mounted) {
+      setState(() {
+        _popupMessage = message;
+        _showPopup = true;
+      });
+    }
 
     // Auto-hide after duration
     _popupTimer?.cancel();
@@ -169,8 +175,12 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                       height: context.h(22)),
                                   CircleAvatar(
                                     radius: context.w(24),
-                                    backgroundColor:
-                                        MonaColors.primaryBlue.withOpacity(0.1),
+                                    backgroundColor: (sdkNotifier
+                                                .merchantBrandingDetails
+                                                ?.colors
+                                                .primaryColour ??
+                                            MonaColors.primaryBlue)
+                                        .withOpacity(0.1),
                                     backgroundImage: switch (
                                         sdkNotifier.merchantBrandingDetails !=
                                                 null &&
@@ -193,7 +203,11 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                                           style: TextStyle(
                                             fontSize: context.sp(16),
                                             fontWeight: FontWeight.w600,
-                                            color: MonaColors.primaryBlue,
+                                            color: (sdkNotifier
+                                                    .merchantBrandingDetails
+                                                    ?.colors
+                                                    .primaryColour ??
+                                                MonaColors.primaryBlue),
                                           ),
                                         ),
                                     },
@@ -278,7 +292,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                           context.sbH(16),
                         ],
 
-                        // Debitor & Duration/Frequency
+                        /// Debiting merchant & Duration/Frequency
                         Padding(
                           padding:
                               EdgeInsets.symmetric(horizontal: context.w(8)),
@@ -492,40 +506,34 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                         context.sbH(24),
                         Builder(
                           builder: (context) {
-                            return sdkNotifier.state == MonaSDKState.loading
-                                ? Align(
-                                    alignment: Alignment.center,
-                                    child: CircularProgressIndicator(
-                                      color: MonaColors.primaryBlue,
+                            return CustomButton(
+                              isLoading:
+                                  sdkNotifier.state == MonaSDKState.loading,
+                              label: _showSuccessState
+                                  ? 'Continue'
+                                  : 'Continue to Mona',
+                              onTap: () async {
+                                if (_showSuccessState) {
+                                  Navigator.of(context).pop();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CollectionsTriggerView(
+                                              successMap: widget.successMap,
+                                              merchantName:
+                                                  widget.merchantName),
                                     ),
-                                  )
-                                : CustomButton(
-                                    label: _showSuccessState
-                                        ? 'Continue'
-                                        : 'Continue to Mona',
-                                    onTap: () async {
-                                      if (_showSuccessState) {
-                                        Navigator.of(context).pop();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                CollectionsTriggerView(
-                                                    successMap:
-                                                        widget.successMap,
-                                                    merchantName:
-                                                        widget.merchantName),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      await sdkNotifier.collectionHandOffToAuth(
-                                          onKeyExchange: () {
-                                        showBankSheet();
-                                      });
-                                    },
                                   );
+                                  return;
+                                }
+
+                                await sdkNotifier.collectionHandOffToAuth(
+                                    onKeyExchange: () {
+                                  showBankSheet();
+                                });
+                              },
+                            );
                           },
                         ),
 
@@ -606,6 +614,8 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
               ),
             ),
           ],
+        ).ignorePointer(
+          isLoading: sdkNotifier.state == MonaSDKState.loading,
         ),
       ),
     );

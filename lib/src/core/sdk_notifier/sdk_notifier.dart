@@ -12,6 +12,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_classes.dart';
 import 'package:pay_with_mona/src/core/events/transaction_state_stream.dart';
 import 'package:pay_with_mona/src/core/security/payment_encryption/payment_encryption_service.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/mona_sdk_merchant_key_cache.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/src/core/services/collections_services.dart';
@@ -35,7 +36,7 @@ import 'dart:math' as math;
 
 import 'package:pay_with_mona/src/widgets/confirm_key_exchange_modal.dart';
 import 'package:pay_with_mona/ui/widgets/otp_or_pin_modal_content.dart';
-
+import 'dart:ui' as dart_app_life_cycle show AppLifecycleState;
 part 'sdk_notifier.helpers.dart';
 part 'sdk_notifier.listeners.dart';
 
@@ -82,8 +83,10 @@ class MonaSDKNotifier extends ChangeNotifier {
   /// Secure storage for persisting user identifiers.
   late SecureStorage _secureStorage;
 
+  final _merchantKeyCache = MonaSdkMerchantKeyCache();
+
   /// Listener for Firebase Server-Sent Events.
-  final FirebaseSSEListener _firebaseSSE = FirebaseSSEListener();
+  final _firebaseSSE = FirebaseSSEListener();
 
   String? _errorMessage;
   String? _currentTransactionId;
@@ -93,6 +96,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   String? _transactionPIN;
   bool showCancelButton = true;
   bool changeSDKStateOnHostAppInForeground = true;
+  bool paymentWithPossibleKeyExchange = false;
   String? _cachedMerchantKey;
   MerchantBranding? _merchantBrandingDetails;
   MerchantPaymentSettingsEnum _merchantPaymentSettingsEnum =
@@ -262,8 +266,11 @@ class MonaSDKNotifier extends ChangeNotifier {
       }
 
       _selectedBankOption ??= banks.firstWhere(
-        (bank) => bank.isPrimary == true,
-        orElse: () => banks.first,
+        (bank) => bank.isPrimary == true && bank.activeIn == null,
+        orElse: () => banks.firstWhere(
+          (bank) => bank.isPrimary == false,
+          orElse: () => banks.first,
+        ),
       );
     }
     notifyListeners();
@@ -295,12 +302,17 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void handleNavToConfirmationScreen() {
+  void handleNavToConfirmationScreen(
+      /* {
+    required TransactionStateNavToResultEnum currentTransactionState,
+  } */
+      ) {
     _txnStateStream.emit(
       state: TransactionStateNavToResult(
         transactionID: _currentTransactionId,
         friendlyID: _currentTransactionFriendlyID,
         amount: _monaCheckOut?.amount,
+        //currentTransactionState: currentTransactionState,
       ),
     );
     notifyListeners();
@@ -311,6 +323,17 @@ class MonaSDKNotifier extends ChangeNotifier {
   }) {
     this.showCancelButton = showCancelButton;
     notifyListeners();
+  }
+
+  void setPaymentWithPossibleKeyExchange({
+    required bool paymentWithPossibleKeyExchange,
+  }) {
+    this.paymentWithPossibleKeyExchange = paymentWithPossibleKeyExchange;
+    notifyListeners();
+  }
+
+  void resetPaymentWithPossibleKeyExchange() {
+    paymentWithPossibleKeyExchange = false;
   }
 
   // Enhanced method with better error handling and type safety
@@ -377,30 +400,44 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<void> _setMerchantKey({required String merchantKey}) async {
-    await _secureStorage.write(
+    /* await _secureStorage.write(
       key: SecureStorageKeys.merchantKey,
       value: merchantKey,
-    );
+    ); */
+
+    await _merchantKeyCache.save({
+      SecureStorageKeys.merchantKey: merchantKey,
+    });
   }
 
   Future<String?> _getMerchantKey() async {
-    return await _secureStorage.read(
+    /* return await _secureStorage.read(
       key: SecureStorageKeys.merchantKey,
+    ); */
+
+    return await _merchantKeyCache.getValue(
+      SecureStorageKeys.merchantKey,
     );
   }
 
   Future<void> setMerchantAPIKey({
     required String merchantAPIKey,
   }) async {
-    await _secureStorage.write(
+    /* await _secureStorage.write(
       key: SecureStorageKeys.merchantAPIKey,
       value: merchantAPIKey,
-    );
+    ); */
+    await _merchantKeyCache.save({
+      SecureStorageKeys.merchantAPIKey: merchantAPIKey,
+    });
   }
 
-  Future<String?> _getMerchantAPIKey() async {
-    return await _secureStorage.read(
+  Future<String?> getMerchantAPIKey() async {
+    /*  return await _secureStorage.read(
       key: SecureStorageKeys.merchantAPIKey,
+    ); */
+    return await _merchantKeyCache.getValue(
+      SecureStorageKeys.merchantAPIKey,
     );
   }
 
@@ -480,8 +517,13 @@ class MonaSDKNotifier extends ChangeNotifier {
       onStateChanged: (state) async {
         /// *** Here, it is assumed, that the only reason the app has come back to foreground is because custom tabs was open and now it has closed.
         /// *** To check if the custom tabs was closed
-        if (state == AppLifecycleState.resumed) {
+        if (state == dart_app_life_cycle.AppLifecycleState.resumed) {
           "HOST App is in foreground".log();
+          if (paymentWithPossibleKeyExchange) {
+            _updateState(MonaSDKState.loading);
+            return;
+          }
+
           _updateState(MonaSDKState.idle);
         } else {
           "HOST App is in background".log();
@@ -515,6 +557,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> validatePII({
     required String userKeyID,
     bool isFromConfirmLoggedInUser = false,
+    bool isFromBankCollectionsView = false,
     void Function(String)? onEffect,
   }) async {
     if (isFromConfirmLoggedInUser == false) {
@@ -531,7 +574,6 @@ class MonaSDKNotifier extends ChangeNotifier {
       return;
     }
 
-    _updateState(MonaSDKState.idle);
     switch (response["exists"] as bool) {
       /// *** This is a Mona User
       case true:
@@ -562,6 +604,10 @@ class MonaSDKNotifier extends ChangeNotifier {
         onEffect?.call('PII Auth Result - User is not a mona user');
         break;
     }
+
+    if (isFromBankCollectionsView) {
+      _updateState(MonaSDKState.idle);
+    }
   }
 
   ///
@@ -589,6 +635,8 @@ class MonaSDKNotifier extends ChangeNotifier {
         );
       }
 
+      _updateState(MonaSDKState.loading);
+
       final firstName = _monaCheckOut?.firstName;
       final lastName = _monaCheckOut?.lastName;
 
@@ -598,7 +646,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       final (Map<String, dynamic>? success, failure) =
           await _paymentsService.initiatePayment(
         merchantKey: await _getMerchantKey() ?? "",
-        merchantAPIKey: await _getMerchantAPIKey() ?? "",
+        merchantAPIKey: await getMerchantAPIKey() ?? "",
         tnxAmountInKobo: tnxAmountInKobo,
         successRateType: _merchantPaymentSettingsEnum.paymentName,
 
@@ -739,7 +787,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     try {
       await Future.wait(
         [
-          _listenForPaymentUpdates(),
+          //_listenForPaymentUpdates(),
           _listenForTransactionUpdateEvents(),
           _listenForCustomTabEvents()
         ],
@@ -768,6 +816,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     switch (_selectedPaymentMethod) {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
+          _updateState(MonaSDKState.loading);
           await _paymentsService.makePaymentRequest(
             paymentType: _selectedPaymentMethod == PaymentMethod.savedBank
                 ? null
@@ -786,27 +835,17 @@ class MonaSDKNotifier extends ChangeNotifier {
               );
 
               if (doKeyExchange) {
-                //handleNavToConfirmationScreen();
                 await SDKUtils.showSDKModalBottomSheet(
                   isDismissible: false,
                   enableDrag: false,
                   callingContext: _callingBuildContext!,
                   child: ConfirmTransactionModal(
+                    performedKeyExchange: true,
                     showTransactionStatusIndicator: true,
                     selectedPaymentMethod: _selectedPaymentMethod,
                     transactionAmountInKobo: _monaCheckOut!.amount!,
                   ),
                 );
-                //return;
-                /* await SDKUtils.showSDKModalBottomSheet(
-                  isDismissible: false,
-                  enableDrag: false,
-                  callingContext: _callingBuildContext!,
-                  child: ConfirmTransactionModal(
-                    selectedPaymentMethod: _selectedPaymentMethod,
-                    transactionAmountInKobo: _monaCheckOut!.amount!,
-                  ),
-                ); */
               }
             },
           );
@@ -842,6 +881,12 @@ class MonaSDKNotifier extends ChangeNotifier {
           ? _selectedBankOption?.bankId
           : _selectedCardOption?.bankId,
     );
+
+    if (url.toString().contains("sessionId")) {
+      setPaymentWithPossibleKeyExchange(
+        paymentWithPossibleKeyExchange: true,
+      );
+    }
 
     await _launchURL(url);
   }
@@ -888,6 +933,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       final canEnrollKeys = await canEnrollKeysCompleter.future;
 
       if (canEnrollKeys) {
+        _updateState(MonaSDKState.loading);
         "USER ALLOWED TO ENROLL KEYS".log();
         return await _authService.signAndCommitAuthKeys(
           deviceAuth: response["deviceAuth"],
@@ -901,13 +947,14 @@ class MonaSDKNotifier extends ChangeNotifier {
               return;
             }
 
-            _updateState(MonaSDKState.success);
-            _authStream.emit(state: AuthState.loggedIn);
-            //validatePII();
-
             if (_callingBuildContext != null) {
+              /// *** TODO: Remove this and use the previous version.
+              //SDKUtils.popMultiple(_callingBuildContext!, 1);
               Navigator.of(_callingBuildContext!).pop();
             }
+            _authStream.emit(state: AuthState.loggedIn);
+            _updateState(MonaSDKState.success);
+            /* await validatePII(); */
 
             /* if (!isFromCollections) {
               if (_callingBuildContext != null) {
@@ -1049,7 +1096,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     required List<Map<String, dynamic>> scheduleEntries,
     void Function(String)? onError,
     void Function()? onSuccess,
-    required String scrtK,
+    required String secretKey,
   }) async {
     _updateState(MonaSDKState.loading);
     final (Map<String, dynamic>? success, failure) =
@@ -1064,7 +1111,7 @@ class MonaSDKNotifier extends ChangeNotifier {
             amount: amount,
             debitType: debitType,
             scheduleEntries: scheduleEntries,
-            scrtK: scrtK);
+            secretKey: secretKey);
 
     if (failure != null) {
       final errorMsg = failure.message;
@@ -1140,6 +1187,15 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
     }
 
+    /// *** Hold up to ensure that user saved methods have been set in the SDK.
+    await Future.delayed(Duration(seconds: 1));
+
+    final userKeyID = await checkIfUserHasKeyID();
+
+    if (userKeyID != null) {
+      await validatePII(userKeyID: userKeyID);
+    }
+
     onKeyExchange?.call();
 
     _updateState(MonaSDKState.idle);
@@ -1155,10 +1211,10 @@ class MonaSDKNotifier extends ChangeNotifier {
     _updateState(MonaSDKState.idle);
   }
 
-  void resetSDKState({
+  Future<void> resetSDKState({
     bool clearMonaCheckout = true,
     bool clearPendingPaymentResponseModel = true,
-  }) {
+  }) async {
     _errorMessage = null;
     _currentTransactionId = null;
     _strongAuthToken = null;

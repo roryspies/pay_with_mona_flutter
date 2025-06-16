@@ -46,7 +46,8 @@ class _BottomSheetTopHeaderState extends State<BottomSheetTopHeader> {
       height: context.h(40),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: MonaColors.primaryBlue,
+        color: sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
+            MonaColors.primaryBlue,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(10),
           topRight: Radius.circular(10),

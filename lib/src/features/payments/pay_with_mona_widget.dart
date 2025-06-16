@@ -4,6 +4,7 @@ import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/sdk_notifier/sdk_notifier.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/src/widgets/confirm_transaction_modal.dart';
@@ -128,7 +129,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                               color: (sdkNotifier.selectedPaymentMethod ==
                                           PaymentMethod.savedCard &&
                                       selectedCardID == card.bankId)
-                                  ? MonaColors.primaryBlue
+                                  ? (sdkNotifier.merchantBrandingDetails?.colors
+                                          .primaryColour ??
+                                      MonaColors.primaryBlue)
                                   : MonaColors.bgGrey,
                             ),
                           ),
@@ -139,7 +142,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                   (sdkNotifier.selectedPaymentMethod ==
                                               PaymentMethod.savedCard &&
                                           selectedCardID == card.bankId)
-                                      ? MonaColors.primaryBlue
+                                      ? (sdkNotifier.merchantBrandingDetails
+                                              ?.colors.primaryColour ??
+                                          MonaColors.primaryBlue)
                                       : Colors.transparent,
                             ),
                           ),
@@ -158,9 +163,75 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       final selectedBankID =
                           sdkNotifier.selectedBankOption?.bankId;
 
-                      "Selected Bank ID: $selectedBankID";
+                      if (bank.activeIn != null && bank.activeIn! > 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: 16.0,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: MonaColors.neutralWhite,
+                                child: Image.network(
+                                  bank.logo ?? "",
+                                ),
+                              ),
 
-                      return ListTile(
+                              context.sbW(16.0),
+
+                              ///
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      bank.bankName ?? "",
+                                      style: TextStyle(
+                                        fontSize: context.sp(14),
+                                        fontWeight: FontWeight.w500,
+                                        color: MonaColors.textHeading,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Account - ${bank.accountNumber}",
+                                      style: TextStyle(
+                                        fontSize: context.sp(12),
+                                        fontWeight: FontWeight.w400,
+                                        color: MonaColors.textBody,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              ///
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                  vertical: 8.0,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.circular(context.h(8)),
+                                    color: Color(
+                                      0xFFE7E8E6,
+                                    )),
+                                child: Text(
+                                  "Active in ${bank.activeIn} hours",
+                                  style: TextStyle(
+                                    fontSize: context.sp(12),
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFFC6C7C3),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return InkWell(
                         onTap: () {
                           sdkNotifier.setSelectedPaymentMethod(
                             method: PaymentMethod.savedBank,
@@ -170,59 +241,82 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             bankOption: bank,
                           );
                         },
-
-                        /// ***
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundColor: MonaColors.neutralWhite,
-                          child: Image.network(
-                            bank.logo ?? "",
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: 16.0,
                           ),
-                        ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: MonaColors.neutralWhite,
+                                child: Image.network(
+                                  bank.logo ?? "",
+                                ),
+                              ),
 
-                        title: Text(
-                          bank.bankName ?? "",
-                          style: TextStyle(
-                            fontSize: context.sp(14),
-                            fontWeight: FontWeight.w500,
-                            color: MonaColors.textHeading,
-                          ),
-                        ),
+                              context.sbW(16.0),
 
-                        subtitle: Text(
-                          "Account - ${bank.accountNumber}",
-                          style: TextStyle(
-                            fontSize: context.sp(12),
-                            fontWeight: FontWeight.w400,
-                            color: MonaColors.textBody,
-                          ),
-                        ),
+                              ///
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      bank.bankName ?? "",
+                                      style: TextStyle(
+                                        fontSize: context.sp(14),
+                                        fontWeight: FontWeight.w500,
+                                        color: MonaColors.textHeading,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Account - ${bank.accountNumber}",
+                                      style: TextStyle(
+                                        fontSize: context.sp(12),
+                                        fontWeight: FontWeight.w400,
+                                        color: MonaColors.textBody,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                        trailing: AnimatedContainer(
-                          duration: Duration(milliseconds: 300),
-                          height: context.h(24),
-                          width: context.w(24),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(context.h(24)),
-                            border: Border.all(
-                              width: 1.5,
-                              color: (sdkNotifier.selectedPaymentMethod ==
-                                          PaymentMethod.savedBank &&
-                                      selectedBankID == bank.bankId)
-                                  ? MonaColors.primaryBlue
-                                  : MonaColors.bgGrey,
-                            ),
-                          ),
-                          child: Center(
-                            child: CircleAvatar(
-                              radius: context.w(6),
-                              backgroundColor:
-                                  (sdkNotifier.selectedPaymentMethod ==
-                                              PaymentMethod.savedBank &&
-                                          selectedBankID == bank.bankId)
-                                      ? MonaColors.primaryBlue
-                                      : Colors.transparent,
-                            ),
+                              ///
+                              AnimatedContainer(
+                                duration: Duration(milliseconds: 300),
+                                height: context.h(24),
+                                width: context.w(24),
+                                decoration: BoxDecoration(
+                                  borderRadius:
+                                      BorderRadius.circular(context.h(24)),
+                                  border: Border.all(
+                                    width: 1.5,
+                                    color: (sdkNotifier.selectedPaymentMethod ==
+                                                PaymentMethod.savedBank &&
+                                            selectedBankID == bank.bankId)
+                                        ? (sdkNotifier.merchantBrandingDetails
+                                                ?.colors.primaryColour ??
+                                            MonaColors.primaryBlue)
+                                        : MonaColors.bgGrey,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: CircleAvatar(
+                                    radius: context.w(6),
+                                    backgroundColor:
+                                        (sdkNotifier.selectedPaymentMethod ==
+                                                    PaymentMethod.savedBank &&
+                                                selectedBankID == bank.bankId)
+                                            ? (sdkNotifier
+                                                    .merchantBrandingDetails
+                                                    ?.colors
+                                                    .primaryColour ??
+                                                MonaColors.primaryBlue)
+                                            : Colors.transparent,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -250,6 +344,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                           method: paymentMethod,
                         );
                       },
+                      iconURL: paymentMethod.paymentOptionIconURL,
                       selectedPaymentMethod: sdkNotifier.selectedPaymentMethod,
                       paymentMethod: paymentMethod,
                     );
@@ -264,8 +359,13 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 label: "",
                 isLoading: sdkNotifier.state == MonaSDKState.loading,
                 color: (sdkNotifier.selectedPaymentMethod == PaymentMethod.none)
-                    ? MonaColors.primaryBlue.withAlpha(100)
-                    : MonaColors.primaryBlue,
+                    ? (sdkNotifier.merchantBrandingDetails?.colors
+                                .primaryColour ??
+                            MonaColors.primaryBlue)
+                        .withAlpha(100)
+                    : (sdkNotifier
+                            .merchantBrandingDetails?.colors.primaryColour ??
+                        MonaColors.primaryBlue),
                 child: switch ([
                   PaymentMethod.none,
                   PaymentMethod.card,
@@ -294,7 +394,9 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         //!
                         CircleAvatar(
                           radius: 12,
-                          backgroundColor: MonaColors.primaryBlue,
+                          backgroundColor: (sdkNotifier.merchantBrandingDetails
+                                  ?.colors.primaryColour ??
+                              MonaColors.primaryBlue),
                           backgroundImage: switch (
                               sdkNotifier.selectedPaymentMethod ==
                                   PaymentMethod.savedBank) {
@@ -326,10 +428,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     ),
                 },
                 onTap: () async {
-                  if (sdkNotifier.state == MonaSDKState.loading) {
-                    return;
-                  }
-
                   if (sdkNotifier.selectedPaymentMethod == PaymentMethod.none) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -388,6 +486,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
             ],
           ),
         ),
+      ).ignorePointer(
+        isLoading: sdkNotifier.state == MonaSDKState.loading,
       ),
     );
   }

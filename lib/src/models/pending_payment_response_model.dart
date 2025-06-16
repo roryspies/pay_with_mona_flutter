@@ -205,10 +205,13 @@ class BankOption {
   final String? accountNumber;
   final String? webLinkAndroid;
   final String? institutionCode;
+  final String? ussdCode;
   final bool? isPrimary;
+  final bool? isNibssAlt;
   final bool? manualPaymentRequired;
   final bool? hasInstantPay;
   final List<String>? primaryInstruments;
+  final num? activeIn;
 
   BankOption({
     this.bankName,
@@ -217,10 +220,13 @@ class BankOption {
     this.accountNumber,
     this.webLinkAndroid,
     this.institutionCode,
+    this.ussdCode,
     this.isPrimary,
+    this.isNibssAlt,
     this.manualPaymentRequired,
     this.hasInstantPay,
     this.primaryInstruments,
+    this.activeIn,
   });
 
   factory BankOption.fromJSON({required Map<String, dynamic> json}) {
@@ -231,7 +237,9 @@ class BankOption {
       accountNumber: json['accountNumber'] as String?,
       webLinkAndroid: json['webLinkAndroid'] as String?,
       institutionCode: json['institutionCode'] as String?,
+      ussdCode: json['ussdCode'] as String?,
       isPrimary: json['isPrimary'] as bool?,
+      isNibssAlt: json['isNibssAlt'] as bool?,
       manualPaymentRequired: json['manualPaymentRequired'] as bool?,
       hasInstantPay: json['hasInstantPay'] as bool?,
       primaryInstruments: json['primaryInstruments'] != null
@@ -239,6 +247,7 @@ class BankOption {
               .map((e) => e as String)
               .toList()
           : null,
+      activeIn: json["activeIn"] as num?,
     );
   }
 
@@ -249,12 +258,15 @@ class BankOption {
         if (accountNumber != null) 'accountNumber': accountNumber,
         if (webLinkAndroid != null) 'webLinkAndroid': webLinkAndroid,
         if (institutionCode != null) 'institutionCode': institutionCode,
+        if (ussdCode != null) 'ussdCode': ussdCode,
         if (isPrimary != null) 'isPrimary': isPrimary,
+        if (isNibssAlt != null) 'isNibssAlt': isNibssAlt,
         if (manualPaymentRequired != null)
           'manualPaymentRequired': manualPaymentRequired,
         if (hasInstantPay != null) 'hasInstantPay': hasInstantPay,
         if (primaryInstruments != null)
           'primaryInstruments': primaryInstruments,
+        if (activeIn != null) 'activeIn': activeIn,
       };
 }
 

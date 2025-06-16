@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
@@ -43,9 +44,12 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
   void initState() {
     super.initState();
     sdkNotifier.addListener(_onSdkStateChange);
-    /* WidgetsBinding.instance.addPostFrameCallback((_) {
-      sdkNotifier.validatePII();
-    }); */
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await sdkNotifier.validatePII(
+        isFromBankCollectionsView: true,
+        userKeyID: await sdkNotifier.checkIfUserHasKeyID() ?? "",
+      );
+    });
   }
 
   void _onSdkStateChange() {
@@ -91,12 +95,18 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
     return NumberFormat("#,##0", "en_NG").format(value);
   }
 
-  void showPopupMessage(String message,
-      {Duration duration = const Duration(seconds: 2)}) {
-    setState(() {
-      _popupMessage = message;
-      _showPopup = true;
-    });
+  void showPopupMessage(
+    String message, {
+    Duration duration = const Duration(
+      seconds: 2,
+    ),
+  }) {
+    setState(
+      () {
+        _popupMessage = message;
+        _showPopup = true;
+      },
+    );
 
     // Auto-hide after duration
     _popupTimer?.cancel();
@@ -113,6 +123,7 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
   Widget build(BuildContext context) {
     final savedBanks =
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
+
     return Scaffold(
       backgroundColor: MonaColors.bgGrey,
       body: SingleChildScrollView(
@@ -174,15 +185,21 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
                           .toList(),
                       onChanged: _onBankSelected,
                     )
-                  : const SizedBox(
-                      height: 50,
-                      child: Center(
-                        child: Text(
-                          'No collections available',
-                          style: TextStyle(fontSize: 16),
+                  : sdkNotifier.state == MonaSDKState.loading
+                      ? CupertinoActivityIndicator(
+                          color: sdkNotifier.merchantBrandingDetails?.colors
+                                  .primaryColour ??
+                              MonaColors.primaryBlue,
+                        )
+                      : const SizedBox(
+                          height: 50,
+                          child: Center(
+                            child: Text(
+                              'No collections available',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
             ),
 
             const SizedBox(height: 20),
@@ -193,7 +210,12 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
                 future: _collectionsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Center(
+                        child: CupertinoActivityIndicator(
+                      color: sdkNotifier
+                              .merchantBrandingDetails?.colors.primaryColour ??
+                          MonaColors.primaryBlue,
+                    ));
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData) {
@@ -303,8 +325,10 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
                       sdkNotifier.state == MonaSDKState.loading
                           ? Align(
                               alignment: Alignment.center,
-                              child: CircularProgressIndicator(
-                                color: MonaColors.primaryBlue,
+                              child: CupertinoActivityIndicator(
+                                color: sdkNotifier.merchantBrandingDetails
+                                        ?.colors.primaryColour ??
+                                    MonaColors.primaryBlue,
                               ),
                             )
                           : CustomButton(

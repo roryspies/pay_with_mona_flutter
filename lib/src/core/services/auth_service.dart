@@ -238,8 +238,7 @@ class AuthService {
   /// - [PlatformException] if the operation fails.
   Future<void> permanentlyClearKeys() async {
     try {
-      await _secureStorage.permanentlyClearKeys();
-      "Cleared Secure Storage Keys".log();
+      await _secureStorage.clearAllExceptMerchantAPIKey();
     } catch (e, stackTrace) {
       throw Exception("Failed to clear secure storage keys: $e\n$stackTrace");
     }

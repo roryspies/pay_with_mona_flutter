@@ -2,16 +2,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pay_with_mona/pay_with_mona_sdk.dart';
-import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/src/utils/mona_colors.dart';
+import 'package:pay_with_mona/src/widgets/flowing_progress_bar.dart';
+import 'package:pay_with_mona/ui/utils/extensions.dart';
 import 'package:pay_with_mona/ui/utils/sdk_utils.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
-import 'package:pay_with_mona/src/widgets/flowing_progress_bar.dart';
 
 class SdkPaymentStatusModal extends StatefulWidget {
-  const SdkPaymentStatusModal({super.key});
+  const SdkPaymentStatusModal({
+    super.key,
+    this.performedKeyExchange = false,
+  });
+
+  final bool performedKeyExchange;
 
   @override
   State<SdkPaymentStatusModal> createState() => _SdkPaymentStatusModalState();
@@ -21,12 +26,10 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     with TickerProviderStateMixin {
   final sdkNotifier = MonaSDKNotifier();
 
-  // Animation controllers for progress bars
   late AnimationController _firstProgressController;
   late AnimationController _secondProgressController;
   late AnimationController _thirdProgressController;
 
-  // Animation for color transitions
   late Animation<Color?> _firstProgressColorAnimation;
   late Animation<Color?> _secondProgressColorAnimation;
   late Animation<Color?> _thirdProgressColorAnimation;
@@ -34,139 +37,99 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   bool showPaymentSuccessfulOrFailed = false;
   bool? isPaymentSuccessful;
 
-  // Track current payment stage 0: not started, 1: sent, 2: received
   int _currentStage = 0;
   num _transactionAmount = 0;
 
   @override
   void initState() {
     super.initState();
+    _setupControllers();
+    _setupAnimations();
+    _setupListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _firstProgressController.forward();
+    });
+  }
 
+  void _setupControllers() {
     _firstProgressController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
+        duration: const Duration(milliseconds: 500), vsync: this);
     _secondProgressController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
+        duration: const Duration(milliseconds: 500), vsync: this);
     _thirdProgressController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
+        duration: const Duration(milliseconds: 500), vsync: this);
+  }
 
+  void _setupAnimations() {
     _firstProgressColorAnimation = ColorTween(
       begin: MonaColors.successColour.withOpacity(0.1),
       end: MonaColors.successColour,
     ).animate(_firstProgressController);
 
-    _secondProgressColorAnimation = (isPaymentSuccessful ?? false
-            ? ColorTween(
-                begin: MonaColors.successColour.withOpacity(0.1),
-                end: MonaColors.successColour,
-              )
-            : ColorTween(
-                begin: MonaColors.errorColour.withOpacity(0.1),
-                end: MonaColors.errorColour,
-              ))
+    // We must update the color tween when the payment status changes
+    _updateProgressColorAnimations();
+  }
+
+  void _updateProgressColorAnimations() {
+    final bool success = isPaymentSuccessful ?? true;
+    final Color startColor =
+        (success ? MonaColors.successColour : MonaColors.errorColour)
+            .withOpacity(0.1);
+    final Color endColor =
+        success ? MonaColors.successColour : MonaColors.errorColour;
+
+    _secondProgressColorAnimation = ColorTween(begin: startColor, end: endColor)
         .animate(_secondProgressController);
-
-    _thirdProgressColorAnimation = (isPaymentSuccessful ?? false
-            ? ColorTween(
-                begin: MonaColors.successColour.withOpacity(0.1),
-                end: MonaColors.successColour,
-              )
-            : ColorTween(
-                begin: MonaColors.errorColour.withOpacity(0.1),
-                end: MonaColors.errorColour,
-              ))
+    _thirdProgressColorAnimation = ColorTween(begin: startColor, end: endColor)
         .animate(_thirdProgressController);
+  }
 
-    _firstProgressController.addListener(() {
-      if (mounted) setState(() {});
-    });
-
-    _secondProgressController.addListener(() {
-      if (mounted) setState(() {});
-    });
-
-    _thirdProgressController.addListener(() {
-      if (mounted) setState(() {});
-    });
+  void _setupListeners() {
+    _firstProgressController.addListener(() => setState(() {}));
+    _secondProgressController.addListener(() => setState(() {}));
+    _thirdProgressController.addListener(() => setState(() {}));
 
     _firstProgressController.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted) {
-        setState(() {
-          _currentStage = 1; // Sent stage
-        });
+      if (status == AnimationStatus.completed) {
+        setState(() => _currentStage = 1);
       }
     });
 
     _secondProgressController.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted) {
-        setState(() {
-          _currentStage = 2;
-        });
+      if (status == AnimationStatus.completed) {
+        setState(() => _currentStage = 2);
       }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) {
-        _firstProgressController.forward();
-
-        sdkNotifier.txnStateStream.listen(
-          (state) async {
-            switch (state) {
-              case TransactionStateFailed(
-                  :final reason,
-                  :final transactionID,
-                  :final amount,
-                ):
-                ("SdkPaymentStatusModal ❌ Failed: $reason (tx=$transactionID, amount=$amount)")
-                    .log();
-
-                _transactionAmount = amount ?? 0;
-                isPaymentSuccessful = false;
-                setState(() {});
-                _completeAllAnimations(
-                  isCompletedTransaction: false,
-                );
-                break;
-
-              case TransactionStateCompleted(
-                  :final transactionID,
-                  :final amount,
-                ):
-                ("SdkPaymentStatusModal ✅ Completed: tx=$transactionID, amount=$amount)")
-                    .log();
-
-                _transactionAmount = amount ?? 0;
-                isPaymentSuccessful = true;
-                setState(() {});
-                _completeAllAnimations();
-                break;
-
-              case TransactionStateInitiated(
-                  :final transactionID,
-                  :final amount,
-                ):
-                ("SdkPaymentStatusModal 🚀 Initiated: tx=$transactionID, amount=$amount)")
-                    .log();
-
-                _transactionAmount = amount ?? 0;
-                break;
-
-              default:
-                ("SdkPaymentStatusModal … default ::: $state").log();
-                break;
-            }
-          },
-          onError: (err) {
-            ('Error from transactionStateStream: $err').log();
-          },
-        );
+    /// *** SDK TXN STATE STREAM LISTENER
+    sdkNotifier.txnStateStream.listen(
+      (state) async {
+        switch (state) {
+          case TransactionStateFailed(:final amount):
+            if (!mounted) return;
+            setState(() {
+              _transactionAmount = amount ?? 0;
+              isPaymentSuccessful = false;
+              _updateProgressColorAnimations();
+            });
+            _completeAllAnimations(isCompletedTransaction: false);
+            break;
+          case TransactionStateCompleted(:final amount):
+            if (!mounted) return;
+            setState(() {
+              _transactionAmount = amount ?? 0;
+              isPaymentSuccessful = true;
+              _updateProgressColorAnimations();
+            });
+            _completeAllAnimations();
+            break;
+          case TransactionStateInitiated(:final amount):
+            if (!mounted) return;
+            setState(() => _transactionAmount = amount ?? 0);
+            break;
+          default:
+            break;
+        }
       },
     );
   }
@@ -176,57 +139,29 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
     _secondProgressController.reset();
     _thirdProgressController.reset();
     if (mounted) {
-      setState(() {
-        _currentStage = 0;
-      });
+      setState(() => _currentStage = 0);
     }
   }
 
-  void _completeAllAnimations({
-    bool isCompletedTransaction = true,
-  }) async {
-    Future.delayed(
-      const Duration(milliseconds: 500),
-      () {
-        if (mounted) {
-          setState(() => _currentStage = 1);
-        }
+  void _completeAllAnimations({bool isCompletedTransaction = true}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    _secondProgressController.forward();
 
-        _secondProgressController.forward(
-          from: _secondProgressController.value,
-        );
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+    _thirdProgressController.forward();
 
-        Future.delayed(
-          const Duration(milliseconds: 1500),
-          () async {
-            if (mounted) {
-              setState(() {
-                _currentStage = 2;
-              });
-            }
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    setState(() => showPaymentSuccessfulOrFailed = true);
 
-            _thirdProgressController.forward(
-              from: _thirdProgressController.value,
-            );
-
-            await Future.delayed(Duration(milliseconds: 500));
-
-            if (mounted) {
-              setState(() {
-                showPaymentSuccessfulOrFailed = true;
-              });
-            }
-
-            await Future.delayed(Duration(seconds: 2));
-
-            if (isCompletedTransaction) {
-              sdkNotifier.handleNavToConfirmationScreen();
-              return;
-            }
-          },
-        );
-      },
-    );
+    await Future.delayed(const Duration(seconds: 2));
+    if (isCompletedTransaction) {
+      sdkNotifier.handleNavToConfirmationScreen(
+          //currentTransactionState: TransactionStateNavToResultEnum.completed,
+          );
+    }
   }
 
   @override
@@ -241,195 +176,197 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Column(
-        spacing: 8.0,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            margin: EdgeInsets.all(16),
-            padding: EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: MonaColors.neutralWhite,
-              borderRadius: BorderRadius.circular(
-                8.0,
-              ),
+              borderRadius: BorderRadius.circular(8.0),
             ),
             child: AnimatedSwitcher(
-              duration: Duration(milliseconds: 300),
-              child: switch (showPaymentSuccessfulOrFailed) {
-                true => Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Colors.transparent,
-                        child: switch (isPaymentSuccessful) {
-                          true => SvgPicture.asset(
-                              "sdk_transaction_successful_icon".svg),
-                          false =>
-                            SvgPicture.asset("sdk_transaction_failed_icon".svg),
-                          null => SizedBox.shrink(),
-                        },
-                      ),
-
-                      context.sbH(8),
-
-                      ///
-                      Text(
-                        // Since this branch only runs when showPaymentSuccessfulOrFailed == true,
-                        // we know isPaymentSuccessful is non-null here, but the compiler still
-                        // wants us to treat it as nullable. So we can use the null-coalescing
-                        // operator to default to “false” if somehow it’s still null.
-                        (isPaymentSuccessful ?? false)
-                            ? "Payment Successful!"
-                            : "Payment Failed!",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-
-                      context.sbH(8),
-
-                      Text(
-                        (isPaymentSuccessful ?? false)
-                            ? "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} was successful. Mona has sent you a transaction receipt!"
-                            : "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} failed! \nPlease try again or use a different payment method.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: MonaColors.textBody,
-                        ),
-                      ),
-
-                      context.sbH(8),
-
-                      CustomButton(
-                        label: (isPaymentSuccessful ?? false)
-                            ? "Return"
-                            : "Try Again",
-                        onTap: () {
-                          if (isPaymentSuccessful == false) {
-                            _resetAnimations();
-                            sdkNotifier.resetSDKState(
-                              clearMonaCheckout: false,
-                              clearPendingPaymentResponseModel: false,
-                            );
-                            Navigator.of(context).pop();
-                            return;
-                          }
-
-                          Navigator.of(context).pop();
-                        },
-                      )
-                    ],
-                  ),
-
-                /// *** Default
-                false => Column(
-                    children: [
-                      ///
-                      Text(
-                        "Hang Tight, We're On It!",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: MonaColors.textHeading,
-                        ),
-                      ),
-
-                      context.sbH(8),
-
-                      Text(
-                        "Your transfer is on the way—we'll confirm as soon as it lands.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: MonaColors.textBody,
-                        ),
-                      ),
-
-                      context.sbH(8),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AnimatedProgressBar(
-                              isCurrentStage: _currentStage >= 0,
-                              colorAnimation: _firstProgressColorAnimation,
-                              controller: _firstProgressController,
-                            ),
-                          ),
-
-                          ///
-                          context.sbW(4),
-
-                          // Sent icon
-                          PaymentStageWidget(
-                            isPaymentSuccessful: true,
-                            isCurrentStage: _currentStage >= 1,
-                            stageText: "Sent",
-                          ),
-
-                          context.sbW(4),
-
-                          Expanded(
-                            flex: 3,
-                            child: _currentStage == 1
-                                ? FlowingProgressBar(
-                                    baseColor: switch (
-                                        isPaymentSuccessful ?? true) {
-                                      true => MonaColors.successColour
-                                          .withOpacity(0.1),
-                                      false =>
-                                        MonaColors.errorColour.withOpacity(0.1),
-                                    },
-                                    flowColor: switch (
-                                        isPaymentSuccessful ?? true) {
-                                      true => MonaColors.successColour,
-                                      false => MonaColors.errorColour,
-                                    },
-                                  )
-                                : AnimatedProgressBar(
-                                    isCurrentStage: _currentStage >= 1,
-                                    colorAnimation:
-                                        _secondProgressColorAnimation,
-                                    controller: _secondProgressController,
-                                  ),
-                          ),
-
-                          context.sbW(4),
-
-                          PaymentStageWidget(
-                            isPaymentSuccessful: isPaymentSuccessful,
-                            isCurrentStage: _currentStage >= 2,
-                            stageText: "Received",
-                          ),
-
-                          context.sbW(4),
-
-                          Expanded(
-                            child: AnimatedProgressBar(
-                              isCurrentStage: _currentStage >= 2,
-                              colorAnimation: _thirdProgressColorAnimation,
-                              controller: _thirdProgressController,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      context.sbH(8),
-                    ],
-                  ),
-              },
+              duration: const Duration(milliseconds: 300),
+              child: showPaymentSuccessfulOrFailed
+                  ? _buildStatusResult()
+                  : _buildProgressTracker(),
             ),
           ),
-
-          ///
-          SecuredByMona(),
+          const SecuredByMona(),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressTracker() {
+    // This is the core of the alignment fix.
+    // By using CrossAxisAlignment.start and Padding, we can align
+    // the progress bars with the vertical center of the circles.
+    const double circleRadius = 12.0;
+    const double lineWidth = 8.0;
+    const double verticalPadding = circleRadius - (lineWidth / 2);
+
+    return Column(
+      key: const ValueKey('tracker'),
+      children: [
+        Text(
+          "Hang Tight, We're On It!",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: MonaColors.textHeading,
+          ),
+        ),
+        context.sbH(8),
+        Text(
+          "Your transfer is on the way—we'll confirm as soon as it lands.",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: MonaColors.textBody,
+          ),
+        ),
+        context.sbH(16), // Increased spacing for better look
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start, // KEY FIX 1
+          children: [
+            Expanded(
+              // Bar 1
+              flex: 1,
+              child: Padding(
+                padding:
+                    const EdgeInsets.only(top: verticalPadding), // KEY FIX 2
+                child: AnimatedProgressBar(
+                  isCurrentStage: _currentStage >= 0,
+                  colorAnimation: _firstProgressColorAnimation,
+                  controller: _firstProgressController,
+                  isFirst: true, // For rounded cap
+                ),
+              ),
+            ),
+
+            // Step 1: Sent
+            PaymentStageWidget(
+              isPaymentSuccessful: true, // First step is always 'successful'
+              isCurrentStage: _currentStage >= 1,
+              stageText: "Sent",
+            ),
+
+            Expanded(
+              // Bar 2
+              flex: 2, // Make middle bar longer
+              child: Padding(
+                padding:
+                    const EdgeInsets.only(top: verticalPadding), // KEY FIX 2
+                child: _currentStage == 1 &&
+                        (isPaymentSuccessful == null ||
+                            isPaymentSuccessful == true)
+                    ? FlowingProgressBar(
+                        // The cool flowing animation
+                        baseColor: MonaColors.successColour.withOpacity(0.1),
+                        flowColor: MonaColors.successColour,
+                      )
+                    : AnimatedProgressBar(
+                        isCurrentStage: _currentStage >= 1,
+                        colorAnimation: _secondProgressColorAnimation,
+                        controller: _secondProgressController,
+                      ),
+              ),
+            ),
+
+            // Step 2: Received
+            PaymentStageWidget(
+              isPaymentSuccessful: isPaymentSuccessful,
+              isCurrentStage: _currentStage >= 2,
+              stageText: "Received",
+            ),
+
+            Expanded(
+              // Bar 3
+              flex: 1,
+              child: Padding(
+                padding:
+                    const EdgeInsets.only(top: verticalPadding), // KEY FIX 2
+                child: AnimatedProgressBar(
+                  isCurrentStage: _currentStage >= 2,
+                  colorAnimation: _thirdProgressColorAnimation,
+                  controller: _thirdProgressController,
+                  isLast: true, // For rounded cap
+                ),
+              ),
+            ),
+          ],
+        ),
+        context.sbH(8),
+      ],
+    );
+  }
+
+  Widget _buildStatusResult() {
+    final bool success = isPaymentSuccessful ?? false;
+    return Column(
+      key: const ValueKey('result'),
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.transparent,
+          child: SvgPicture.asset(
+            (success
+                    ? "sdk_transaction_successful_icon"
+                    : "sdk_transaction_failed_icon")
+                .svg,
+          ),
+        ),
+        context.sbH(8),
+        Text(
+          success ? "Payment Successful!" : "Payment Failed!",
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        context.sbH(8),
+        Text(
+          success
+              ? "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} was successful. Mona has sent you a transaction receipt!"
+              : "Your payment of ₦${SDKUtils.formatMoney(double.parse(_transactionAmount.toString()))} failed! \nPlease try again or use a different payment method.",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: MonaColors.textBody),
+        ),
+        context.sbH(16),
+
+        ///
+        if (success == false) ...[
+          CustomButton(
+            label: success ? "Return" : "Try Again",
+            onTap: () {
+              if (!success) {
+                Navigator.of(context).pop();
+                _resetAnimations();
+                sdkNotifier.resetSDKState(
+                  clearMonaCheckout: false,
+                  clearPendingPaymentResponseModel: false,
+                );
+
+                if (mounted) {
+                  setState(() => showPaymentSuccessfulOrFailed = false);
+                }
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _firstProgressController.forward();
+                });
+                return;
+              }
+
+              ///
+              Navigator.of(context).pop();
+              ("Returning...").log();
+            },
+          )
+        ],
+      ],
     );
   }
 }
@@ -440,35 +377,43 @@ class AnimatedProgressBar extends StatelessWidget {
     required this.isCurrentStage,
     required this.colorAnimation,
     required this.controller,
+    this.isFirst = false,
+    this.isLast = false,
   });
 
   final bool isCurrentStage;
   final Animation<Color?> colorAnimation;
   final AnimationController controller;
+  final bool isFirst;
+  final bool isLast;
+
+  static const double _lineWidth = 8.0;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 8,
+      height: _lineWidth,
       child: Stack(
         children: [
           Container(
             decoration: BoxDecoration(
               color: MonaColors.successColour.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(
+                _lineWidth,
+              ),
             ),
           ),
-
-          // Animated foreground bar
           AnimatedBuilder(
             animation: controller,
             builder: (context, child) {
               return FractionallySizedBox(
-                widthFactor: isCurrentStage ? controller.value : 0.0,
+                widthFactor: controller.value,
                 child: Container(
                   decoration: BoxDecoration(
                     color: colorAnimation.value,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(
+                      _lineWidth,
+                    ),
                   ),
                 ),
               );
@@ -494,44 +439,63 @@ class PaymentStageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = switch ((isPaymentSuccessful, isCurrentStage)) {
-      (false, _) => MonaColors.errorColour,
-      (true, true) => MonaColors.successColour,
-      (_, true) => MonaColors.successColour.withOpacity(0.2),
-      _ => MonaColors.successColour.withOpacity(0.1),
-    };
+    final Color circleColor;
+    //final double circleRadius;
+    Widget? icon;
 
-    final icon = switch ((isPaymentSuccessful, isCurrentStage)) {
-      (true, true) => SvgPicture.asset(
-          "mona_tick".svg,
-          height: 12,
-        ),
-      (false, true) => SvgPicture.asset(
+    if (isCurrentStage) {
+      if (isPaymentSuccessful == false) {
+        /// *** Explicitly failed
+        circleColor = MonaColors.errorColour;
+        icon = SvgPicture.asset(
           "close".svg,
           height: 12,
-        ),
-      _ => null,
-    };
+        );
+        //circleRadius = 12;
+      } else {
+        /// *** Completed successfully
+        circleColor = MonaColors.successColour;
+        icon = SvgPicture.asset(
+          "mona_tick".svg,
+          height: 12,
+        );
+        //circleRadius = 12;
+      }
+    } else {
+      /// *** Not yet at this stage
+      circleColor = MonaColors.successColour.withOpacity(
+        0.1,
+      );
+      icon = null;
+      //circleRadius = 10;
+    }
 
-    return Column(
-      spacing: 8.0,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        CircleAvatar(
-          radius: 12,
-          backgroundColor: backgroundColor,
-          child: AnimatedSwitcher(
-            duration: Duration(milliseconds: 300),
-            child: icon,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8.0,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 12, //circleRadius,
+            backgroundColor: circleColor,
+            child: AnimatedSwitcher(
+              duration: const Duration(
+                milliseconds: 300,
+              ),
+              child: icon,
+            ),
           ),
-        ),
-
-        ///
-        Text(
-          stageText,
-          style: TextStyle(fontSize: 10.0),
-        ),
-      ],
+          context.sbH(8),
+          Text(
+            stageText,
+            style: const TextStyle(
+              fontSize: 10.0,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
