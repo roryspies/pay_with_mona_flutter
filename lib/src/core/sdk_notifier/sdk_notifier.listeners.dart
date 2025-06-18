@@ -104,7 +104,6 @@ extension SDKNotifierListeners on MonaSDKNotifier {
           final decodedEvent = jsonDecode(event) as Map<String, dynamic>;
 
           if (decodedEvent["success"] == true) {
-            _updateState(MonaSDKState.idle);
             _txnStateStream.emit(state: TransactionStateNavToResult());
 
             await sdkCloseCustomTabs();
@@ -142,8 +141,8 @@ extension SDKNotifierListeners on MonaSDKNotifier {
               _sdkStateStream.emit(state: MonaSDKState.loading);
 
               await loginWithStrongAuth(isFromCollections: isFromCollections);
-              authCompleter.complete();
               resetPaymentWithPossibleKeyExchange();
+              authCompleter.complete();
             }
           } catch (error, stackTrace) {
             "_listenForAuthEvents error: $error".log();

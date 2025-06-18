@@ -98,22 +98,31 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
     );
   }
 
-  void showPopupMessage(String message,
-      {Duration duration = const Duration(seconds: 2)}) {
+  Future<void> showPopupMessage(
+    String message, {
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    final completer = Completer<void>();
+
     setState(() {
       _popupMessage = message;
       _showPopup = true;
     });
 
-    // Auto-hide after duration
+    // Cancel any previous timer
     _popupTimer?.cancel();
+
     _popupTimer = Timer(duration, () {
       if (mounted) {
         setState(() {
           _showPopup = false;
         });
       }
+      // Complete the future so callers know we're done
+      completer.complete();
     });
+
+    return completer.future;
   }
 
   @override
@@ -300,48 +309,37 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                             },
                           ),
                           context.sbH(10.5),
-                          sdkNotifier.state == MonaSDKState.loading
-                              ? Align(
-                                  alignment: Alignment.center,
-                                  child: CircularProgressIndicator(
-                                      color: (sdkNotifier
-                                              .merchantBrandingDetails
-                                              ?.colors
-                                              .primaryColour ??
-                                          MonaColors.primaryBlue)),
-                                )
-                              : CustomButton(
-                                  onTap: () {
-                                    sdkNotifier
-                                      ..setCallingBuildContext(context: context)
-                                      ..triggerCollection(
-                                          merchantId:
-                                              '67e41f884126830aded0b43c',
-                                          timeFactor: switch (
-                                              timeFactor.value) {
-                                            TimeFactor.day => 24 * 60,
-                                            TimeFactor.week => 7 * 24 * 60,
-                                            TimeFactor.month => 30 * 24 * 60,
-                                          },
-                                          onSuccess: (p0) async {
-                                            setState(() {
-                                              isError = false;
-                                            });
-                                            showPopupMessage(
-                                                'Collection triggered successfully');
+                          CustomButton(
+                            isLoading:
+                                sdkNotifier.state == MonaSDKState.loading,
+                            onTap: () {
+                              sdkNotifier
+                                ..setCallingBuildContext(context: context)
 
-                                            await Future.delayed(
-                                                Duration(seconds: 2));
-
-                                            nav();
-                                          },
-                                          onError: (message) {
-                                            isError = true;
-                                            showPopupMessage(message);
-                                          });
+                                /// *** TODO: @Serticode Fix This
+                                ..triggerCollection(
+                                  merchantId: '67e41f884126830aded0b43c',
+                                  timeFactor: switch (timeFactor.value) {
+                                    TimeFactor.day => 24 * 60,
+                                    TimeFactor.week => 7 * 24 * 60,
+                                    TimeFactor.month => 30 * 24 * 60,
                                   },
-                                  label: 'Continue',
-                                ),
+                                  onSuccess: (p0) async {
+                                    setState(() {
+                                      isError = false;
+                                    });
+                                    ('Collection triggered successfully');
+
+                                    nav();
+                                  },
+                                  onError: (message) async {
+                                    isError = true;
+                                    await showPopupMessage(message);
+                                  },
+                                );
+                            },
+                            label: 'Continue',
+                          ),
                         ],
                       ),
                     );

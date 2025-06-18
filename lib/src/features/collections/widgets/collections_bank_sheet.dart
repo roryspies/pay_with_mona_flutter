@@ -75,8 +75,12 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
     super.dispose();
   }
 
-  void showPopupMessage(String message,
-      {Duration duration = const Duration(seconds: 2)}) {
+  void showPopupMessage(
+    String message, {
+    Duration duration = const Duration(
+      seconds: 2,
+    ),
+  }) {
     setState(() {
       _popupMessage = message;
       _showPopup = true;
@@ -324,20 +328,22 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                               isLoading:
                                   sdkNotifier.state == MonaSDKState.loading,
                               label: 'Approve debiting',
-                              onTap: () {
+                              onTap: () async {
                                 if (selectedBank == null) {
                                   showPopupMessage('Please select a bank');
                                   return;
                                 }
+
                                 sdkNotifier.setCallingBuildContext(
-                                    context: context);
-                                sdkNotifier.createCollections(
-                                  bankId: selectedBank?.bankId ??
-                                      '680f5d983bccd31f1312645d',
+                                  context: context,
+                                );
+
+                                await sdkNotifier.createCollections(
+                                  bankId: selectedBank?.bankId ?? '',
                                   accessRequestId: widget.accessRequestId,
-                                  onSuccess: (successMap) {
+                                  onSuccess: (successMap) async {
                                     Navigator.of(context).pop();
-                                    showModalBottomSheet(
+                                    await showModalBottomSheet(
                                       context: context,
                                       isScrollControlled: true,
                                       builder: (_) => Wrap(
@@ -399,10 +405,14 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                       ],
                     ),
                   ),
-                  if (_showPopup && _popupMessage != null)
+
+                  ///
+                  if (_showPopup && _popupMessage != null) ...[
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 400),
+                      duration: const Duration(
+                        milliseconds: 300,
+                      ),
                       builder: (context, value, child) {
                         return Opacity(
                           opacity: value,
@@ -449,6 +459,8 @@ class _CollectionsBankSheetState extends State<CollectionsBankSheet> {
                         ),
                       ),
                     ),
+                  ],
+
                   context.sbH(20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

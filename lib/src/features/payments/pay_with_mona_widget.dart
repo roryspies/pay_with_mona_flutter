@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
 import 'package:pay_with_mona/src/core/sdk_notifier/notifier_enums.dart';
 import 'package:pay_with_mona/src/core/sdk_notifier/sdk_notifier.dart';
@@ -80,7 +81,107 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                       final selectedCardID =
                           sdkNotifier.selectedCardOption?.bankId;
 
-                      return ListTile(
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 16.0,
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 21.0,
+                              backgroundColor: MonaColors.neutralWhite,
+                              child: Stack(
+                                children: [
+                                  //!
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: CircleAvatar(
+                                      backgroundColor: MonaColors.neutralWhite,
+                                      child: Image.network(
+                                        card.logo ?? "",
+                                      ),
+                                    ),
+                                  ),
+
+                                  Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: CircleAvatar(
+                                      radius: 7.0,
+                                      backgroundColor: Colors.white,
+                                      child: SvgPicture.asset(
+                                        "tiny_card_icon".svg,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+
+                            context.sbW(16.0),
+
+                            ///
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    card.bankName ?? "",
+                                    style: TextStyle(
+                                      fontSize: context.sp(14),
+                                      fontWeight: FontWeight.w500,
+                                      color: MonaColors.textHeading,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Card - ${card.accountNumber}",
+                                    style: TextStyle(
+                                      fontSize: context.sp(12),
+                                      fontWeight: FontWeight.w400,
+                                      color: MonaColors.textBody,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            ///
+                            AnimatedContainer(
+                              duration: Duration(milliseconds: 300),
+                              height: context.h(24),
+                              width: context.w(24),
+                              decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.circular(context.h(24)),
+                                border: Border.all(
+                                  width: 1.5,
+                                  color: (sdkNotifier.selectedPaymentMethod ==
+                                              PaymentMethod.savedBank &&
+                                          selectedCardID == card.bankId)
+                                      ? (sdkNotifier.merchantBrandingDetails
+                                              ?.colors.primaryColour ??
+                                          MonaColors.primaryBlue)
+                                      : MonaColors.bgGrey,
+                                ),
+                              ),
+                              child: Center(
+                                child: CircleAvatar(
+                                  radius: context.w(6),
+                                  backgroundColor:
+                                      (sdkNotifier.selectedPaymentMethod ==
+                                                  PaymentMethod.savedBank &&
+                                              selectedCardID == card.bankId)
+                                          ? (sdkNotifier.merchantBrandingDetails
+                                                  ?.colors.primaryColour ??
+                                              MonaColors.primaryBlue)
+                                          : Colors.transparent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      /* ListTile(
                         onTap: () {
                           sdkNotifier.setSelectedPaymentMethod(
                             method: PaymentMethod.savedCard,
@@ -149,7 +250,36 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             ),
                           ),
                         ),
-                      );
+                      ); */
+                      /* CircleAvatar(
+                        radius: 21.0,
+                        backgroundColor: MonaColors.neutralWhite,
+                        child: Stack(
+                          children: [
+                            //!
+                            Align(
+                              alignment: Alignment.center,
+                              child: CircleAvatar(
+                                backgroundColor: MonaColors.neutralWhite,
+                                child: Image.network(
+                                  bank.logo ?? "",
+                                ),
+                              ),
+                            ),
+
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: CircleAvatar(
+                                radius: 7.0,
+                                backgroundColor: Colors.white,
+                                backgroundImage: AssetImage(
+                                  "tiny_bank_icon".svg,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ); */
                     },
                   ).toList(),
                 ),
@@ -171,9 +301,36 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                           child: Row(
                             children: [
                               CircleAvatar(
+                                radius: 21.0,
                                 backgroundColor: MonaColors.neutralWhite,
-                                child: Image.network(
-                                  bank.logo ?? "",
+                                child: Stack(
+                                  children: [
+                                    //!
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: CircleAvatar(
+                                        backgroundColor:
+                                            MonaColors.neutralWhite,
+                                        child: Image.network(
+                                          bank.logo ?? "",
+                                        ),
+                                      ),
+                                    ),
+
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: CircleAvatar(
+                                        radius: 7.0,
+                                        backgroundColor: Colors.white,
+                                        child: SvgPicture.asset(
+                                          "tiny_bank_icon".svg,
+                                        ),
+                                        /* backgroundImage: AssetImage(
+                                          "tiny_bank_icon".svg,
+                                        ), */
+                                      ),
+                                    )
+                                  ],
                                 ),
                               ),
 
@@ -248,9 +405,36 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                           child: Row(
                             children: [
                               CircleAvatar(
+                                radius: 21.0,
                                 backgroundColor: MonaColors.neutralWhite,
-                                child: Image.network(
-                                  bank.logo ?? "",
+                                child: Stack(
+                                  children: [
+                                    //!
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: CircleAvatar(
+                                        backgroundColor:
+                                            MonaColors.neutralWhite,
+                                        child: Image.network(
+                                          bank.logo ?? "",
+                                        ),
+                                      ),
+                                    ),
+
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: CircleAvatar(
+                                        radius: 7.0,
+                                        backgroundColor: Colors.white,
+                                        child: SvgPicture.asset(
+                                          "tiny_bank_icon".svg,
+                                        ),
+                                        /* backgroundImage: AssetImage(
+                                          "tiny_bank_icon".svg,
+                                        ), */
+                                      ),
+                                    )
+                                  ],
                                 ),
                               ),
 

@@ -43,7 +43,6 @@ class MonaSdkMerchantKeyCache {
 
     // 3. Write the complete, merged data back to the file
     final file = await _localFile;
-    "SAVE TO APP FILE (MERGED) ::: $currentData".log();
     await file.writeAsString(jsonEncode(currentData));
   }
 
@@ -59,7 +58,6 @@ class MonaSdkMerchantKeyCache {
         return null;
       }
       final contents = await file.readAsString();
-      "READ FROM APP FILE ::: $contents".log();
 
       if (contents.isNotEmpty) {
         return jsonDecode(contents) as Map<String, dynamic>;
