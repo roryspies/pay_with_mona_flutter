@@ -38,7 +38,7 @@ class PaymentOptionTile extends StatelessWidget {
                   (sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
                           MonaColors.primaryBlue)
                       .withOpacity(
-                0.1,
+                0.05,
               ),
               child: SvgPicture.asset(
                 iconURL.svg,

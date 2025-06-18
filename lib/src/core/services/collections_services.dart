@@ -4,6 +4,7 @@ import 'package:pay_with_mona/src/core/api/api_exceptions.dart';
 import 'package:pay_with_mona/src/core/api/api_service.dart';
 import 'package:pay_with_mona/src/core/generators/uuid_generator.dart';
 import 'package:pay_with_mona/src/core/security/biometrics/biometrics_service.dart';
+import 'package:pay_with_mona/src/core/security/secure_storage/mona_sdk_merchant_key_cache.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage.dart';
 import 'package:pay_with_mona/src/core/security/secure_storage/secure_storage_keys.dart';
 import 'package:pay_with_mona/ui/utils/extensions.dart';
@@ -18,15 +19,13 @@ class CollectionsService {
 
   final _apiService = ApiService();
 
-  // final _merchantId = "67e41f884126830aded0b43c";
-
   String? _secretKey;
 
-  final _secureStorage = SecureStorage();
+  final _merchantKeyCache = MonaSdkMerchantKeyCache();
 
   Future<String?> getMerchantKey() async {
-    return await _secureStorage.read(
-      key: SecureStorageKeys.merchantKey,
+    return await _merchantKeyCache.getValue(
+      SecureStorageKeys.merchantKey,
     );
   }
 
@@ -188,6 +187,7 @@ class CollectionsService {
   }) async {
     try {
       final secureStorage = SecureStorage();
+
       final payload = {
         "bankId": bankId,
         "accessRequestId": accessRequestId,

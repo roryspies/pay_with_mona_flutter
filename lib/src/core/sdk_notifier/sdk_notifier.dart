@@ -519,10 +519,10 @@ class MonaSDKNotifier extends ChangeNotifier {
         /// *** To check if the custom tabs was closed
         if (state == dart_app_life_cycle.AppLifecycleState.resumed) {
           "HOST App is in foreground".log();
-          if (paymentWithPossibleKeyExchange) {
+          /* if (paymentWithPossibleKeyExchange) {
             _updateState(MonaSDKState.loading);
             return;
-          }
+          } */
 
           _updateState(MonaSDKState.idle);
         } else {
@@ -547,7 +547,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     if (isLoggedIn != null) {
       _authStream.emit(state: AuthState.loggedIn);
-      //await validatePII(isFromConfirmLoggedInUser: true);
       return;
     } else {
       _authStream.emit(state: AuthState.loggedOut);
@@ -556,20 +555,16 @@ class MonaSDKNotifier extends ChangeNotifier {
 
   Future<void> validatePII({
     required String userKeyID,
-    bool isFromConfirmLoggedInUser = false,
     bool isFromBankCollectionsView = false,
     void Function(String)? onEffect,
   }) async {
-    if (isFromConfirmLoggedInUser == false) {
-      _updateState(MonaSDKState.loading);
-    }
+    _updateState(MonaSDKState.loading);
 
     final response = await _authService.validatePII(
       userKeyID: userKeyID,
     );
 
     if (response == null) {
-      //_handleError("Failed to validate user PII - Experienced an Error");
       onEffect?.call("Failed to validate user PII - Experienced an Error");
       return;
     }
@@ -635,8 +630,6 @@ class MonaSDKNotifier extends ChangeNotifier {
         );
       }
 
-      _updateState(MonaSDKState.loading);
-
       final firstName = _monaCheckOut?.firstName;
       final lastName = _monaCheckOut?.lastName;
 
@@ -691,8 +684,8 @@ class MonaSDKNotifier extends ChangeNotifier {
           ),
         );
       }
-      _updateState(MonaSDKState.idle);
       onSuccess();
+      _updateState(MonaSDKState.idle);
       return;
     } catch (error) {
       _updateState(MonaSDKState.idle);
@@ -744,7 +737,7 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> confirmMakePayment({
+/*   Future<void> confirmMakePayment({
     required bool shouldMakePayment,
   }) async {
     if (shouldMakePayment) {
@@ -754,7 +747,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       _updateState(MonaSDKState.idle);
     }
   }
-
+ */
   /// Orchestrates the in-app payment flow with SSE and strong authentication.
   ///
   /// 1. Opens a custom tab to the payment URL.
@@ -796,6 +789,7 @@ class MonaSDKNotifier extends ChangeNotifier {
       "MonaSDKNotifier ::: makePayment ::: ```Concurrently listen for transaction completion.``` ::: Error ::: $error"
           .log();
       _handleError("Error during payment process: $error");
+      return;
     }
 
     /// *** If the user doesn't have a keyID and they want to use a saved payment method,
@@ -825,7 +819,6 @@ class MonaSDKNotifier extends ChangeNotifier {
               "Payment Notifier ::: Make Payment Request Complete".log();
 
               _currentTransactionFriendlyID = res["friendlyID"];
-              _sdkStateStream.emit(state: MonaSDKState.transactionInitiated);
               _txnStateStream.emit(
                 state: TransactionStateInitiated(
                   transactionID: res["transactionRef"],
@@ -849,8 +842,6 @@ class MonaSDKNotifier extends ChangeNotifier {
               }
             },
           );
-
-          _updateState(MonaSDKState.idle);
         } catch (error, trace) {
           _handleError("Error listening for transaction updates.");
           "Payment Notifier ::: makePayment ::: PaymentMethod.savedBank ::: ERROR ::: $error TRACE ::: $trace"
@@ -865,6 +856,8 @@ class MonaSDKNotifier extends ChangeNotifier {
         await handleRegularPayment();
         break;
     }
+
+    _updateState(MonaSDKState.idle);
   }
 
   Future<void> handleRegularPayment() async {
@@ -898,6 +891,7 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> loginWithStrongAuth({
     bool isFromCollections = false,
   }) async {
+    final canEnrollKeysCompleter = Completer<bool>();
     _updateState(MonaSDKState.loading);
     try {
       final response = await _authService.loginWithStrongAuth(
@@ -909,8 +903,6 @@ class MonaSDKNotifier extends ChangeNotifier {
         _handleError("Strong authentication failed.");
         return;
       }
-
-      final canEnrollKeysCompleter = Completer<bool>();
 
       SDKUtils.showSDKModalBottomSheet(
         callingContext: _callingBuildContext!,
@@ -953,7 +945,7 @@ class MonaSDKNotifier extends ChangeNotifier {
               Navigator.of(_callingBuildContext!).pop();
             }
             _authStream.emit(state: AuthState.loggedIn);
-            _updateState(MonaSDKState.success);
+            //_updateState(MonaSDKState.success);
             /* await validatePII(); */
 
             /* if (!isFromCollections) {
@@ -984,7 +976,6 @@ class MonaSDKNotifier extends ChangeNotifier {
       if (_callingBuildContext != null) {
         Navigator.of(_callingBuildContext!).pop();
       }
-      _updateState(MonaSDKState.idle);
       _authStream.emit(state: AuthState.loggedOut);
       ScaffoldMessenger.of(_callingBuildContext!).showSnackBar(
         const SnackBar(
@@ -994,6 +985,8 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
     } catch (e) {
       _handleError("Unexpected error during authentication.");
+    } finally {
+      _updateState(MonaSDKState.idle);
     }
   }
 
@@ -1020,12 +1013,12 @@ class MonaSDKNotifier extends ChangeNotifier {
           onFailure?.call();
         },
       );
-
-      _updateState(MonaSDKState.success);
     } catch (e) {
       onFailure?.call();
       e.toString().log();
       _handleError(e.toString());
+    } finally {
+      _updateState(MonaSDKState.success);
     }
   }
 
@@ -1066,7 +1059,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
         if (transactionId != null) {
           _handleTransactionId(transactionId);
-          _listenForTransactionUpdateEvents();
+          //_listenForTransactionUpdateEvents();
           _listenForCustomTabEvents();
         }
 
@@ -1122,7 +1115,6 @@ class MonaSDKNotifier extends ChangeNotifier {
 
     if (success != null) {
       success.log();
-      _updateState(MonaSDKState.success);
 
       final requestsMap = success['data'] as Map<String, dynamic>;
 
@@ -1160,6 +1152,8 @@ class MonaSDKNotifier extends ChangeNotifier {
           ],
         ),
       );
+
+      _updateState(MonaSDKState.success);
       return;
     }
   }

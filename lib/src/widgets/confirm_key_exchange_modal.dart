@@ -27,7 +27,6 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
         _sdkNotifier
