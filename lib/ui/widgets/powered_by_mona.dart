@@ -15,26 +15,36 @@ class PoweredByMona extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          title ?? SDKStrings.poweredBy,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: MonaColors.textHeading,
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title ?? SDKStrings.poweredBy,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: MonaColors.textHeading,
+                ),
+              ),
+
+              context.sbW(4.0),
+
+              ///
+              SvgPicture.asset(
+                SDKStrings.monaLogoWritten.svg,
+              ),
+            ],
           ),
-        ),
-
-        context.sbW(4.0),
-
-        ///
-        SvgPicture.asset(
-          SDKStrings.monaLogoWritten.svg,
-        )
-      ],
+          context.sbH(16.0)
+        ],
+      ),
     );
   }
 }

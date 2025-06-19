@@ -206,10 +206,10 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
               ),
             ),
 
-            PoweredByMona(),
+            context.sbH(16.0),
 
             ///
-            context.sbH(8.0),
+            PoweredByMona(),
           ],
         ),
       ),

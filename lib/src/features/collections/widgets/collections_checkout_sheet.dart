@@ -593,7 +593,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                       ],
                     ),
                   ),
-                  context.sbH(20),
+                  context.sbH(16),
                   PoweredByMona()
                 ],
               ),

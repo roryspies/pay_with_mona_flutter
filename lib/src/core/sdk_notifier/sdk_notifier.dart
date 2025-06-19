@@ -737,17 +737,6 @@ class MonaSDKNotifier extends ChangeNotifier {
     }
   }
 
-/*   Future<void> confirmMakePayment({
-    required bool shouldMakePayment,
-  }) async {
-    if (shouldMakePayment) {
-      _updateState(MonaSDKState.loading);
-      await makePayment();
-    } else {
-      _updateState(MonaSDKState.idle);
-    }
-  }
- */
   /// Orchestrates the in-app payment flow with SSE and strong authentication.
   ///
   /// 1. Opens a custom tab to the payment URL.
