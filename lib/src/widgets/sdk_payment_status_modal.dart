@@ -192,7 +192,7 @@ class _SdkPaymentStatusModalState extends State<SdkPaymentStatusModal>
                   : _buildProgressTracker(),
             ),
           ),
-          const SecuredByMona(),
+          const PoweredByMona(),
         ],
       ),
     );

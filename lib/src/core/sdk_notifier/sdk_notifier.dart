@@ -519,10 +519,10 @@ class MonaSDKNotifier extends ChangeNotifier {
         /// *** To check if the custom tabs was closed
         if (state == dart_app_life_cycle.AppLifecycleState.resumed) {
           "HOST App is in foreground".log();
-          /* if (paymentWithPossibleKeyExchange) {
+          if (paymentWithPossibleKeyExchange) {
             _updateState(MonaSDKState.loading);
             return;
-          } */
+          }
 
           _updateState(MonaSDKState.idle);
         } else {
@@ -834,7 +834,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                   callingContext: _callingBuildContext!,
                   child: ConfirmTransactionModal(
                     performedKeyExchange: true,
-                    showTransactionStatusIndicator: true,
+                    //showTransactionStatusIndicator: true,
                     selectedPaymentMethod: _selectedPaymentMethod,
                     transactionAmountInKobo: _monaCheckOut!.amount!,
                   ),

@@ -5,6 +5,6 @@ export 'src/core/events/mona_sdk_state_stream.dart';
 export 'src/core/events/transaction_state_stream.dart';
 export 'src/models/mona_checkout.dart';
 export 'src/core/events/transaction_state_classes.dart';
-export 'ui/widgets/secured_by_mona.dart';
+export 'ui/widgets/powered_by_mona.dart';
 export 'src/features/collections/views/bank_collections_view.dart';
 export 'package:pay_with_mona/src/features/collections/controller/notifier_enums.dart';

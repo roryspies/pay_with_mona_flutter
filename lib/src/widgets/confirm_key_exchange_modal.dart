@@ -206,7 +206,7 @@ class _ConfirmKeyExchangeModalState extends State<ConfirmKeyExchangeModal> {
               ),
             ),
 
-            SecuredByMona(),
+            PoweredByMona(),
 
             ///
             context.sbH(8.0),

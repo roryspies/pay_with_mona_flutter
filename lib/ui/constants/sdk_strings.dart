@@ -5,6 +5,7 @@ abstract class SDKStrings {
   ///
   /// *** REGULAR TEXTS
   static const String securedBy = "Secured by";
+  static const String poweredBy = "Powered by";
 
   ///
   ///

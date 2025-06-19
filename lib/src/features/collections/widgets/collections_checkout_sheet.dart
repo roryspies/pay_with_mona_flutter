@@ -473,8 +473,10 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                               EdgeInsets.symmetric(horizontal: context.w(8)),
                           child: Row(
                             children: [
-                              SvgPicture.asset('reference'.svg,
-                                  height: context.h(24)),
+                              SvgPicture.asset(
+                                'reference'.svg,
+                                height: context.h(24),
+                              ),
                               context.sbW(8),
                               Flexible(
                                 child: Column(
@@ -592,24 +594,7 @@ class _CollectionsCheckoutSheetState extends State<CollectionsCheckoutSheet> {
                     ),
                   ),
                   context.sbH(20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 2,
-                    children: [
-                      Text(
-                        'Secured by ',
-                        style: TextStyle(
-                          fontSize: context.sp(12),
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Image.asset(
-                        'textlogo'.png,
-                        height: context.h(16),
-                      ),
-                    ],
-                  ),
+                  PoweredByMona()
                 ],
               ),
             ),

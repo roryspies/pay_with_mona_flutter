@@ -6,6 +6,7 @@ import 'package:pay_with_mona/src/utils/mona_colors.dart';
 import 'package:pay_with_mona/ui/utils/size_config.dart';
 import 'package:pay_with_mona/ui/widgets/bottom_sheet_top_header.dart';
 import 'package:pay_with_mona/src/widgets/custom_button.dart';
+import 'package:pay_with_mona/ui/widgets/powered_by_mona.dart';
 
 class DataShareSheet extends StatelessWidget {
   const DataShareSheet({super.key});
@@ -176,24 +177,7 @@ class DataShareSheet extends StatelessWidget {
                     ),
                   ),
                   context.sbH(20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 2,
-                    children: [
-                      Text(
-                        'Secured by ',
-                        style: TextStyle(
-                          fontSize: context.sp(12),
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Image.asset(
-                        'textlogo'.png,
-                        height: context.h(16),
-                      ),
-                    ],
-                  ),
+                  PoweredByMona()
                 ],
               ),
             ),
