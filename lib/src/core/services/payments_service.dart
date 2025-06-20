@@ -139,6 +139,7 @@ class PaymentService {
         await paymentNotifier.buildCardPaymentPayload(),
       _ => await paymentNotifier.buildBankPaymentPayload(),
     };
+
     final monaKeyID = await secureStorage.read(
           key: SecureStorageKeys.keyID,
         ) ??
@@ -269,7 +270,6 @@ class PaymentService {
 
                 await makePaymentRequest(
                   paymentType: paymentType,
-                  //sign: true,
                   onPayComplete: onPayComplete,
                 );
               } else {
@@ -292,7 +292,6 @@ class PaymentService {
 
                 await makePaymentRequest(
                   paymentType: paymentType,
-                  //sign: true,
                   onPayComplete: onPayComplete,
                 );
               } else {
@@ -350,8 +349,6 @@ class PaymentService {
     String timestamp,
     String userKeyID,
   ) async {
-    "$_repoName _signRequest".log();
-
     final encodedPayload = base64Encode(utf8.encode(jsonEncode(payload)));
 
     Map<String, dynamic> data = {

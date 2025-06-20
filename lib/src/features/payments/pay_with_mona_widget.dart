@@ -554,9 +554,13 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             sdkNotifier.selectedPaymentMethod,
                         transactionAmountInKobo:
                             sdkNotifier.monaCheckout!.amount!,
+                        onPay: () {
+                          sdkNotifier
+                            ..setCallingBuildContext(context: context)
+                            ..makePayment();
+                        },
                       ),
                     );
-
                     return;
                   }
 

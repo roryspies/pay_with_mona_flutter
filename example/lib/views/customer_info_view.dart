@@ -41,7 +41,6 @@ class _CustomerInfoViewState extends ConsumerState<CustomerInfoView> {
     super.initState();
     _authStateSub = sdkNotifier.authStateStream.listen(
       (state) {
-        " :::AUTH STATE ::: $state".log();
         if (state == AuthState.loggedOut || state == AuthState.error) {
           authText = 'Not signed in';
           isSignedIn = false;

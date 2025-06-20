@@ -27,6 +27,7 @@ class SdkBottomSheetWrapper extends StatelessWidget {
     final bgColour =
         sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
             MonaColors.primaryBlue;
+
     return Container(
       width: double.infinity,
 
@@ -46,7 +47,10 @@ class SdkBottomSheetWrapper extends StatelessWidget {
         duration: const Duration(
           milliseconds: 300,
         ),
+        curve: Curves.fastOutSlowIn,
+        clipBehavior: Clip.antiAlias,
         child: Wrap(
+          clipBehavior: Clip.antiAlias,
           children: [
             BottomSheetTopHeader(
               isForCustomTab: isForCustomTab,

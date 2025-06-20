@@ -302,17 +302,12 @@ class MonaSDKNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void handleNavToConfirmationScreen(
-      /* {
-    required TransactionStateNavToResultEnum currentTransactionState,
-  } */
-      ) {
+  void handleNavToConfirmationScreen() {
     _txnStateStream.emit(
       state: TransactionStateNavToResult(
         transactionID: _currentTransactionId,
         friendlyID: _currentTransactionFriendlyID,
         amount: _monaCheckOut?.amount,
-        //currentTransactionState: currentTransactionState,
       ),
     );
     notifyListeners();
@@ -360,8 +355,9 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       // Initiate payment
       final response = await _authService.updateMerchantPaymentSettings(
-        merchantAPIKey:
-            "4d85a2a80ea5247c4643692d267f179d9db35132b3299d46014f4350243a68d5",
+        merchantAPIKey: await _merchantKeyCache.getValue(
+          SecureStorageKeys.merchantAPIKey,
+        ),
         successRateType: _merchantPaymentSettingsEnum.paymentName,
       );
 
@@ -400,21 +396,12 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   Future<void> _setMerchantKey({required String merchantKey}) async {
-    /* await _secureStorage.write(
-      key: SecureStorageKeys.merchantKey,
-      value: merchantKey,
-    ); */
-
     await _merchantKeyCache.save({
       SecureStorageKeys.merchantKey: merchantKey,
     });
   }
 
   Future<String?> _getMerchantKey() async {
-    /* return await _secureStorage.read(
-      key: SecureStorageKeys.merchantKey,
-    ); */
-
     return await _merchantKeyCache.getValue(
       SecureStorageKeys.merchantKey,
     );
@@ -423,19 +410,12 @@ class MonaSDKNotifier extends ChangeNotifier {
   Future<void> setMerchantAPIKey({
     required String merchantAPIKey,
   }) async {
-    /* await _secureStorage.write(
-      key: SecureStorageKeys.merchantAPIKey,
-      value: merchantAPIKey,
-    ); */
     await _merchantKeyCache.save({
       SecureStorageKeys.merchantAPIKey: merchantAPIKey,
     });
   }
 
   Future<String?> getMerchantAPIKey() async {
-    /*  return await _secureStorage.read(
-      key: SecureStorageKeys.merchantAPIKey,
-    ); */
     return await _merchantKeyCache.getValue(
       SecureStorageKeys.merchantAPIKey,
     );
@@ -524,7 +504,7 @@ class MonaSDKNotifier extends ChangeNotifier {
             return;
           }
 
-          _updateState(MonaSDKState.idle);
+          //_updateState(MonaSDKState.idle);
         } else {
           "HOST App is in background".log();
         }
@@ -792,21 +772,20 @@ class MonaSDKNotifier extends ChangeNotifier {
     /// *** Payment process will be handled here on the web, if there is no checkout ID / Key Exchange done
     /// *** previously
     if (doKeyExchange) {
-      "DO KEY EXCHANGE".log();
+      "DO KEY EXCHANGE ::: $doKeyExchange".log();
       await initKeyExchange();
     }
 
     switch (_selectedPaymentMethod) {
       case PaymentMethod.savedBank || PaymentMethod.savedCard:
         try {
-          _updateState(MonaSDKState.loading);
+          // _updateState(MonaSDKState.loading);
           await _paymentsService.makePaymentRequest(
             paymentType: _selectedPaymentMethod == PaymentMethod.savedBank
                 ? null
                 : TransactionPaymentTypes.card,
             onPayComplete: (res, payload) async {
               "Payment Notifier ::: Make Payment Request Complete".log();
-
               _currentTransactionFriendlyID = res["friendlyID"];
               _txnStateStream.emit(
                 state: TransactionStateInitiated(
@@ -816,7 +795,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                 ),
               );
 
-              if (doKeyExchange) {
+              /* if (doKeyExchange) {
                 await SDKUtils.showSDKModalBottomSheet(
                   isDismissible: false,
                   enableDrag: false,
@@ -828,7 +807,7 @@ class MonaSDKNotifier extends ChangeNotifier {
                     transactionAmountInKobo: _monaCheckOut!.amount!,
                   ),
                 );
-              }
+              } */
             },
           );
         } catch (error, trace) {
@@ -915,6 +894,7 @@ class MonaSDKNotifier extends ChangeNotifier {
 
       if (canEnrollKeys) {
         _updateState(MonaSDKState.loading);
+
         "USER ALLOWED TO ENROLL KEYS".log();
         return await _authService.signAndCommitAuthKeys(
           deviceAuth: response["deviceAuth"],
@@ -928,12 +908,13 @@ class MonaSDKNotifier extends ChangeNotifier {
               return;
             }
 
+            /// *** Close the Modal
             if (_callingBuildContext != null) {
-              /// *** TODO: Remove this and use the previous version.
-              //SDKUtils.popMultiple(_callingBuildContext!, 1);
               Navigator.of(_callingBuildContext!).pop();
             }
+
             _authStream.emit(state: AuthState.loggedIn);
+
             //_updateState(MonaSDKState.success);
             /* await validatePII(); */
 
@@ -966,6 +947,7 @@ class MonaSDKNotifier extends ChangeNotifier {
         Navigator.of(_callingBuildContext!).pop();
       }
       _authStream.emit(state: AuthState.loggedOut);
+      _updateState(MonaSDKState.idle);
       ScaffoldMessenger.of(_callingBuildContext!).showSnackBar(
         const SnackBar(
           content: Text('Enrollment Declined'),
@@ -974,8 +956,6 @@ class MonaSDKNotifier extends ChangeNotifier {
       );
     } catch (e) {
       _handleError("Unexpected error during authentication.");
-    } finally {
-      _updateState(MonaSDKState.idle);
     }
   }
 
