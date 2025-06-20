@@ -795,19 +795,18 @@ class MonaSDKNotifier extends ChangeNotifier {
                 ),
               );
 
-              /* if (doKeyExchange) {
+              if (doKeyExchange) {
                 await SDKUtils.showSDKModalBottomSheet(
                   isDismissible: false,
                   enableDrag: false,
                   callingContext: _callingBuildContext!,
                   child: ConfirmTransactionModal(
-                    performedKeyExchange: true,
-                    //showTransactionStatusIndicator: true,
+                    showTransactionStatusIndicator: true,
                     selectedPaymentMethod: _selectedPaymentMethod,
                     transactionAmountInKobo: _monaCheckOut!.amount!,
                   ),
                 );
-              } */
+              }
             },
           );
         } catch (error, trace) {
