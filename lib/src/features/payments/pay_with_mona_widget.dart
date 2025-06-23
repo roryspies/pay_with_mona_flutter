@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pay_with_mona/src/core/events/mona_sdk_state_stream.dart';
@@ -436,6 +436,60 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 ).toList(),
               ),
 
+              InkWell(
+                onTap: () async {
+                  await sdkNotifier.addBankAccountForCheckout();
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: (sdkNotifier.merchantBrandingDetails
+                                  ?.colors.primaryColour ??
+                              MonaColors.primaryBlue)
+                          .withOpacity(
+                        0.05,
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        color: sdkNotifier.merchantBrandingDetails?.colors
+                                .primaryColour ??
+                            MonaColors.primaryBlue,
+                        size: 20,
+                      ),
+                    ),
+
+                    ///
+                    context.sbW(16.0),
+
+                    ///
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Add an account",
+                            style: TextStyle(
+                              fontSize: context.sp(14),
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                          Text(
+                            "Click to add a new account",
+                            style: TextStyle(
+                              fontSize: context.sp(12),
+                              fontWeight: FontWeight.w400,
+                              color: MonaColors.hint,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               context.sbH(16.0),
 
               ///
@@ -556,8 +610,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             sdkNotifier.monaCheckout!.amount!,
                         onPay: () {
                           sdkNotifier
-                            ..setCallingBuildContext(context: context)
-                            ..makePayment();
+                              //..setCallingBuildContext(context: context)
+                              .makePayment();
                         },
                       ),
                     );
@@ -565,8 +619,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                   }
 
                   sdkNotifier
-                    ..setCallingBuildContext(context: context)
-                    ..makePayment();
+                      //..setCallingBuildContext(context: context)
+                      .makePayment();
                 },
               ),
 

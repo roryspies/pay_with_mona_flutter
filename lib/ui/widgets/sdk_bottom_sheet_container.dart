@@ -66,34 +66,6 @@ class SdkBottomSheetWrapper extends StatelessWidget {
           ],
         ),
       ),
-    ); /* AnimatedContainer(
-      width: double.infinity,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-
-      ///
-      child: Wrap(
-        children: [
-          BottomSheetTopHeader(
-            isForCustomTab: isForCustomTab,
-            showCancelButton: showCancelButton,
-            onCancelButtonTap: onCancelButtonTap,
-          ),
-
-          /// *** Content
-          child,
-        ],
-      ),
-    ); */
+    );
   }
 }

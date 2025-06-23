@@ -334,30 +334,30 @@ class _BankCollectionsViewState extends State<BankCollectionsView> {
                           : CustomButton(
                               onTap: () {
                                 sdkNotifier
-                                  ..setCallingBuildContext(context: context)
-                                  ..triggerCollection(
-                                      merchantId: '67e41f884126830aded0b43c',
-                                      timeFactor: switch (timeFactor.value) {
-                                        TimeFactor.day => 24 * 60,
-                                        TimeFactor.week => 7 * 24 * 60,
-                                        TimeFactor.month => 30 * 24 * 60,
-                                      },
-                                      onSuccess: (p0) async {
-                                        setState(() {
-                                          isError = false;
+                                    //..setCallingBuildContext(context: context)
+                                    .triggerCollection(
+                                        merchantId: '67e41f884126830aded0b43c',
+                                        timeFactor: switch (timeFactor.value) {
+                                          TimeFactor.day => 24 * 60,
+                                          TimeFactor.week => 7 * 24 * 60,
+                                          TimeFactor.month => 30 * 24 * 60,
+                                        },
+                                        onSuccess: (p0) async {
+                                          setState(() {
+                                            isError = false;
+                                          });
+                                          showPopupMessage(
+                                              'Collection triggered successfully');
+
+                                          await Future.delayed(
+                                              Duration(seconds: 2));
+
+                                          nav();
+                                        },
+                                        onError: (message) {
+                                          isError = true;
+                                          showPopupMessage(message);
                                         });
-                                        showPopupMessage(
-                                            'Collection triggered successfully');
-
-                                        await Future.delayed(
-                                            Duration(seconds: 2));
-
-                                        nav();
-                                      },
-                                      onError: (message) {
-                                        isError = true;
-                                        showPopupMessage(message);
-                                      });
                               },
                               label: 'Continue',
                             ),

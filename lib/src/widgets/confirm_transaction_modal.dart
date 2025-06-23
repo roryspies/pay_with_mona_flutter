@@ -61,7 +61,10 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
             (state) async {
               switch (state) {
                 case TransactionStateInitiated():
+                  "ConfirmTransactionModal :::_sdkNotifier ::: txnStateStream.listen ::: TransactionStateInitiated "
+                      .log();
                   showTransactionStatusIndicator.value = true;
+                  if (mounted) setState(() {});
                   _sdkNotifier.setShowCancelButton(showCancelButton: false);
 
                   break;

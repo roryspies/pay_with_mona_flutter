@@ -37,7 +37,6 @@ class PaymentService {
     required String merchantKey,
     String? merchantAPIKey,
     required num tnxAmountInKobo,
-    required String successRateType,
     String? phoneNumber,
     String? bvn,
     String? dob,
@@ -80,7 +79,6 @@ class PaymentService {
         ),
         data: {
           "amount": tnxAmountInKobo,
-          'successRateType': successRateType,
           if (phoneNumber != null) "phone": phoneNumber,
           if (bvn != null) "bvn": bvn,
           if (dob != null) "dob": dob,

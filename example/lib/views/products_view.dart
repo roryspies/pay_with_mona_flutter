@@ -222,12 +222,12 @@ class _ProductsViewState extends ConsumerState<ProductsView> {
                                         );
 
                                         _sdkNotifier
-                                          ..setCallingBuildContext(
+                                            /* ..setCallingBuildContext(
                                             context: context,
-                                          )
-                                          ..setMonaCheckOut(
-                                            checkoutDetails: checkoutDetails,
-                                          );
+                                          ) */
+                                            .setMonaCheckOut(
+                                          checkoutDetails: checkoutDetails,
+                                        );
 
                                         await _sdkNotifier.setMerchantAPIKey(
                                           merchantAPIKey: await appSecureStorage

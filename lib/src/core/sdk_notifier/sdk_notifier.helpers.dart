@@ -84,13 +84,8 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
 
     "🚀 Launching payment URL: $url".log();
 
-    assert(
-      _callingBuildContext != null,
-      "Build context must be set before launching URL",
-    );
-
-    final screenHeight = _callingBuildContext!.screenHeight;
-    final screenWidth = _callingBuildContext!.screenWidth;
+    final screenHeight = callingContext.screenHeight;
+    final screenWidth = callingContext.screenWidth;
 
     try {
       await launchUrl(
@@ -178,7 +173,7 @@ extension SDKNotifierHelpers on MonaSDKNotifier {
     // Show the same modal widget for both PIN and OTP; we configure
     // its "task" parameter based on pinOrOtpType:
     SDKUtils.showSDKModalBottomSheet(
-      callingContext: _callingBuildContext!,
+      callingContext: callingContext,
       child: OtpOrPinModalContent(
         controller: controller,
         // When the user taps "Submit", we encrypt if needed and call
