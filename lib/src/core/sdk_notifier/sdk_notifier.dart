@@ -983,12 +983,16 @@ class MonaSDKNotifier extends ChangeNotifier {
   }
 
   void addBankAccountForCollections({required String collectionId}) async {
+    _updateState(MonaSDKState.loading);
+
     final url =
         'https://pay.development.mona.ng/collections/enrollment?collectionId=$collectionId';
     await _launchURL(url);
   }
 
   Future<void> addBankAccountForCheckout() async {
+    _updateState(MonaSDKState.loading);
+
     final url =
         'https://pay.development.mona.ng/checkout/enrollment?transactionId=$_currentTransactionId';
 

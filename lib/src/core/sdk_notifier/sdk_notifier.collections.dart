@@ -164,37 +164,6 @@ extension SDKNotifierCollections on MonaSDKNotifier {
         ),
       );
 
-      /* showModalBottomSheet(
-        context: _callingBuildContext!,
-        isScrollControlled: true,
-        builder: (_) => Wrap(
-          children: [
-            CollectionsCheckoutSheet(
-              accessRequestId: accessRequestId,
-              debitType: debitType,
-              scheduleEntries: scheduleEntries,
-              method: method,
-              details: Collection(
-                maxAmount: maximumAmount,
-                expiryDate: expiryDate,
-                startDate: startDate,
-                monthlyLimit: divideBy100NoDecimal(monthlyLimit),
-                schedule: Schedule(
-                  frequency: frequency,
-                  type: type,
-                  amount: amount,
-                  entries: [],
-                ),
-                reference: reference,
-                status: '',
-                nextCollectionAt: '',
-              ),
-              merchantName: merchantName,
-            ),
-          ],
-        ),
-      ); */
-
       _updateState(MonaSDKState.success);
       return;
     }

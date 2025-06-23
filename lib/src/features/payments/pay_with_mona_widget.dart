@@ -450,12 +450,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                           .withOpacity(
                         0.05,
                       ),
-                      child: Icon(
-                        Icons.add,
-                        color: sdkNotifier.merchantBrandingDetails?.colors
-                                .primaryColour ??
-                            MonaColors.primaryBlue,
-                        size: 20,
+                      child: SvgPicture.asset(
+                        "add_payment_option_button".svg,
                       ),
                     ),
 
@@ -468,7 +464,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Add an account",
+                            "Add a payment option",
                             style: TextStyle(
                               fontSize: context.sp(14),
                               fontWeight: FontWeight.w500,
@@ -476,7 +472,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             ),
                           ),
                           Text(
-                            "Click to add a new account",
+                            "Add a bank account or card to pay with",
                             style: TextStyle(
                               fontSize: context.sp(12),
                               fontWeight: FontWeight.w400,
