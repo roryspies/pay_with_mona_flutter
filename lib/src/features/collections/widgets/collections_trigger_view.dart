@@ -314,29 +314,29 @@ class _CollectionsTriggerViewState extends State<CollectionsTriggerView> {
                                 sdkNotifier.state == MonaSDKState.loading,
                             onTap: () {
                               sdkNotifier
-                                ..setCallingBuildContext(context: context)
+                                  //..setCallingBuildContext(context: context)
 
-                                /// *** TODO: @Serticode Fix This
-                                ..triggerCollection(
-                                  merchantId: '67e41f884126830aded0b43c',
-                                  timeFactor: switch (timeFactor.value) {
-                                    TimeFactor.day => 24 * 60,
-                                    TimeFactor.week => 7 * 24 * 60,
-                                    TimeFactor.month => 30 * 24 * 60,
-                                  },
-                                  onSuccess: (p0) async {
-                                    setState(() {
-                                      isError = false;
-                                    });
-                                    ('Collection triggered successfully');
+                                  /// *** TODO: @Serticode Fix This
+                                  .triggerCollection(
+                                merchantId: '67e41f884126830aded0b43c',
+                                timeFactor: switch (timeFactor.value) {
+                                  TimeFactor.day => 24 * 60,
+                                  TimeFactor.week => 7 * 24 * 60,
+                                  TimeFactor.month => 30 * 24 * 60,
+                                },
+                                onSuccess: (p0) async {
+                                  setState(() {
+                                    isError = false;
+                                  });
+                                  ('Collection triggered successfully');
 
-                                    nav();
-                                  },
-                                  onError: (message) async {
-                                    isError = true;
-                                    await showPopupMessage(message);
-                                  },
-                                );
+                                  nav();
+                                },
+                                onError: (message) async {
+                                  isError = true;
+                                  await showPopupMessage(message);
+                                },
+                              );
                             },
                             label: 'Continue',
                           ),

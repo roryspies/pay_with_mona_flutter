@@ -17,13 +17,13 @@ class ConfirmTransactionModal extends StatefulWidget {
     required this.transactionAmountInKobo,
     required this.selectedPaymentMethod,
     this.showTransactionStatusIndicator = false,
-    this.performedKeyExchange = false,
+    this.onPay,
   });
 
   final num transactionAmountInKobo;
   final PaymentMethod selectedPaymentMethod;
   final bool showTransactionStatusIndicator;
-  final bool performedKeyExchange;
+  final VoidCallback? onPay;
 
   @override
   State<ConfirmTransactionModal> createState() =>
@@ -33,7 +33,7 @@ class ConfirmTransactionModal extends StatefulWidget {
 class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
   final _sdkNotifier = MonaSDKNotifier();
   bool isLoading = false;
-  bool showTransactionStatusIndicator = false;
+  final showTransactionStatusIndicator = ValueNotifier(false);
   BankOption? _bank;
   CardOption? _card;
 
@@ -50,7 +50,9 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       default:
         break;
     }
-    showTransactionStatusIndicator = widget.showTransactionStatusIndicator;
+
+    showTransactionStatusIndicator.value =
+        widget.showTransactionStatusIndicator;
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
@@ -59,7 +61,10 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
             (state) async {
               switch (state) {
                 case TransactionStateInitiated():
-                  showTransactionStatusIndicator = true;
+                  "ConfirmTransactionModal :::_sdkNotifier ::: txnStateStream.listen ::: TransactionStateInitiated "
+                      .log();
+                  showTransactionStatusIndicator.value = true;
+                  if (mounted) setState(() {});
                   _sdkNotifier.setShowCancelButton(showCancelButton: false);
 
                   break;
@@ -76,11 +81,10 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
               switch (state) {
                 case MonaSDKState.loading:
                   if (mounted) setState(() => isLoading = true);
-
                   break;
+
                 default:
                   if (mounted) setState(() => isLoading = false);
-
                   break;
               }
             },
@@ -106,195 +110,219 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
       color: MonaColors.textBody,
     );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(8),
-        ),
-        color: showTransactionStatusIndicator
-            ? MonaColors.bgGrey
-            : MonaColors.neutralWhite,
-      ),
-      child: SafeArea(
-        child: switch (showTransactionStatusIndicator) {
-          true => SdkPaymentStatusModal(
-              performedKeyExchange: widget.performedKeyExchange,
+    return showTransactionStatusIndicator.sync(
+      builder: (context, value, child) {
+        final showStatusIndicator = value;
+
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(16),
             ),
-          false => Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.all(16),
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: MonaColors.bgGrey,
-                    borderRadius: BorderRadius.circular(
-                      8.0,
-                    ),
-                  ),
+            color: showStatusIndicator
+                ? MonaColors.bgGrey
+                : MonaColors.neutralWhite,
+          ),
 
-                  ///
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Amount to pay",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w400,
-                          color: MonaColors.textBody,
-                        ),
-                      ),
+          ///
+          child: SafeArea(
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: switch (showStatusIndicator) {
+                true => SdkPaymentStatusModal(),
 
-                      ///
-                      Text(
-                        "${SDKStrings.nairaSymbol}${SDKUtils.formatMoney(double.parse(widget.transactionAmountInKobo.toString()))}",
-                        style: TextStyle(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.w700,
-                          color: MonaColors.textHeading,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
+                ///
+                false => Column(
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Payment Method",
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w700,
-                            color: MonaColors.textHeading,
+                      Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: MonaColors.bgGrey,
+                          borderRadius: BorderRadius.circular(
+                            8.0,
                           ),
                         ),
-                      ),
 
-                      context.sbH(16.0),
-
-                      ListTile(
-                        onTap: () {
-                          if (isLoading) {
-                            return;
-                          }
-                          Navigator.of(context).pop();
-                        },
-                        contentPadding: EdgeInsets.zero,
-                        leading: switch (widget.selectedPaymentMethod) {
-                          PaymentMethod.savedBank => CircleAvatar(
-                              backgroundColor: MonaColors.neutralWhite,
-                              child: Image.network(
-                                _bank?.logo ?? "",
-                              ),
-                            ),
-                          PaymentMethod.savedCard => CircleAvatar(
-                              backgroundColor: MonaColors.neutralWhite,
-                              child: Image.network(
-                                _card?.logo ?? "",
-                              ),
-                            ),
-                          _ => CircleAvatar(
-                              backgroundColor: (_sdkNotifier
-                                          .merchantBrandingDetails
-                                          ?.colors
-                                          .primaryColour ??
-                                      MonaColors.primaryBlue)
-                                  .withOpacity(
-                                0.1,
-                              ),
-                              child: Icon(widget.selectedPaymentMethod.icon),
-                            ),
-                        },
-
-                        /// *** Title
-                        title: switch (widget.selectedPaymentMethod) {
-                          PaymentMethod.savedBank => Text(
-                              _bank?.bankName ?? "",
-                              style: titleStyle,
-                            ),
-                          PaymentMethod.savedCard => Text(
-                              _card?.bankName ?? "",
-                              style: titleStyle,
-                            ),
-                          _ => Text(
-                              widget.selectedPaymentMethod.title,
-                              style: titleStyle,
-                            ),
-                        },
-
-                        /// *** Subtitle
-                        subtitle: switch (widget.selectedPaymentMethod) {
-                          PaymentMethod.savedBank => Text(
-                              _bank?.accountNumber ?? "",
-                              style: subtitleStyle,
-                            ),
-                          PaymentMethod.savedCard => Text(
-                              _card?.accountNumber ?? "",
-                              style: subtitleStyle,
-                            ),
-                          _ => Text(
-                              widget.selectedPaymentMethod.description,
-                              style: subtitleStyle,
-                            ),
-                        },
-
-                        /// ***
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        ///
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              "Change",
+                              "Amount to pay",
                               style: TextStyle(
-                                fontSize: 14.0,
-                                fontWeight: FontWeight.w600,
-                                color: (_sdkNotifier.merchantBrandingDetails
-                                        ?.colors.primaryColour ??
-                                    MonaColors.primaryBlue),
+                                fontWeight: FontWeight.w400,
+                                color: MonaColors.textBody,
                               ),
                             ),
-                            Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 14,
-                              color: (_sdkNotifier.merchantBrandingDetails
-                                      ?.colors.primaryColour ??
-                                  MonaColors.primaryBlue),
+
+                            ///
+                            Text(
+                              "${SDKStrings.nairaSymbol}${SDKUtils.formatMoney(double.parse(widget.transactionAmountInKobo.toString()))}",
+                              style: TextStyle(
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.w700,
+                                color: MonaColors.textHeading,
+                              ),
                             ),
                           ],
                         ),
                       ),
 
-                      context.sbH(16.0),
+                      ///
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "Payment Method",
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w700,
+                                  color: MonaColors.textHeading,
+                                ),
+                              ),
+                            ),
 
-                      /// ***
-                      //!
-                      CustomButton(
-                        label: "Pay",
-                        isLoading: isLoading,
-                        onTap: () {
-                          if (isLoading) {
-                            return;
-                          }
+                            context.sbH(8.0),
 
-                          _sdkNotifier
-                            ..setCallingBuildContext(context: context)
-                            ..makePayment();
-                        },
+                            ListTile(
+                              onTap: () {
+                                if (isLoading) {
+                                  return;
+                                }
+                                Navigator.of(context).pop();
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              leading: switch (widget.selectedPaymentMethod) {
+                                PaymentMethod.savedBank => CircleAvatar(
+                                    backgroundColor: MonaColors.neutralWhite,
+                                    child: Image.network(
+                                      _bank?.logo ?? "",
+                                    ),
+                                  ),
+                                PaymentMethod.savedCard => CircleAvatar(
+                                    backgroundColor: MonaColors.neutralWhite,
+                                    child: Image.network(
+                                      _card?.logo ?? "",
+                                    ),
+                                  ),
+                                _ => CircleAvatar(
+                                    backgroundColor: (_sdkNotifier
+                                                .merchantBrandingDetails
+                                                ?.colors
+                                                .primaryColour ??
+                                            MonaColors.primaryBlue)
+                                        .withOpacity(
+                                      0.1,
+                                    ),
+                                    child:
+                                        Icon(widget.selectedPaymentMethod.icon),
+                                  ),
+                              },
+
+                              /// *** Title
+                              title: switch (widget.selectedPaymentMethod) {
+                                PaymentMethod.savedBank => Text(
+                                    _bank?.bankName ?? "",
+                                    style: titleStyle,
+                                  ),
+                                PaymentMethod.savedCard => Text(
+                                    _card?.bankName ?? "",
+                                    style: titleStyle,
+                                  ),
+                                _ => Text(
+                                    widget.selectedPaymentMethod.title,
+                                    style: titleStyle,
+                                  ),
+                              },
+
+                              /// *** Subtitle
+                              subtitle: switch (widget.selectedPaymentMethod) {
+                                PaymentMethod.savedBank => Text(
+                                    _bank?.accountNumber ?? "",
+                                    style: subtitleStyle,
+                                  ),
+                                PaymentMethod.savedCard => Text(
+                                    _card?.accountNumber ?? "",
+                                    style: subtitleStyle,
+                                  ),
+                                _ => Text(
+                                    widget.selectedPaymentMethod.description,
+                                    style: subtitleStyle,
+                                  ),
+                              },
+
+                              /// ***
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "Change",
+                                    style: TextStyle(
+                                      fontSize: 14.0,
+                                      fontWeight: FontWeight.w600,
+                                      color: (_sdkNotifier
+                                              .merchantBrandingDetails
+                                              ?.colors
+                                              .primaryColour ??
+                                          MonaColors.primaryBlue),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 14,
+                                    color: (_sdkNotifier.merchantBrandingDetails
+                                            ?.colors.primaryColour ??
+                                        MonaColors.primaryBlue),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            context.sbH(8.0),
+
+                            /// ***
+                            //!
+                            CustomButton(
+                              label: "Pay",
+                              isLoading: isLoading,
+                              onTap: () {
+                                if (isLoading) {
+                                  return;
+                                }
+
+                                if (widget.onPay != null) {
+                                  widget.onPay!();
+                                  return;
+                                }
+
+                                /*  _sdkNotifier
+                                  ..setCallingBuildContext(context: context)
+                                  ..makePayment(); */
+                              },
+                            ),
+
+                            //!
+                            context.sbH(16.0),
+
+                            PoweredByMona()
+                          ],
+                        ),
                       ),
-
-                      //!
-                      context.sbH(16.0),
-
-                      PoweredByMona()
                     ],
                   ),
-                ),
-              ],
+              },
             ),
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -21,9 +21,11 @@ abstract class PayWithMona {
 
   static Future<void> initialize({
     required String merchantKey,
+    required GlobalKey<NavigatorState> hostAppNavKey,
   }) async {
     _instance ??= await _MonaSDKImpl.initialize(
       merchantKey: merchantKey,
+      hostAppNavKey: hostAppNavKey,
     );
   }
 

@@ -23,7 +23,7 @@ class SDKLoader extends StatefulWidget {
 
 class _SDKLoaderState extends State<SDKLoader> {
   final _monaSDKNotifier = MonaSDKNotifier();
-  bool isLoading = false;
+  final isLoadingValueNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -35,15 +35,12 @@ class _SDKLoaderState extends State<SDKLoader> {
             switch (state) {
               case MonaSDKState.loading:
                 ('🔄 SDKLoader ==>>  SDK is Loading').log();
-
-                if (mounted) setState(() => isLoading = true);
-
+                isLoadingValueNotifier.value = true;
                 break;
+
               default:
                 ('🔄 SDKLoader ==>>  SDK is Not Loading').log();
-
-                if (mounted) setState(() => isLoading = false);
-
+                isLoadingValueNotifier.value = false;
                 break;
             }
           },
@@ -61,59 +58,78 @@ class _SDKLoaderState extends State<SDKLoader> {
         _monaSDKNotifier.merchantBrandingDetails?.colors.primaryColour ??
             MonaColors.primaryBlue;
 
-    return AnimatedSwitcher(
-      duration: Duration(
-        milliseconds: 300,
-      ),
-      child: switch (isLoading) {
-        true => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ///
-                  context.sbH(48.0),
-
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: progressIndicatorColour.withOpacity(0.1),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 4.0,
-                        color: progressIndicatorColour,
-                        strokeCap: StrokeCap.round,
-                        backgroundColor:
-                            progressIndicatorColour.withOpacity(0.15),
-                      ),
-                    ),
-                  ),
-
-                  ///
-                  context.sbH(16.0),
-
-                  Text(
-                    widget.loadingStateTitle,
-                    style: TextStyle(
-                      color: MonaColors.textBody,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-
-                  ///
-                  context.sbH(48.0),
-
-                  PoweredByMona()
-                ],
+    return isLoadingValueNotifier.sync(
+      builder: (context, isLoading, child) {
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: MonaColors.neutralWhite,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(
+                16,
               ),
             ),
           ),
+          child: AnimatedSwitcher(
+            switchInCurve: Curves.fastOutSlowIn,
+            switchOutCurve: Curves.fastOutSlowIn,
+            duration: Duration(
+              milliseconds: 50,
+            ),
 
-        /// ***
-        false => widget.child ?? const SizedBox.shrink(),
+            ///
+            child: switch (isLoading || widget.child == null) {
+              true => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ///
+                        context.sbH(32.0),
+
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor:
+                              progressIndicatorColour.withOpacity(0.1),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 4.0,
+                              color: progressIndicatorColour,
+                              strokeCap: StrokeCap.round,
+                              backgroundColor:
+                                  progressIndicatorColour.withOpacity(0.15),
+                            ),
+                          ),
+                        ),
+
+                        ///
+                        context.sbH(16.0),
+
+                        Text(
+                          widget.loadingStateTitle,
+                          style: TextStyle(
+                            color: MonaColors.textBody,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+
+                        ///
+                        context.sbH(32.0),
+
+                        PoweredByMona()
+                      ],
+                    ),
+                  ),
+                ),
+
+              /// ***
+              false => widget.child ?? const SizedBox.shrink(),
+            },
+          ),
+        );
       },
     );
   }

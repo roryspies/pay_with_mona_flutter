@@ -3,10 +3,13 @@ part of "pay_with_mona.dart";
 class _MonaSDKImpl extends PayWithMona {
   _MonaSDKImpl._();
 
-  static Future<_MonaSDKImpl> initialize({
-    required String merchantKey,
-  }) async {
-    await MonaSDKNotifier().initSDK(merchantKey: merchantKey);
+  static Future<_MonaSDKImpl> initialize(
+      {required String merchantKey,
+      required GlobalKey<NavigatorState> hostAppNavKey}) async {
+    await MonaSDKNotifier().initSDK(
+      merchantKey: merchantKey,
+      hostAppNavKey: hostAppNavKey,
+    );
 
     return _MonaSDKImpl._();
   }

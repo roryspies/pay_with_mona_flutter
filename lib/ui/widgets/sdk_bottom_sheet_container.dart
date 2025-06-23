@@ -27,6 +27,7 @@ class SdkBottomSheetWrapper extends StatelessWidget {
     final bgColour =
         sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
             MonaColors.primaryBlue;
+
     return Container(
       width: double.infinity,
 
@@ -46,7 +47,10 @@ class SdkBottomSheetWrapper extends StatelessWidget {
         duration: const Duration(
           milliseconds: 300,
         ),
+        curve: Curves.fastOutSlowIn,
+        clipBehavior: Clip.antiAlias,
         child: Wrap(
+          clipBehavior: Clip.antiAlias,
           children: [
             BottomSheetTopHeader(
               isForCustomTab: isForCustomTab,
@@ -62,34 +66,6 @@ class SdkBottomSheetWrapper extends StatelessWidget {
           ],
         ),
       ),
-    ); /* AnimatedContainer(
-      width: double.infinity,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-
-      ///
-      child: Wrap(
-        children: [
-          BottomSheetTopHeader(
-            isForCustomTab: isForCustomTab,
-            showCancelButton: showCancelButton,
-            onCancelButtonTap: onCancelButtonTap,
-          ),
-
-          /// *** Content
-          child,
-        ],
-      ),
-    ); */
+    );
   }
 }

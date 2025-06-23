@@ -14,7 +14,7 @@ abstract class SDKUtils {
     return currencyFormatter.format(price / 100);
   }
 
-  static Future<bool> showSDKModalBottomSheet({
+/*   static Future<bool> showSDKModalBottomSheet({
     required BuildContext callingContext,
     required Widget child,
     bool isDismissible = true,
@@ -45,6 +45,64 @@ abstract class SDKUtils {
     );
 
     return result == true;
+  }
+ */
+  static Future<bool?> showSDKModalBottomSheet({
+    required BuildContext callingContext,
+    required Widget child,
+    bool isDismissible = true,
+    bool enableDrag = true,
+    bool isForCustomTab = false,
+    bool showCancelButton = false,
+    VoidCallback? onCancelButtonTap,
+    Color backgroundColor = Colors.white,
+  }) {
+    return showGeneralDialog<bool>(
+      context: callingContext,
+      barrierDismissible: isDismissible,
+      barrierLabel:
+          MaterialLocalizations.of(callingContext).modalBarrierDismissLabel,
+      transitionDuration: const Duration(
+        milliseconds: 300,
+      ),
+
+      pageBuilder: (ctx, anim, anim2) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Material(
+            color: Colors.transparent,
+            clipBehavior: Clip.antiAlias,
+            child: SdkBottomSheetWrapper(
+              isForCustomTab: isForCustomTab,
+              showCancelButton: showCancelButton,
+              onCancelButtonTap: onCancelButtonTap,
+              child: child,
+            ),
+          ),
+        );
+      },
+
+      ///
+      transitionBuilder: (ctx, animation, secondaryAnimation, page) {
+        // Slide from bottom (Offset(0,1) → Offset(0,0)) + fade (0→1)
+        final slide = Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: animation,
+            curve: Curves.fastOutSlowIn,
+          ),
+        );
+        return SlideTransition(
+          position: slide,
+          child: FadeTransition(
+            opacity: animation,
+            child: page,
+          ),
+        );
+      },
+    );
   }
 
   static void popMultiple(BuildContext context, int count) {
