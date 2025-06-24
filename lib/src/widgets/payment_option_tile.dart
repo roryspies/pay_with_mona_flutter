@@ -25,6 +25,11 @@ class PaymentOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sdkNotifier = MonaSDKNotifier();
+    final primaryColour =
+        sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
+            MonaColors.primaryBlue;
+    final bgColour = primaryColour.withOpacity(0.1);
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -34,14 +39,12 @@ class PaymentOptionTile extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor:
-                  (sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
-                          MonaColors.primaryBlue)
-                      .withOpacity(
-                0.05,
-              ),
+              backgroundColor: bgColour,
               child: SvgPicture.asset(
                 iconURL.svg,
+                color: primaryColour.withOpacity(
+                  0.7,
+                ),
               ),
             ),
 

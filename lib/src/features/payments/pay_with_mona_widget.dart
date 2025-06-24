@@ -51,6 +51,10 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.bank;
     final savedCards =
         sdkNotifier.currentPaymentResponseModel?.savedPaymentOptions?.card;
+    final primaryColour =
+        sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
+            MonaColors.primaryBlue;
+    final bgColour = primaryColour.withOpacity(0.1);
 
     return SafeArea(
       child: Container(
@@ -89,14 +93,14 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                           children: [
                             CircleAvatar(
                               radius: 21.0,
-                              backgroundColor: MonaColors.neutralWhite,
+                              backgroundColor: bgColour,
                               child: Stack(
                                 children: [
                                   //!
                                   Align(
                                     alignment: Alignment.center,
                                     child: CircleAvatar(
-                                      backgroundColor: MonaColors.neutralWhite,
+                                      backgroundColor: bgColour,
                                       child: Image.network(
                                         card.logo ?? "",
                                       ),
@@ -110,6 +114,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                       backgroundColor: Colors.white,
                                       child: SvgPicture.asset(
                                         "tiny_card_icon".svg,
+                                        color: primaryColour,
                                       ),
                                     ),
                                   )
@@ -202,15 +207,14 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             children: [
                               CircleAvatar(
                                 radius: 21.0,
-                                backgroundColor: MonaColors.neutralWhite,
+                                backgroundColor: bgColour,
                                 child: Stack(
                                   children: [
                                     //!
                                     Align(
                                       alignment: Alignment.center,
                                       child: CircleAvatar(
-                                        backgroundColor:
-                                            MonaColors.neutralWhite,
+                                        backgroundColor: bgColour,
                                         child: Image.network(
                                           bank.logo ?? "",
                                         ),
@@ -225,9 +229,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                         child: SvgPicture.asset(
                                           "tiny_bank_icon".svg,
                                         ),
-                                        /* backgroundImage: AssetImage(
-                                          "tiny_bank_icon".svg,
-                                        ), */
                                       ),
                                     )
                                   ],
@@ -306,15 +307,14 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                             children: [
                               CircleAvatar(
                                 radius: 21.0,
-                                backgroundColor: MonaColors.neutralWhite,
+                                backgroundColor: bgColour,
                                 child: Stack(
                                   children: [
                                     //!
                                     Align(
                                       alignment: Alignment.center,
                                       child: CircleAvatar(
-                                        backgroundColor:
-                                            MonaColors.neutralWhite,
+                                        backgroundColor: bgColour,
                                         child: Image.network(
                                           bank.logo ?? "",
                                         ),
@@ -329,9 +329,6 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                                         child: SvgPicture.asset(
                                           "tiny_bank_icon".svg,
                                         ),
-                                        /* backgroundImage: AssetImage(
-                                          "tiny_bank_icon".svg,
-                                        ), */
                                       ),
                                     )
                                   ],
@@ -436,7 +433,8 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                 ).toList(),
               ),
 
-              InkWell(
+              /// *** Keep until the URL is available by Web Team
+              /* InkWell(
                 onTap: () async {
                   await sdkNotifier.addBankAccountForCheckout();
                 },
@@ -484,7 +482,7 @@ class _PayWithMonaWidgetState extends State<PayWithMonaWidget> {
                     ),
                   ],
                 ),
-              ),
+              ), */
 
               context.sbH(16.0),
 

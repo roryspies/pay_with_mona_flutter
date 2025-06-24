@@ -464,7 +464,18 @@ class MonaSDKNotifier extends ChangeNotifier {
           _merchantBrandingDetails != null) {
         succeeded = true;
       } else {
-        final storedKey = _cachedMerchantKey ?? await _getMerchantKey();
+        await _setMerchantKey(merchantKey: merchantKey);
+
+        final branding =
+            await _authService.initMerchant(merchantKey: merchantKey);
+
+        if (branding != null) {
+          _merchantBrandingDetails = branding;
+          unawaited(_setMerchantBranding(merchant: branding));
+          succeeded = true;
+        }
+
+        /* final storedKey = _cachedMerchantKey ?? await _getMerchantKey();
 
         if (storedKey == merchantKey) {
           _merchantBrandingDetails ??= await _getMerchantBranding();
@@ -483,7 +494,7 @@ class MonaSDKNotifier extends ChangeNotifier {
           } else {
             _handleError("Failed to initialize SDK");
           }
-        }
+        } */
 
         if (succeeded) notifyListeners();
 

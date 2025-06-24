@@ -113,6 +113,10 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
     return showTransactionStatusIndicator.sync(
       builder: (context, value, child) {
         final showStatusIndicator = value;
+        final primaryColour =
+            _sdkNotifier.merchantBrandingDetails?.colors.primaryColour ??
+                MonaColors.primaryBlue;
+        final bgColour = primaryColour.withOpacity(0.1);
 
         return DecoratedBox(
           decoration: BoxDecoration(
@@ -136,7 +140,7 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                     children: [
                       Container(
                         width: double.infinity,
-                        margin: EdgeInsets.all(16),
+                        margin: EdgeInsets.symmetric(horizontal: 16),
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: MonaColors.bgGrey,
@@ -190,8 +194,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                               ),
                             ),
 
-                            context.sbH(8.0),
-
                             ListTile(
                               onTap: () {
                                 if (isLoading) {
@@ -202,28 +204,22 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                               contentPadding: EdgeInsets.zero,
                               leading: switch (widget.selectedPaymentMethod) {
                                 PaymentMethod.savedBank => CircleAvatar(
-                                    backgroundColor: MonaColors.neutralWhite,
+                                    backgroundColor: bgColour,
                                     child: Image.network(
                                       _bank?.logo ?? "",
                                     ),
                                   ),
                                 PaymentMethod.savedCard => CircleAvatar(
-                                    backgroundColor: MonaColors.neutralWhite,
+                                    backgroundColor: bgColour,
                                     child: Image.network(
                                       _card?.logo ?? "",
                                     ),
                                   ),
                                 _ => CircleAvatar(
-                                    backgroundColor: (_sdkNotifier
-                                                .merchantBrandingDetails
-                                                ?.colors
-                                                .primaryColour ??
-                                            MonaColors.primaryBlue)
-                                        .withOpacity(
-                                      0.1,
+                                    backgroundColor: bgColour,
+                                    child: Icon(
+                                      widget.selectedPaymentMethod.icon,
                                     ),
-                                    child:
-                                        Icon(widget.selectedPaymentMethod.icon),
                                   ),
                               },
 
@@ -268,19 +264,13 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                                     style: TextStyle(
                                       fontSize: 14.0,
                                       fontWeight: FontWeight.w600,
-                                      color: (_sdkNotifier
-                                              .merchantBrandingDetails
-                                              ?.colors
-                                              .primaryColour ??
-                                          MonaColors.primaryBlue),
+                                      color: primaryColour,
                                     ),
                                   ),
                                   Icon(
                                     Icons.arrow_forward_ios_rounded,
                                     size: 14,
-                                    color: (_sdkNotifier.merchantBrandingDetails
-                                            ?.colors.primaryColour ??
-                                        MonaColors.primaryBlue),
+                                    color: primaryColour,
                                   ),
                                 ],
                               ),
@@ -302,10 +292,6 @@ class _ConfirmTransactionModalState extends State<ConfirmTransactionModal> {
                                   widget.onPay!();
                                   return;
                                 }
-
-                                /*  _sdkNotifier
-                                  ..setCallingBuildContext(context: context)
-                                  ..makePayment(); */
                               },
                             ),
 

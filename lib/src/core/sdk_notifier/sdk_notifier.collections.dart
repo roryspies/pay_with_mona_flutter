@@ -5,7 +5,7 @@ extension SDKNotifierCollections on MonaSDKNotifier {
     required String bankId,
     required String accessRequestId,
     void Function(Map<String, dynamic>?)? onSuccess,
-    void Function()? onFailure,
+    void Function(String message)? onFailure,
   }) async {
     _updateState(MonaSDKState.loading);
 
@@ -19,13 +19,17 @@ extension SDKNotifierCollections on MonaSDKNotifier {
           success.log();
           onSuccess?.call(success);
         },
-        onError: () {
+        onError: (errorMessage) {
           _updateState(MonaSDKState.error);
-          onFailure?.call();
+          onFailure?.call(errorMessage);
         },
       );
     } catch (e) {
-      onFailure?.call();
+      "SDKNotifierCollections ::: CREATE COLLECTIONS ERROR::: ${e.toString()}"
+          .log();
+      onFailure?.call(
+        "Something went wrong, please try again",
+      );
       e.toString().log();
       _handleError(e.toString());
     } finally {

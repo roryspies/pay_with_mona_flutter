@@ -180,8 +180,8 @@ class CollectionsService {
 
   Future<void> createCollectionRequest({
     bool sign = false,
-    Function? onComplete,
-    void Function()? onError,
+    required Function onComplete,
+    required Function(String reason) onError,
     required String bankId,
     required String accessRequestId,
   }) async {
@@ -225,9 +225,12 @@ class CollectionsService {
         signature: signature,
         nonce: nonce,
         timestamp: timestamp,
+        onError: (errorMessage) => onError(errorMessage),
       );
     } catch (e) {
-      onError?.call();
+      onError.call(
+        "Something went wrong, please try again later",
+      );
       return;
     }
   }
@@ -235,12 +238,13 @@ class CollectionsService {
   Future<void> submitCreateCollectionRequest(
     Map<String, dynamic> payload, {
     required Function? onComplete,
+    required Function(String errorMessage)? onError,
     String? monaKeyId,
     String? signature,
     String? nonce,
     String? timestamp,
   }) async {
-    "$_repoName submitPaymentRequest REACHED SUBMISSION".log();
+    "$_repoName submitCreateCollectionRequest REACHED SUBMISSION".log();
 
     final (res, failure) = await createCollections(
       payload: payload,
@@ -251,12 +255,13 @@ class CollectionsService {
     );
 
     if (failure != null) {
-      "$_repoName submitPaymentRequest FAILED ::: ${failure.message}".log();
-      return;
+      "$_repoName submitCreateCollectionRequest FAILED ::: ${failure.message}"
+          .log();
+      throw (failure.message);
     }
 
     if (res!["success"] == true) {
-      "Payment Successful".log();
+      "submitCreateCollectionRequest Successful".log();
       if (onComplete != null) {
         onComplete(res, payload);
       }
